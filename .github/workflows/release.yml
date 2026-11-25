@@ -89,9 +89,11 @@ jobs:
             }
           }
           $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
-          & $packagedGui --self-test --require-cli
-          if ($LASTEXITCODE -ne 0) {
-            throw "错误：发布包中的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $LASTEXITCODE）"
+          # WinExe (GUI subsystem): `& exe` does not wait and leaves $LASTEXITCODE unset, so wait explicitly.
+          $selfTest = Start-Process -FilePath $packagedGui -ArgumentList @('--self-test', '--require-cli') -Wait -PassThru -NoNewWindow
+          $selfTestExit = $selfTest.ExitCode
+          if ($selfTestExit -ne 0) {
+            throw "错误：发布包中的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $selfTestExit）"
           }
 
       - name: Prepare Release notes
