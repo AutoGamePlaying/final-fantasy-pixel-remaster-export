@@ -8,21 +8,64 @@
 
 ## 快速开始（Windows）
 
-无需安装 .NET 运行时，也无需手动敲命令：
+无需安装 .NET 运行时，也无需敲命令，点几下即可完成导出：
 
 1. **下载压缩包**（二选一）：
    - **Releases 页面**：下载最新正式版的 `ffpr-export-<版本>-win-x64.zip`；
    - **Actions 页面**：打开最近一次 `main` 分支通过的 `CI` 工作流，在页面底部 **Artifacts** 下载 `ffpr-export-<版本>-<提交短号>-win-x64`（每次推送到 `main` 自动生成，保留 30 天）。
-2. **解压**：将压缩包解压到任意目录（包含 `ffpr-export.exe`、`known-builds.json` 等文件）。
-3. **双击运行 `ffpr-export.exe`**，按中文向导提示操作：
-   - 向导会自动读取本机 Steam 安装路径与 `libraryfolders.vdf`，列出所有已安装的 FF1–FF6 像素复刻版及 Steam 构建号；
-   - 输入编号选择单个游戏，或选择“**全部**”一次性依次构建所有已找到的游戏（若未自动找到，也可直接粘贴游戏目录路径，支持带空格或两端带引号）；
-   - 输出目录默认放在 `ffpr-export.exe` 同目录下的 `output/<游戏代号>-<Steam 构建号>/`，直接回车接受，也可输入其他路径；
-   - 回车确认后自动执行导出、建库与哈希核对，结束后显示数据库路径、文件哈希、内容哈希以及与 `known-builds.json` 的比对结论，最后按回车关闭窗口。
+2. **完整解压**：将压缩包解压到任意文件夹（保持 `ffpr-export-gui.exe`、`ffpr-export.exe` 与 `known-builds.json` 在同一目录）。
+3. **双击 `ffpr-export-gui.exe`**：
+   - 启动时自动扫描本机全部 Steam 库，列出已安装的 FF1–FF6 像素复刻版、Steam 构建号与目录，并**默认全选**（如未自动找到，也可点“手动选择游戏目录…”添加）；
+   - 输出根目录默认为 `%USERPROFILE%\Documents\FF-Export\`（每个游戏生成 `<ffN>-<Steam 构建号>\` 子目录），点“浏览…”可改选其他位置；若目标目录已存在且不是本工具创建的目录，会先弹框确认，不静默覆盖；
+   - 点击 **“开始导出”**，程序会依次调用同目录的 `ffpr-export.exe build-db` 逐个构建（不并行），实时显示“第 k / n 个：FFk”进度与日志，随时可点“取消”终止子进程树；
+   - 完成后在底部“完成结果”区查看每个游戏的比对结论（`✓ 与登记的版本一致` / `✓ 新版本，未登记` / `✗ 哈希不同`）、数据库路径、文件哈希与内容哈希，并可一键 **“打开输出文件夹”** 或 **“复制哈希”**；
+   - 上次的输出根目录与勾选状态会自动保存在 `%APPDATA%\ffpr-export\settings.json`（不写注册表）。
 
-## 命令行用法
+```text
++-----------------------------------------------------------------------------+
+| FFPR 导出工具 v0.1.0 — FINAL FANTASY I–VI Pixel Remaster                    |
++-----------------------------------------------------------------------------+
+| 1. 游戏（自动扫描 Steam 库，默认全选）                                       |
+| [x] 全选  已选 3 / 3 个游戏               [ 重新扫描 ] [ 手动选择游戏目录… ] |
+| +------------------------+----------+-------------------------------------+ |
+| | 游戏                   | 构建号   | 目录                                | |
+| | [x] FINAL FANTASY (FF1)| 20249397 | C:\...\common\FINAL FANTASY PR      | |
+| | [x] FINAL FANTASY V... | 20265087 | D:\...\common\FINAL FANTASY V PR    | |
+| +------------------------+----------+-------------------------------------+ |
+|                                                                             |
+| 2. 输出位置                                                                 |
+| 输出根目录：[ C:\Users\<用户>\Documents\FF-Export                ] [ 浏览… ] |
+| 子目录预览：将分别输出到 ff1-20249397、ff5-20265087 等 3 个子目录            |
+|                                                                             |
+| [                  开 始 导 出                  ]         [   取  消   ]    |
+| 第 2 / 3 个：FF5（步骤 3/6：进程内执行 db build 构建 ff5.sqlite）            |
+| [===========================-----------------------]                        |
+| | ==> [ff5] 步骤 1/6：识别游戏版本与资源指纹                              ^ | |
+| | ==> [ff5] 步骤 2/6：进程内执行 inventory 与 export                      | | |
+| | ==> [ff5] 步骤 3/6：进程内执行 db build 构建 ff5.sqlite                 v | |
+|                                                                             |
+| 3. 完成结果                                                                 |
+| +--------------------+----------+--------------------+--------------------+ |
+| | 游戏               | 构建号   | 结论               | 库文件路径         | |
+| | FINAL FANTASY (FF1)| 20249397 | ✓ 与登记的版本一致 | ...\ff1.sqlite     | |
+| +--------------------+----------+--------------------+--------------------+ |
+| 数据库路径：C:\Users\<用户>\Documents\FF-Export\ff1-20249397\ff1.sqlite     |
+| 文件哈希：  abb52056...                                                     |
+| 内容哈希：  45fb76f7...                                                     |
+| 比对结论：  ✓ 与登记的版本一致（登记日期：2026-11-25，来源：file）          |
+| [ 打开输出文件夹 ]  [ 复制哈希 ]                                            |
++-----------------------------------------------------------------------------+
+```
 
-向导仅在**不带任何参数**运行时启动；传入参数时走完整命令行模式。Linux 下通过 `scripts/run.sh` 调用，Windows 下直接运行 `ffpr-export.exe`：
+## 命令行用法与控制台向导
+
+### 控制台向导（无参数启动 `ffpr-export.exe`）
+
+若在没有图形界面或需要终端交互的场景下使用，可直接双击或无参数运行 `ffpr-export.exe` 启动中文控制台向导：自动扫描 Steam 游戏库，按编号选择单个游戏或“全部”，确认输出目录后依次执行 `build-db` 并汇总数据库路径、哈希与比对结论。
+
+### 命令行子命令
+
+传入参数时走完整命令行模式。Linux 下通过 `scripts/run.sh` 调用，Windows 下直接运行 `ffpr-export.exe`：
 
 ### 1. `build-db` — 一步建库与版本核对
 
@@ -100,13 +143,13 @@ bash .deps/dotnet-install.sh --channel 10.0 --install-dir .deps/dotnet --no-path
 
 ### Windows 单文件发布与打包
 
-无需在目标机安装 .NET 运行时，可执行打包脚本构建自包含单文件 `ffpr-export.exe`（含 `longPathAware` 清单、支持带空格与超长路径），并产出带校验和的发布压缩包：
+无需在目标机安装 .NET 运行时，可执行打包脚本同时构建自包含单文件 `ffpr-export-gui.exe`（WinForms 图形界面，支持高 DPI 与 `longPathAware`）与 `ffpr-export.exe`（命令行 / 控制台向导），并产出带校验和的发布压缩包：
 
 ```bash
 scripts/package-windows.sh
 ```
 
-脚本优先读取当前 HEAD 的 git tag 作为版本号（无 tag 时读取根目录 `VERSION`），在 `dist/` 下生成 `ffpr-export-<版本>-win-x64.zip`，内含 `ffpr-export.exe`、`known-builds.json`、`README.md`、`LICENSE` 与 `SHA256SUMS`。
+脚本优先读取当前 HEAD 的 git tag 作为版本号（无 tag 时读取根目录 `VERSION`），在 `dist/` 下生成 `ffpr-export-<版本>-win-x64.zip`，内含 `ffpr-export-gui.exe`、`ffpr-export.exe`、`使用说明.txt`、`known-builds.json`、`README.md`、`LICENSE` 与 `SHA256SUMS`。
 
 ## 跨代数据结构调查
 
@@ -134,10 +177,10 @@ scripts/check.sh
 
 每次向任意分支 `push` 或提交 `pull_request` 时触发（最小权限 `contents: read`），包含四个 job：
 
-1. **`check`**（`ubuntu-latest` + `windows-latest`）：安装 .NET 10 SDK 并缓存 NuGet 后执行 `scripts/check.sh`（Linux 上额外跑 `dotnet format --verify-no-changes`，两个平台均执行 `dotnet build -c Release` 与 `dotnet test`；CI 上不含 `.deps/`）。
+1. **`check`**（`ubuntu-latest` + `windows-latest`）：安装 .NET 10 SDK 并缓存 NuGet 后执行 `scripts/check.sh`（Linux 上额外跑 `dotnet format --verify-no-changes`，两个平台均编译包含 `FfprExport.Gui` 在内的 `FfprExport.sln` 并执行 `dotnet test`；Windows 上另以 `--self-test` 对 `ffpr-export-gui.exe` 做无窗口依赖自检；CI 上不含 `.deps/`）。
 2. **`fixture-hash`**（`ubuntu-latest` + `windows-latest`）：执行 `scripts/fixture-db.sh`，生成确定的合成导出目录并运行完整 `ffpr-export db build`，随后执行 `ffpr-export db hash --json` 并将结果上传为 artifact。
 3. **`compare-hash`**（依赖两个 `fixture-hash`）：下载 Linux 与 Windows 两份哈希 JSON，比对 `file_sha256`、`content_sha256`、`schema_version` 以及每张普通表的行数与哈希；任意一项不一致即失败并列出存在差异的表。
-4. **`package-windows`**（仅在 `push` 到 `main` 时运行，依赖 `check`，`windows-latest`）：调用 `scripts/package-windows.ps1` 构建 Windows x64 单文件压缩包，并以 `ffpr-export-<版本>-<提交短号>-win-x64` 为名上传为 GitHub Actions Artifact，保留 30 天。
+4. **`package-windows`**（仅在 `push` 到 `main` 时运行，依赖 `check`，`windows-latest`）：调用 `scripts/package-windows.ps1` 构建包含 `ffpr-export-gui.exe`、`ffpr-export.exe` 与 `使用说明.txt` 的 Windows x64 单文件压缩包，解压校验并执行 `ffpr-export-gui.exe --self-test --require-cli`，最后以 `ffpr-export-<版本>-<提交短号>-win-x64` 为名上传为 GitHub Actions Artifact，保留 30 天。
 
 ### 跨平台哈希核对的意义
 
