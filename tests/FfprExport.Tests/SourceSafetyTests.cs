@@ -18,6 +18,24 @@ public sealed class SourceSafetyTests
             }
         }
 
+        var guiDir = Path.Combine(root, "src", "FfprExport.Gui");
+        if (Directory.Exists(guiDir))
+        {
+            foreach (var path in Directory.EnumerateFiles(guiDir, "*", SearchOption.AllDirectories))
+            {
+                var rel = Path.GetRelativePath(guiDir, path).Replace('\\', '/');
+                if (rel.StartsWith("bin/", StringComparison.Ordinal) || rel.StartsWith("obj/", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (Path.GetExtension(path) is ".cs" or ".csproj" or ".manifest")
+                {
+                    targets.Add(path);
+                }
+            }
+        }
+
         foreach (var path in Directory.EnumerateFiles(Path.Combine(root, "scripts"), "*.sh", SearchOption.TopDirectoryOnly))
         {
             targets.Add(path);

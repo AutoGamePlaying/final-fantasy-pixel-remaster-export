@@ -8,6 +8,11 @@ internal static class Program
 
     public static async Task<int> Main(string[] args)
     {
+        if (Console.IsOutputRedirected || Console.IsErrorRedirected)
+        {
+            Console.OutputEncoding = OutputGuard.Utf8WithoutBom;
+        }
+
         try
         {
             return await RunAsync(args);

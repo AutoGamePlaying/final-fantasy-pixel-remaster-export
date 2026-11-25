@@ -15,5 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FfprExport\FfprExport.csproj" />
+    <Compile Include="..\..\src\FfprExport.Gui\Core\*.cs" Link="GuiCore\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
