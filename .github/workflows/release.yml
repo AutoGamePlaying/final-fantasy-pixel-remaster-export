@@ -72,6 +72,28 @@ jobs:
         shell: pwsh
         run: ./scripts/package-windows.ps1 -Version "$env:RELEASE_VERSION"
 
+      - name: Verify packaged zip and GUI self-test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $zipPath = Join-Path $PWD "dist\ffpr-export-$($env:RELEASE_VERSION)-win-x64.zip"
+          $verifyDir = Join-Path $env:RUNNER_TEMP "verify-release-pkg"
+          if (Test-Path -LiteralPath $verifyDir) {
+            Remove-Item -LiteralPath $verifyDir -Recurse -Force
+          }
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $verifyDir -Force
+          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "使用说明.txt")) {
+            $itemPath = Join-Path $verifyDir $name
+            if (-not (Test-Path -LiteralPath $itemPath -PathType Leaf)) {
+              throw "错误：发布压缩包缺少文件：$name"
+            }
+          }
+          $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
+          & $packagedGui --self-test --require-cli
+          if ($LASTEXITCODE -ne 0) {
+            throw "错误：发布包中的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $LASTEXITCODE）"
+          }
+
       - name: Prepare Release notes
         shell: bash
         run: |
@@ -86,14 +108,17 @@ jobs:
           cat > "${RUNNER_TEMP}/release-notes.md" <<EOF
           ## 说明
 
-          - 本发布包**不含任何游戏数据**（仅包含导出与建库工具本体、校验文件与已知构建清单）。
+          - 本发布包**不含任何游戏数据**（仅包含图形界面工具、命令行导出与建库工具、校验文件与已知构建清单）。
           - 同时支持《FINAL FANTASY I–VI Pixel Remaster》全六作（FF1–6），工具会自动识别游戏编号、Unity 版本与 Steam 构建号。
           - 构建完成后，工具会自动将生成的数据库与 \`known-builds.json\` 中的已知构建记录进行哈希比对。
 
           ## 快速使用（Windows）
 
-          1. 下载 \`${ZIP_NAME}\` 并用 \`SHA256SUMS\` 校验完整性后解压；
-          2. 在解压目录运行（FF1–6 任一 Steam 游戏目录均可）：
+          1. 下载 \`${ZIP_NAME}\` 并用 \`SHA256SUMS\` 校验完整性后**完整解压**；
+          2. 双击运行 \`ffpr-export-gui.exe\`，程序会自动扫描并默认勾选本机 Steam 中的 FF1–FF6；
+          3. 点击 **“开始导出”** 即可依次导出并在 \`文档\\FF-Export\\<游戏代号>-<构建号>\\\` 中生成 SQLite 数据库。
+
+          命令行用法也可直接在同一解压目录运行：
 
           \`\`\`powershell
           ffpr-export build-db --game "<Steam 游戏目录>"
@@ -101,7 +126,7 @@ jobs:
 
           ## 附件
 
-          - \`${ZIP_NAME}\`：Windows x64 原生单文件版 \`ffpr-export.exe\`、\`known-builds.json\`、\`SHA256SUMS\`、\`README.md\`、\`LICENSE\`
+          - \`${ZIP_NAME}\`：Windows x64 原生单文件版 \`ffpr-export-gui.exe\`（图形界面）、\`ffpr-export.exe\`（命令行/向导）、\`使用说明.txt\`、\`known-builds.json\`、\`SHA256SUMS\`、\`README.md\`、\`LICENSE\`
           - \`SHA256SUMS\`：发布附件的 SHA-256 校验值
           - \`known-builds.json\`：FF1–6 已登记的游戏版本与数据库哈希清单
           EOF

@@ -95,19 +95,21 @@ try {
     }
 
     $stageDir = Join-Path ([System.IO.Path]::GetTempPath()) ("ffpr-win-pkg-" + [System.Guid]::NewGuid().ToString("N"))
-    $dotnetOut = Join-Path $stageDir "dotnet-publish"
+    $dotnetCliOut = Join-Path $stageDir "dotnet-publish-cli"
+    $dotnetGuiOut = Join-Path $stageDir "dotnet-publish-gui"
     $packageDir = Join-Path $stageDir "package"
     $distDir = Join-Path $root "dist"
 
-    New-Item -ItemType Directory -Path $dotnetOut -Force | Out-Null
+    New-Item -ItemType Directory -Path $dotnetCliOut -Force | Out-Null
+    New-Item -ItemType Directory -Path $dotnetGuiOut -Force | Out-Null
     New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
     New-Item -ItemType Directory -Path $distDir -Force | Out-Null
 
     Write-Host "==> 打包版本：$packageVersion（git: $gitCommit）"
     Write-Host "==> 发布 ffpr-export.exe（win-x64 self-contained single-file）"
 
-    $csprojPath = Join-Path $root "src\FfprExport\FfprExport.csproj"
-    & $dotnetBin publish $csprojPath `
+    $cliCsprojPath = Join-Path $root "src\FfprExport\FfprExport.csproj"
+    & $dotnetBin publish $cliCsprojPath `
         -c Release `
         -r win-x64 `
         --self-contained true `
@@ -119,14 +121,39 @@ try {
         -p:AssemblyName=ffpr-export `
         "-p:Version=$packageVersion" `
         "-p:FfprGitCommit=$gitCommit" `
-        -o $dotnetOut
+        -o $dotnetCliOut
     if ($LASTEXITCODE -ne 0) {
-        throw "错误：dotnet publish 发布 $csprojPath 失败（退出码 $LASTEXITCODE）"
+        throw "错误：dotnet publish 发布 $cliCsprojPath 失败（退出码 $LASTEXITCODE）"
     }
 
-    $ffprExportExe = Join-Path $dotnetOut "ffpr-export.exe"
+    $ffprExportExe = Join-Path $dotnetCliOut "ffpr-export.exe"
     if (-not (Test-Path -LiteralPath $ffprExportExe -PathType Leaf)) {
         throw "错误：dotnet publish 未生成 $ffprExportExe"
+    }
+
+    Write-Host "==> 发布 ffpr-export-gui.exe（win-x64 WinForms self-contained single-file）"
+
+    $guiCsprojPath = Join-Path $root "src\FfprExport.Gui\FfprExport.Gui.csproj"
+    & $dotnetBin publish $guiCsprojPath `
+        -c Release `
+        -r win-x64 `
+        --self-contained true `
+        -p:PublishSingleFile=true `
+        -p:IncludeNativeLibrariesForSelfExtract=true `
+        -p:EnableCompressionInSingleFile=true `
+        -p:DebugType=None `
+        -p:DebugSymbols=false `
+        -p:AssemblyName=ffpr-export-gui `
+        "-p:Version=$packageVersion" `
+        "-p:FfprGitCommit=$gitCommit" `
+        -o $dotnetGuiOut
+    if ($LASTEXITCODE -ne 0) {
+        throw "错误：dotnet publish 发布 $guiCsprojPath 失败（退出码 $LASTEXITCODE）"
+    }
+
+    $ffprGuiExe = Join-Path $dotnetGuiOut "ffpr-export-gui.exe"
+    if (-not (Test-Path -LiteralPath $ffprGuiExe -PathType Leaf)) {
+        throw "错误：dotnet publish 未生成 $ffprGuiExe"
     }
 
     foreach ($required in @("known-builds.json", "README.md", "LICENSE")) {
@@ -137,13 +164,29 @@ try {
     }
 
     Copy-Item -LiteralPath $ffprExportExe -Destination (Join-Path $packageDir "ffpr-export.exe") -Force
+    Copy-Item -LiteralPath $ffprGuiExe -Destination (Join-Path $packageDir "ffpr-export-gui.exe") -Force
     Copy-Item -LiteralPath (Join-Path $root "known-builds.json") -Destination (Join-Path $packageDir "known-builds.json") -Force
     Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination (Join-Path $packageDir "README.md") -Force
     Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination (Join-Path $packageDir "LICENSE") -Force
 
-    # Write inner SHA256SUMS matching package-windows.sh layout (UTF-8 without BOM, LF endings).
+    # Generate short Chinese quick-start guide (<= 10 lines, UTF-8 without BOM, CRLF endings).
     $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-    $innerFiles = @("LICENSE", "README.md", "ffpr-export.exe", "known-builds.json")
+    $guideLines = @(
+        "FFPR 导出工具（FINAL FANTASY I–VI Pixel Remaster）使用说明",
+        "",
+        "1. 将整个压缩包完整解压到任意文件夹（不要在压缩包内直接双击运行）。",
+        "2. 保持 ffpr-export-gui.exe、ffpr-export.exe 与 known-builds.json 在同一目录。",
+        "3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。",
+        "4. 确认已勾选的游戏后，点击“开始导出”即可依次生成 SQLite 数据库。",
+        "5. 导出结果默认保存在“文档\FF-Export\<游戏代号>-<构建号>\”目录中。",
+        "6. 高级命令行用法与说明请查看同目录的 README.md。"
+    )
+    $guideName = "使用说明.txt"
+    $guidePath = Join-Path $packageDir $guideName
+    [System.IO.File]::WriteAllText($guidePath, (($guideLines -join "`r`n") + "`r`n"), $utf8NoBom)
+
+    # Write inner SHA256SUMS matching package-windows.sh layout (UTF-8 without BOM, LF endings).
+    $innerFiles = @("LICENSE", "README.md", "ffpr-export-gui.exe", "ffpr-export.exe", "known-builds.json", $guideName)
     $innerLines = foreach ($name in $innerFiles) {
         $filePath = Join-Path $packageDir $name
         $digest = (Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -159,8 +202,12 @@ try {
     }
 
     Write-Host "==> 生成压缩包：$zipPath"
-    $zipEntries = @("LICENSE", "README.md", "SHA256SUMS", "ffpr-export.exe", "known-builds.json")
-    $archive = [System.IO.Compression.ZipFile]::Open($zipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+    $zipEntries = @("LICENSE", "README.md", "SHA256SUMS", "ffpr-export-gui.exe", "ffpr-export.exe", "known-builds.json", $guideName)
+    $archive = [System.IO.Compression.ZipFile]::Open(
+        $zipPath,
+        [System.IO.Compression.ZipArchiveMode]::Create,
+        $utf8NoBom
+    )
     try {
         foreach ($name in $zipEntries) {
             $sourceFile = Join-Path $packageDir $name

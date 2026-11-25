@@ -60,6 +60,19 @@ jobs:
           fi
           bash scripts/check.sh
 
+      - name: Smoke test Windows GUI binary
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $guiExe = Join-Path $PWD "src\FfprExport.Gui\bin\Release\net10.0-windows\ffpr-export-gui.exe"
+          if (-not (Test-Path -LiteralPath $guiExe -PathType Leaf)) {
+            throw "错误：未找到构建出的窗口程序：$guiExe"
+          }
+          & $guiExe --self-test
+          if ($LASTEXITCODE -ne 0) {
+            throw "错误：ffpr-export-gui.exe --self-test 失败（退出码 $LASTEXITCODE）"
+          }
+
   fixture-hash:
     name: Fixture Hash (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -241,6 +254,28 @@ jobs:
       - name: Package Windows native build
         shell: pwsh
         run: ./scripts/package-windows.ps1 -Version "$env:PACKAGE_VERSION"
+
+      - name: Verify Windows package contents and GUI self-test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $zipPath = Join-Path $PWD "dist\ffpr-export-$($env:PACKAGE_VERSION)-win-x64.zip"
+          $verifyDir = Join-Path $env:RUNNER_TEMP "verify-win-pkg"
+          if (Test-Path -LiteralPath $verifyDir) {
+            Remove-Item -LiteralPath $verifyDir -Recurse -Force
+          }
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $verifyDir -Force
+          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "使用说明.txt")) {
+            $itemPath = Join-Path $verifyDir $name
+            if (-not (Test-Path -LiteralPath $itemPath -PathType Leaf)) {
+              throw "错误：压缩包缺少文件：$name"
+            }
+          }
+          $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
+          & $packagedGui --self-test --require-cli
+          if ($LASTEXITCODE -ne 0) {
+            throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $LASTEXITCODE）"
+          }
 
       - name: Upload Windows package artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
