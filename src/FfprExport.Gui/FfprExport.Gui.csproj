@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>ffpr-export-gui</AssemblyName>
+    <RootNamespace>FfprExport.Gui</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Version Condition="'$(Version)' == '' and Exists('$(MSBuildProjectDirectory)/../../VERSION')">$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../../VERSION').Trim())</Version>
+    <Version Condition="'$(Version)' == ''">0.1.0</Version>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\FfprExport\PathSupport.cs" Link="Shared\PathSupport.cs" />
+    <Compile Include="..\FfprExport\SteamLocator.cs" Link="Shared\SteamLocator.cs" />
+  </ItemGroup>
+  <Target Name="EmbedGitCommitMetadata" BeforeTargets="GetAssemblyAttributes">
+    <Exec Condition="'$(FfprGitCommit)' == ''"
+          Command="git rev-parse --short=12 HEAD"
+          ConsoleToMSBuild="true"
+          IgnoreExitCode="true"
+          IgnoreStandardErrorWarningFormat="true"
+          StandardErrorImportance="Low"
+          StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="FfprGitCommit" />
+      <Output TaskParameter="ExitCode" PropertyName="FfprGitExitCode" />
+    </Exec>
+    <PropertyGroup>
+      <FfprGitCommit Condition="'$(FfprGitExitCode)' != '' and '$(FfprGitExitCode)' != '0'">unknown</FfprGitCommit>
+      <FfprGitCommit Condition="'$(FfprGitCommit)' == ''">unknown</FfprGitCommit>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyMetadata Include="GitCommit" Value="$(FfprGitCommit)" />
+    </ItemGroup>
+  </Target>
+</Project>
