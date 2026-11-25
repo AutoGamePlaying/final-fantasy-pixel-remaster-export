@@ -1,3 +1,4 @@
+using System.Text;
 using System.Diagnostics;
 
 namespace FfprExport.Tests;
@@ -100,6 +101,10 @@ internal static class TestHarness
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
+            // The CLI writes UTF-8 when redirected; decode it as UTF-8 too (Windows would default to the OEM code page).
+            StandardOutputEncoding = new UTF8Encoding(false),
+            StandardErrorEncoding = new UTF8Encoding(false),
+            StandardInputEncoding = standardInput is not null ? new UTF8Encoding(false) : null,
         };
 
         startInfo.ArgumentList.Add("exec");

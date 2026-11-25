@@ -504,6 +504,9 @@ public sealed class DatabaseTests
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
+            // The CLI writes UTF-8 when redirected; decode it as UTF-8 too (Windows would default to the OEM code page).
+            StandardOutputEncoding = new UTF8Encoding(false),
+            StandardErrorEncoding = new UTF8Encoding(false),
         };
         startInfo.ArgumentList.Add("exec");
         startInfo.ArgumentList.Add(dllPath);
