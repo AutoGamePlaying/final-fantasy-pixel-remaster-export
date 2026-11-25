@@ -1,0 +1,37 @@
+# Local dependencies, SDK, caches, game files, and exports
+.deps/
+
+# Local agent instructions (not committed)
+CLAUDE.md
+AGENTS.md
+
+# .NET build, publish, and test artifacts
+bin/
+obj/
+dist/
+TestResults/
+*.user
+*.suo
+*.cache
+.vs/
+
+# Unity / game dumps and generated SQLite databases (never commit)
+*.bundle
+*.assets
+*.resS
+*.resource
+global-metadata.dat
+GameAssembly.dll
+UnityPlayer.dll
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite.build.json
+*.sqlite.manifest.json
+ffpr-*-build/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*~
