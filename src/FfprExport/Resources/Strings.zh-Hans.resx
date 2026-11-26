@@ -1,0 +1,1659 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Agp_AllUnixCandidatesFailed" xml:space="preserve">
+    <value>全部默认候选目录均不可写</value>
+  </data>
+  <data name="Agp_AllWinCandidatesFailed" xml:space="preserve">
+    <value>%LOCALAPPDATA% 等全部默认候选目录均不可写</value>
+  </data>
+  <data name="Agp_BannerFallback" xml:space="preserve">
+    <value>数据目录：{0}（原因：{1}）</value>
+  </data>
+  <data name="Agp_BannerLowIlLocalLow" xml:space="preserve">
+    <value>数据目录：{0}（原因：程序是以低完整性级别运行的，%LOCALAPPDATA% 不可写，本次已改用 LocalLow 下的目录，可正常使用）。常见原因是文件带了低完整性标记；建议做法：右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。</value>
+  </data>
+  <data name="Agp_BannerLowIlOther" xml:space="preserve">
+    <value>数据目录：{0}（提示：程序是以低完整性级别运行的，常见原因是文件带了低完整性标记；建议做法：右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。当前目录可正常使用。）</value>
+  </data>
+  <data name="Agp_BasePathNullOrEmpty" xml:space="preserve">
+    <value>基准路径为空或包含空字符</value>
+  </data>
+  <data name="Agp_CliAllFailedGuidance" xml:space="preserve">
+    <value>请通过环境变量 {0} 指定一个可写文件夹后重试；如被安全软件或受控文件夹访问拦截，请将本工具加入信任/白名单。若以上方法仍全部失败，最后手段可尝试检查目录权限或以管理员身份运行。</value>
+  </data>
+  <data name="Agp_CliAllFailedIntro" xml:space="preserve">
+    <value>无法找到可写的数据根目录，已尝试的全部候选目录均失败</value>
+  </data>
+  <data name="Agp_CliAllFailedLowIl" xml:space="preserve">
+    <value>当前进程以低完整性级别运行，建议右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。</value>
+  </data>
+  <data name="Agp_CliAllFailedNoDetails" xml:space="preserve">
+    <value>{0}。</value>
+  </data>
+  <data name="Agp_CliAllFailedWithDetails" xml:space="preserve">
+    <value>{0}（{1}）。</value>
+  </data>
+  <data name="Agp_CombineLocalAppDataFailed" xml:space="preserve">
+    <value>拼接 %LOCALAPPDATA%\{0} 失败：{1}</value>
+  </data>
+  <data name="Agp_CombineLocalLowFailed" xml:space="preserve">
+    <value>拼接 LocalLow\{0} 失败：{1}</value>
+  </data>
+  <data name="Agp_CombineLocalShareFailed" xml:space="preserve">
+    <value>拼接 ~/.local/share/{0} 失败：{1}</value>
+  </data>
+  <data name="Agp_CombinePortableFailed" xml:space="preserve">
+    <value>拼接程序目录 {0} 失败：{1}</value>
+  </data>
+  <data name="Agp_CombineUserProfileFailed" xml:space="preserve">
+    <value>拼接用户目录 {0} 失败：{1}</value>
+  </data>
+  <data name="Agp_CombineXdgFailed" xml:space="preserve">
+    <value>拼接 ${0}/{1} 失败：{2}</value>
+  </data>
+  <data name="Agp_CrossPlatformNoProbe" xml:space="preserve">
+    <value>跨平台路径模拟未注入可写探测函数</value>
+  </data>
+  <data name="Agp_DirNotWritable" xml:space="preserve">
+    <value>目录不可写</value>
+  </data>
+  <data name="Agp_EmptyBaseOrTarget" xml:space="preserve">
+    <value>程序目录或目标路径为空</value>
+  </data>
+  <data name="Agp_EmptyDirPath" xml:space="preserve">
+    <value>目录路径为空</value>
+  </data>
+  <data name="Agp_EnvDirNotWritable" xml:space="preserve">
+    <value>环境变量 {0} 指定的目录不可写（{1}）：{2}。请检查该目录的写入权限，或修改/清除环境变量 {0} 后重试。</value>
+  </data>
+  <data name="Agp_EnvPathInvalid" xml:space="preserve">
+    <value>环境变量 {0} 指定的路径无效（{1}）：{2}。请修正或清除环境变量 {0} 后重试。</value>
+  </data>
+  <data name="Agp_GuiAllFailedAttempted" xml:space="preserve">
+    <value>已尝试的目录：{0}</value>
+  </data>
+  <data name="Agp_GuiAllFailedFolderPrompt" xml:space="preserve">
+    <value>点击「确定」后将打开「选择文件夹…」，请手动指定一个可写目录用于保存数据（选择后将尽量记录在程序同目录的 agp-location.txt 中）。</value>
+  </data>
+  <data name="Agp_GuiAllFailedIntro" xml:space="preserve">
+    <value>未能找到可写的数据根目录（日志、设置与默认导出路径均需要写入权限）。</value>
+  </data>
+  <data name="Agp_GuiAllFailedLastResort" xml:space="preserve">
+    <value>若更换文件夹后仍全部失败，最后手段可尝试检查目录权限或以管理员身份运行。</value>
+  </data>
+  <data name="Agp_GuiAllFailedLowIl1" xml:space="preserve">
+    <value>检测到程序当前是以低完整性级别运行的，常见原因是文件带了低完整性标记。</value>
+  </data>
+  <data name="Agp_GuiAllFailedLowIl2" xml:space="preserve">
+    <value>建议做法：右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。</value>
+  </data>
+  <data name="Agp_GuiAllFailedSecurity" xml:space="preserve">
+    <value>可能被安全软件拦截或受 Windows 受控文件夹访问限制，建议将本工具加入信任或白名单，或者换一个有写入权限的文件夹。</value>
+  </data>
+  <data name="Agp_ListSeparator" xml:space="preserve">
+    <value>；</value>
+  </data>
+  <data name="Agp_LocationFilePathInvalid" xml:space="preserve">
+    <value>{0} 中的路径无效：{1}</value>
+  </data>
+  <data name="Agp_NoBaseDir" xml:space="preserve">
+    <value>无法确定程序所在目录</value>
+  </data>
+  <data name="Agp_NoHomeDir" xml:space="preserve">
+    <value>未设置 HOME 且系统未返回用户主目录</value>
+  </data>
+  <data name="Agp_NoLocalAppData" xml:space="preserve">
+    <value>系统未返回 LocalApplicationData 且未设置 LOCALAPPDATA</value>
+  </data>
+  <data name="Agp_NoLocalLowDir" xml:space="preserve">
+    <value>无法确定 Windows LocalLow 目录</value>
+  </data>
+  <data name="Agp_NoUserProfile" xml:space="preserve">
+    <value>系统未返回 UserProfile 且未设置 USERPROFILE</value>
+  </data>
+  <data name="Agp_PathNullOrEmpty" xml:space="preserve">
+    <value>路径包含空字符或为空</value>
+  </data>
+  <data name="Agp_ReadEnvFailed" xml:space="preserve">
+    <value>读取环境变量 {0} 失败：{1}</value>
+  </data>
+  <data name="Agp_ReasonDefaultUnwritable" xml:space="preserve">
+    <value>默认数据目录不可写</value>
+  </data>
+  <data name="Agp_ReasonLocalAppDataUnwritable" xml:space="preserve">
+    <value>%LOCALAPPDATA% 不可写</value>
+  </data>
+  <data name="Agp_RootNotReady" xml:space="preserve">
+    <value>数据根目录未就绪</value>
+  </data>
+  <data name="Agp_UnwritableShort" xml:space="preserve">
+    <value>不可写</value>
+  </data>
+  <data name="Asset_ContainerPathEmpty" xml:space="preserve">
+    <value>容器路径映射后为空：{0}</value>
+  </data>
+  <data name="Asset_ContainerPathTraversal" xml:space="preserve">
+    <value>容器路径包含非法越界片段：{0}</value>
+  </data>
+  <data name="BuildDb_CleanedTempJson" xml:space="preserve">
+    <value>[{0}] 已清理临时导出目录：{1}（耗时 {2} ms）</value>
+  </data>
+  <data name="BuildDb_ClearingOutput" xml:space="preserve">
+    <value>即将清空输出目录：{0}；文件数：{1}</value>
+  </data>
+  <data name="BuildDb_Completed" xml:space="preserve">
+    <value>[{0}] 建库完成：{1}（报告：{2}，总耗时 {3:F2}s）</value>
+  </data>
+  <data name="BuildDb_DbBuildFailed" xml:space="preserve">
+    <value>调用 db build 失败（数据库：{0}，退出码：{1}）：{2}</value>
+  </data>
+  <data name="BuildDb_DbFileMissing" xml:space="preserve">
+    <value>db build 执行完成但未生成数据库文件：{0}</value>
+  </data>
+  <data name="BuildDb_DbHashFailed" xml:space="preserve">
+    <value>调用 db hash 失败（数据库：{0}，退出码：{1}）：{2}</value>
+  </data>
+  <data name="BuildDb_DbHashesInfo" xml:space="preserve">
+    <value>[{0}] 数据库哈希：file_sha256={1}，content_sha256={2}（{3} 张表）</value>
+  </data>
+  <data name="BuildDb_DbSubcommandUnavailableForBuild" xml:space="preserve">
+    <value>建库失败：当前构建尚未包含 db 子命令（请等待 SQLite 建库模块合入后重试）</value>
+  </data>
+  <data name="BuildDb_DbSubcommandUnavailableForHash" xml:space="preserve">
+    <value>计算数据库哈希失败：当前构建尚未包含 db 子命令（请等待 SQLite 建库模块合入后重试）</value>
+  </data>
+  <data name="BuildDb_FingerprintInfo" xml:space="preserve">
+    <value>[{0}] 资源指纹：{1}（catalog.json + {2} 个 bundle，哈希 {3} 字节，耗时 {4} ms）</value>
+  </data>
+  <data name="BuildDb_GameInfo" xml:space="preserve">
+    <value>[{0}] 游戏：{1}（AppID={2}，Unity {3}）</value>
+  </data>
+  <data name="BuildDb_HashJsonMissingFields" xml:space="preserve">
+    <value>db hash 返回的 JSON 缺少必需字段（file_sha256/content_sha256/tables）：{0}</value>
+  </data>
+  <data name="BuildDb_HelpText" xml:space="preserve">
+    <value>用法：
+  ffpr-export build-db --game "&lt;Steam 游戏目录&gt;" [--out &lt;目录&gt;] [--steam-buildid &lt;编号&gt;] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
+
+选项：
+  --game &lt;目录&gt;            Steam 游戏安装目录（自动识别 FF1–FF6）
+  --out &lt;目录&gt;             输出目录（默认 %LOCALAPPDATA%\agp\ffpr-export\output\&lt;ffN&gt;-&lt;Steam 构建号&gt;，可用 AGP_HOME 覆盖根目录）
+  --steam-buildid &lt;编号&gt;   无法读取 appmanifest_&lt;appid&gt;.acf 时手动指定 Steam 构建号
+  --keep-json              保留 &lt;out&gt;/json/ 中间导出目录（默认建库后自动删除）
+  --jobs &lt;N&gt;               并行线程数（默认 min(CPU 核数, 8)）
+  --force                  清空已有 build-db 输出目录后重新建库
+  --progress-json          同时输出机器可读的 @@progress JSON 进度行（供窗口程序解析）
+  --lang &lt;语言&gt;            显示语言：en（默认）、zh-Hans 或 ja（也可通过 AGP_LANG 设置）
+  --help                   打印本帮助信息</value>
+  </data>
+  <data name="BuildDb_MissingGameArg" xml:space="preserve">
+    <value>build-db 缺少必需参数 --game &lt;Steam 游戏目录&gt;</value>
+  </data>
+  <data name="BuildDb_NotOwnDirectory" xml:space="preserve">
+    <value>{0} 不是 {1} 的输出目录，拒绝清空；请换一个空目录或手动清理后重试</value>
+  </data>
+  <data name="BuildDb_OutputNotEmpty" xml:space="preserve">
+    <value>输出目录非空：{0}；如需清空并重新建库，请加 --force</value>
+  </data>
+  <data name="BuildDb_ParseHashJsonFailed" xml:space="preserve">
+    <value>解析 db hash 输出的 JSON 失败（数据库：{0}）：{1}</value>
+  </data>
+  <data name="BuildDb_Step1" xml:space="preserve">
+    <value>==&gt; [{0}] 步骤 1/6：识别游戏版本与资源指纹</value>
+  </data>
+  <data name="BuildDb_Step2" xml:space="preserve">
+    <value>==&gt; [{0}] 步骤 2/6：进程内执行 inventory 与 export</value>
+  </data>
+  <data name="BuildDb_Step3" xml:space="preserve">
+    <value>==&gt; [{0}] 步骤 3/6：进程内执行 db build 构建 {1}</value>
+  </data>
+  <data name="BuildDb_Step4" xml:space="preserve">
+    <value>==&gt; [{0}] 步骤 4/6：进程内执行 db hash --json 计算数据库哈希</value>
+  </data>
+  <data name="BuildDb_Step5" xml:space="preserve">
+    <value>==&gt; [{0}] 步骤 5/6：比对已知版本登记表</value>
+  </data>
+  <data name="BuildDb_Step6" xml:space="preserve">
+    <value>==&gt; [{0}] 步骤 6/6：写出构建报告 {1}</value>
+  </data>
+  <data name="BuildDb_UnknownArg" xml:space="preserve">
+    <value>build-db 收到未知参数：{0}</value>
+  </data>
+  <data name="BuildDb_UnknownCommand" xml:space="preserve">
+    <value>未知命令</value>
+  </data>
+  <data name="BuildDb_VersionInfo" xml:space="preserve">
+    <value>[{0}] Steam 构建号：{1}（来源：{2}）；exe 版本：FileVersion={3}，ProductVersion={4}</value>
+  </data>
+  <data name="BuildDb_WrongCommandDirectory" xml:space="preserve">
+    <value>{0} 是 {1} {2} 的输出目录，不能由 build-db 清空</value>
+  </data>
+  <data name="Catalog_NotFound" xml:space="preserve">
+    <value>找不到 Addressables 目录文件：{0}</value>
+  </data>
+  <data name="Cli_HelpText" xml:space="preserve">
+    <value>{0} {1} — FINAL FANTASY I–VI Pixel Remaster 资源盘点、导出与 SQLite 建库工具
+
+用法：
+  ffpr-export build-db  --game &lt;Steam 游戏目录&gt; [--out &lt;输出目录&gt;] [--steam-buildid &lt;编号&gt;] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
+  ffpr-export inventory --game &lt;Steam 游戏目录&gt; [--out &lt;输出目录&gt;] [--jobs N] [--force] [--lang en|zh-Hans|ja]
+  ffpr-export export    --game &lt;Steam 游戏目录&gt; [--out &lt;输出目录&gt;] [--jobs N] [--force] [--lang en|zh-Hans|ja]
+  ffpr-export db        &lt;build|hash|stats|sql&gt; ... [--lang en|zh-Hans|ja]
+
+选项：
+  --game &lt;目录&gt;      Steam 游戏安装目录（自动识别 FF1–FF6、Unity 版本与 Steam buildid）
+  --out &lt;目录&gt;       输出目录（build-db 默认 %LOCALAPPDATA%\agp\ffpr-export\output\&lt;ffN&gt;-&lt;Steam 构建号&gt;，可用 AGP_HOME 覆盖；inventory/export 默认 .deps/ffpr/&lt;ffN&gt;/…）
+  --jobs &lt;N&gt;         并行线程数（默认 min(CPU 核数, 8)）
+  --force            清空已有输出目录（仅允许清空带本工具同名子命令 manifest.json 的目录）
+  --lang &lt;语言&gt;      显示语言：en（默认）、zh-Hans 或 ja（也可通过 AGP_LANG 设置）
+  --progress-json    输出机器可读的 @@progress JSON 进度行（仅 build-db，供窗口程序使用）
+  --version          打印工具及 AssetsTools.NET 版本
+  --help             打印本帮助信息</value>
+  </data>
+  <data name="Cli_JobsMustBePositive" xml:space="preserve">
+    <value>--jobs 必须是正整数：{0}</value>
+  </data>
+  <data name="Cli_OptionRequiresValue" xml:space="preserve">
+    <value>选项 {0} 需要一个值</value>
+  </data>
+  <data name="Cli_UnknownSubcommand" xml:space="preserve">
+    <value>未知子命令：{0}；可用命令：build-db、inventory、export、db</value>
+  </data>
+  <data name="Common_ErrorPrefix" xml:space="preserve">
+    <value>错误：{0}</value>
+  </data>
+  <data name="Common_InfoPrefix" xml:space="preserve">
+    <value>提示：{0}</value>
+  </data>
+  <data name="Common_None" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="Common_NoneParen" xml:space="preserve">
+    <value>（无）</value>
+  </data>
+  <data name="Common_Null" xml:space="preserve">
+    <value>空</value>
+  </data>
+  <data name="Common_ReadFailed" xml:space="preserve">
+    <value>&lt;读取失败: {0}&gt;</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="Common_UnknownError" xml:space="preserve">
+    <value>未知错误</value>
+  </data>
+  <data name="Common_WarningPrefix" xml:space="preserve">
+    <value>警告：{0}</value>
+  </data>
+  <data name="Db_BuildComplete" xml:space="preserve">
+    <value>构建完成：{0}（游戏 {1}，schema v{2}，SQLite {3}，{4}，耗时 {5} ms）</value>
+  </data>
+  <data name="Db_BuildContentHash" xml:space="preserve">
+    <value>内容哈希（content_sha256）：{0}</value>
+  </data>
+  <data name="Db_BuildFileHash" xml:space="preserve">
+    <value>文件哈希（file_sha256）：{0}</value>
+  </data>
+  <data name="Db_BuildIssuesCount" xml:space="preserve">
+    <value>构建问题（build_issue）：共 {0} 条</value>
+  </data>
+  <data name="Db_BuildIssuesZero" xml:space="preserve">
+    <value>构建问题（build_issue）：0 条</value>
+  </data>
+  <data name="Db_BuildManifest" xml:space="preserve">
+    <value>清单文件：{0}</value>
+  </data>
+  <data name="Db_BuildMissingExport" xml:space="preserve">
+    <value>db build 缺少 --export &lt;导出目录&gt; 参数</value>
+  </data>
+  <data name="Db_BuildMissingOut" xml:space="preserve">
+    <value>db build 缺少 --out &lt;数据库文件路径&gt; 参数</value>
+  </data>
+  <data name="Db_BuildStageNote" xml:space="preserve">
+    <value>  说明={0}</value>
+  </data>
+  <data name="Db_BuildStageReport" xml:space="preserve">
+    <value>阶段报告：</value>
+  </data>
+  <data name="Db_BuildUnknownArg" xml:space="preserve">
+    <value>db build 未知参数：{0}</value>
+  </data>
+  <data name="Db_ExportDirNotFound" xml:space="preserve">
+    <value>导出目录不存在：{0}</value>
+  </data>
+  <data name="Db_FileNotFound" xml:space="preserve">
+    <value>数据库文件不存在：{0}</value>
+  </data>
+  <data name="Db_GridBlobTooShort" xml:space="preserve">
+    <value>格子图层二进制长度不足：{0} 字节，期望至少 {1} 字节</value>
+  </data>
+  <data name="Db_GridCoordOutOfRange" xml:space="preserve">
+    <value>格子坐标越界：({0}, {1}) 不在尺寸 {2}x{3} 范围内</value>
+  </data>
+  <data name="Db_HashDatabase" xml:space="preserve">
+    <value>数据库：{0}</value>
+  </data>
+  <data name="Db_HashExtraPositional" xml:space="preserve">
+    <value>db hash 多余的位置参数：{0}</value>
+  </data>
+  <data name="Db_HashFormat" xml:space="preserve">
+    <value>格式版本：v{0}（schema v{1}，SQLite {2}）</value>
+  </data>
+  <data name="Db_HashMissingDb" xml:space="preserve">
+    <value>db hash 缺少 &lt;库&gt; 路径参数</value>
+  </data>
+  <data name="Db_HashTablesHeader" xml:space="preserve">
+    <value>普通表哈希（共 {0} 张）：</value>
+  </data>
+  <data name="Db_HashUnknownArg" xml:space="preserve">
+    <value>db hash 未知参数：{0}</value>
+  </data>
+  <data name="Db_HelpText" xml:space="preserve">
+    <value>ffpr-export db — FF1–6 Pixel Remaster SQLite 数据库构建与只读查询工具
+
+用法：
+  ffpr-export db build --export &lt;.deps/ffpr/ffN/export&gt; --out &lt;ffN.sqlite&gt; [--jobs N] [--lang en|zh-Hans|ja]
+  ffpr-export db hash  &lt;库&gt; [--json] [--lang en|zh-Hans|ja]
+  ffpr-export db stats &lt;库&gt; [--lang en|zh-Hans|ja]
+  ffpr-export db sql   &lt;库&gt; "&lt;SELECT …&gt;" [--lang en|zh-Hans|ja]</value>
+  </data>
+  <data name="Db_MissingOutArg" xml:space="preserve">
+    <value>缺少 --out &lt;数据库文件路径&gt; 参数</value>
+  </data>
+  <data name="Db_OutIsDirectory" xml:space="preserve">
+    <value>--out 必须是文件路径，不能指向已有目录：{0}</value>
+  </data>
+  <data name="Db_OutProtectedDir" xml:space="preserve">
+    <value>--out 不能写入受保护目录 {0}/{1}：{2}</value>
+  </data>
+  <data name="Db_SchemaVersionMismatch" xml:space="preserve">
+    <value>数据库表结构版本不匹配（文件：{0}，期望 v{1}，实际 v{2}），请重新构建数据库</value>
+  </data>
+  <data name="Db_SqlAllowedStartOnly" xml:space="preserve">
+    <value>只读查询仅允许 SELECT / WITH / EXPLAIN / VALUES 语句，收到：{0}</value>
+  </data>
+  <data name="Db_SqlEmpty" xml:space="preserve">
+    <value>SQL 查询语句不能为空</value>
+  </data>
+  <data name="Db_SqlExtraPositional" xml:space="preserve">
+    <value>db sql 多余的位置参数：{0}</value>
+  </data>
+  <data name="Db_SqlForbiddenKeyword" xml:space="preserve">
+    <value>拒绝非只读 SQL 语句：包含不允许的关键字 {0}</value>
+  </data>
+  <data name="Db_SqlMissingDb" xml:space="preserve">
+    <value>db sql 缺少 &lt;库&gt; 路径参数</value>
+  </data>
+  <data name="Db_SqlMissingQuery" xml:space="preserve">
+    <value>db sql 缺少只读 SQL 查询语句参数</value>
+  </data>
+  <data name="Db_SqlMultiStatement" xml:space="preserve">
+    <value>只读查询仅允许单条 SQL 语句，拒绝多语句输入</value>
+  </data>
+  <data name="Db_SqlNoExecutable" xml:space="preserve">
+    <value>SQL 查询语句不包含可执行内容</value>
+  </data>
+  <data name="Db_SqlUnknownArg" xml:space="preserve">
+    <value>db sql 未知参数：{0}</value>
+  </data>
+  <data name="Db_SqliteVersionNull" xml:space="preserve">
+    <value>查询 sqlite_version() 返回空值</value>
+  </data>
+  <data name="Db_StageFailed" xml:space="preserve">
+    <value>构建阶段 {0} 失败：{1}</value>
+  </data>
+  <data name="Db_StatsAreaRow" xml:space="preserve">
+    <value>  {0,-14} {1,10}（{2} 张表）</value>
+  </data>
+  <data name="Db_StatsAreaSummaryHeader" xml:space="preserve">
+    <value>区域行数汇总：</value>
+  </data>
+  <data name="Db_StatsExtraPositional" xml:space="preserve">
+    <value>db stats 多余的位置参数：{0}</value>
+  </data>
+  <data name="Db_StatsFileSize" xml:space="preserve">
+    <value>文件大小：{0} 字节（{1}），SQLite {2}</value>
+  </data>
+  <data name="Db_StatsMetaHeader" xml:space="preserve">
+    <value>元信息（meta）：</value>
+  </data>
+  <data name="Db_StatsMissingDb" xml:space="preserve">
+    <value>db stats 缺少 &lt;库&gt; 路径参数</value>
+  </data>
+  <data name="Db_StatsTableRowsHeader" xml:space="preserve">
+    <value>数据表行数：</value>
+  </data>
+  <data name="Db_StatsUnknownArg" xml:space="preserve">
+    <value>db stats 未知参数：{0}</value>
+  </data>
+  <data name="Db_UnknownSubcommand" xml:space="preserve">
+    <value>未知 db 子命令：{0}；可用子命令：build、hash、stats、sql</value>
+  </data>
+  <data name="Db_UnsupportedCanonicalType" xml:space="preserve">
+    <value>规范化内容哈希不支持的 SQLite 值类型：{0}</value>
+  </data>
+  <data name="Db_UnsupportedGridEncoding" xml:space="preserve">
+    <value>不支持的地图格子编码：{0}</value>
+  </data>
+  <data name="Db_WriteFixtureCreated" xml:space="preserve">
+    <value>已生成合成导出目录：{0}</value>
+  </data>
+  <data name="Db_WriteFixtureDirNotEmpty" xml:space="preserve">
+    <value>合成夹具输出目录非空：{0}</value>
+  </data>
+  <data name="Db_WriteFixtureMissingOut" xml:space="preserve">
+    <value>db write-fixture 缺少 --out &lt;目录&gt; 参数</value>
+  </data>
+  <data name="Db_WriteFixtureUnknownArg" xml:space="preserve">
+    <value>db write-fixture 未知参数：{0}</value>
+  </data>
+  <data name="Export_BundleFailed" xml:space="preserve">
+    <value>导出失败：{0}：{1}</value>
+  </data>
+  <data name="Export_BundleOpenFailed" xml:space="preserve">
+    <value>打开或导出 bundle 失败：{0}：{1}</value>
+  </data>
+  <data name="Export_Completed" xml:space="preserve">
+    <value>[{0}] 导出完成：资产成功 {1}（新增 {2}，续跑跳过 {3}），跳过 {4}，失败 {5}，写出文件 {6}（续跑 {7}），输出 {8} 字节，MonoBehaviour(TypeTree={9}, Cpp2IL={10}, BaseOnly={11})，耗时 {12:F2}s -&gt; {13}</value>
+  </data>
+  <data name="Export_DataFileOpenFailed" xml:space="preserve">
+    <value>打开或导出数据文件失败：{0}：{1}</value>
+  </data>
+  <data name="Export_DataTextAssetFailed" xml:space="preserve">
+    <value>导出数据 TextAsset 失败：{0} (PathId={1})：{2}</value>
+  </data>
+  <data name="Export_MissingBundle" xml:space="preserve">
+    <value>目录中声明的 bundle 文件不存在：{0}</value>
+  </data>
+  <data name="Export_MonoBehaviourFailed" xml:space="preserve">
+    <value>导出 MonoBehaviour 失败：{0} (PathId={1})：{2}</value>
+  </data>
+  <data name="Export_StandaloneMonoBehaviourFailed" xml:space="preserve">
+    <value>导出 MonoBehaviour 失败：{0} ({1})：{2}</value>
+  </data>
+  <data name="Export_TextAssetFailed" xml:space="preserve">
+    <value>导出 TextAsset 失败：{0} ({1})：{2}</value>
+  </data>
+  <data name="Export_UnknownArg" xml:space="preserve">
+    <value>export 收到未知参数：{0}</value>
+  </data>
+  <data name="GameDetector_DirNotFound" xml:space="preserve">
+    <value>游戏目录不存在：{0}</value>
+  </data>
+  <data name="GameDetector_MissingDataDir" xml:space="preserve">
+    <value>识别到 {0}（{1}），但缺少数据目录：{2}</value>
+  </data>
+  <data name="GameDetector_MissingGameArg" xml:space="preserve">
+    <value>缺少 --game &lt;Steam 游戏目录&gt; 参数</value>
+  </data>
+  <data name="GameDetector_UnityVersionNotFound" xml:space="preserve">
+    <value>无法从资源文件头读取 Unity 版本（数据目录：{0}）</value>
+  </data>
+  <data name="GameDetector_UnrecognizedDir" xml:space="preserve">
+    <value>无法从目录识别 FF1–FF6 Pixel Remaster 游戏（未找到已知 exe 或 *_Data 目录）：{0}</value>
+  </data>
+  <data name="GameVersion_BinaryNotFound" xml:space="preserve">
+    <value>警告：未找到 {0}，对应 SHA-256 记为 null</value>
+  </data>
+  <data name="GameVersion_ExeNotFound" xml:space="preserve">
+    <value>警告：未找到游戏可执行文件 {0}，exe 版本信息记为 null</value>
+  </data>
+  <data name="GameVersion_FingerprintMissingCatalog" xml:space="preserve">
+    <value>计算资源指纹失败：缺少目录文件：{0}</value>
+  </data>
+  <data name="GameVersion_FingerprintMissingDataDir" xml:space="preserve">
+    <value>计算资源指纹失败：数据目录不存在：{0}</value>
+  </data>
+  <data name="GameVersion_IgnoreManualBuildId" xml:space="preserve">
+    <value>提示：已从 {1} 读取 buildid={0}，忽略 --steam-buildid {2}</value>
+  </data>
+  <data name="GameVersion_ManifestMissingBuildId" xml:space="preserve">
+    <value>警告：{0} 中缺少 buildid 且未提供 --steam-buildid，Steam 构建号记为 null</value>
+  </data>
+  <data name="GameVersion_NoManifestNoManualBuildId" xml:space="preserve">
+    <value>警告：未找到 {0}（已检查上两级目录）且未提供 --steam-buildid，Steam 构建号记为 null</value>
+  </data>
+  <data name="GameVersion_ReadManifestFailed" xml:space="preserve">
+    <value>读取 Steam 清单失败：{0}：{1}</value>
+  </data>
+  <data name="Gui_AddGameFolder" xml:space="preserve">
+    <value>手动选择游戏目录…</value>
+  </data>
+  <data name="Gui_AgpExplicitEnvFailedFallback" xml:space="preserve">
+    <value>环境变量 {0} 指定的目录不可写。请修改或清除后重试。</value>
+  </data>
+  <data name="Gui_ArgGameDirEmpty" xml:space="preserve">
+    <value>游戏目录不能为空</value>
+  </data>
+  <data name="Gui_ArgOutputDirEmpty" xml:space="preserve">
+    <value>输出目录不能为空</value>
+  </data>
+  <data name="Gui_BatchClearForeignErrorLog" xml:space="preserve">
+    <value>错误：清理目录失败（{0}）：{1}</value>
+  </data>
+  <data name="Gui_BatchClearForeignReadError" xml:space="preserve">
+    <value>清理已有目录失败：{0}</value>
+  </data>
+  <data name="Gui_BatchClearingForeignLog" xml:space="preserve">
+    <value>正在清空已确认覆盖的目录：{0}</value>
+  </data>
+  <data name="Gui_BatchFinishedSummary" xml:space="preserve">
+    <value>全部导出结束（共 {0} 个：通过 {1}，哈希不同 {2}，失败 {3}）</value>
+  </data>
+  <data name="Gui_BatchForceHintLog" xml:space="preserve">
+    <value>提示：输出目录包含上次建库结果，将附加 --force 自动覆盖重建。</value>
+  </data>
+  <data name="Gui_BatchItemCancelledLog" xml:space="preserve">
+    <value>[{0}] 已取消。</value>
+  </data>
+  <data name="Gui_BatchItemGameDirLog" xml:space="preserve">
+    <value>游戏目录：{0}</value>
+  </data>
+  <data name="Gui_BatchItemOutputDirLog" xml:space="preserve">
+    <value>输出目录：{0}</value>
+  </data>
+  <data name="Gui_BatchItemStartLog" xml:space="preserve">
+    <value>[{0}/{1}] 开始导出：{2}（构建号：{3}）</value>
+  </data>
+  <data name="Gui_BatchLaunchCliErrorLog" xml:space="preserve">
+    <value>错误：启动或运行 {0} 失败：{1}</value>
+  </data>
+  <data name="Gui_Browse" xml:space="preserve">
+    <value>浏览…</value>
+  </data>
+  <data name="Gui_BrowseOutputDialogDesc" xml:space="preserve">
+    <value>选择导出输出根目录（每个游戏会在其下创建 &lt;ffN&gt;-&lt;构建号&gt; 子目录）</value>
+  </data>
+  <data name="Gui_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Gui_CancellingLog" xml:space="preserve">
+    <value>==&gt; 收到取消请求，正在终止导出子进程树……</value>
+  </data>
+  <data name="Gui_CancellingProgress" xml:space="preserve">
+    <value>正在取消导出并结束子进程……</value>
+  </data>
+  <data name="Gui_CliCheckErrorWarning" xml:space="preserve">
+    <value>检查命令行程序 {0} 时出错：{1}。</value>
+  </data>
+  <data name="Gui_CliNotFoundWarning" xml:space="preserve">
+    <value>未找到同目录命令行程序 {0}（预期位置：{1}），导出前请确认压缩包已完整解压。</value>
+  </data>
+  <data name="Gui_ClipboardDbPath" xml:space="preserve">
+    <value>数据库路径: {0}</value>
+  </data>
+  <data name="Gui_ClipboardHeader" xml:space="preserve">
+    <value>[{0}] {1} | 构建号: {2} | 结论: {3}</value>
+  </data>
+  <data name="Gui_ColBuildId" xml:space="preserve">
+    <value>构建号</value>
+  </data>
+  <data name="Gui_ColDbPath" xml:space="preserve">
+    <value>库文件路径</value>
+  </data>
+  <data name="Gui_ColDirectory" xml:space="preserve">
+    <value>目录</value>
+  </data>
+  <data name="Gui_ColGame" xml:space="preserve">
+    <value>游戏</value>
+  </data>
+  <data name="Gui_ColVerdict" xml:space="preserve">
+    <value>结论</value>
+  </data>
+  <data name="Gui_CompletionGroupTitle" xml:space="preserve">
+    <value>3. 完成结果</value>
+  </data>
+  <data name="Gui_ConfirmCloseMessage" xml:space="preserve">
+    <value>当前正在导出游戏数据，确定要取消导出并关闭窗口吗？</value>
+  </data>
+  <data name="Gui_ConfirmCloseTitle" xml:space="preserve">
+    <value>确认关闭</value>
+  </data>
+  <data name="Gui_ConfirmOverwriteMessage" xml:space="preserve">
+    <value>以下输出目录已存在且非空，但不是由 ffpr-export 创建的建库目录：
+
+{0}
+
+继续将清空上述目录中的现有文件并写入新的导出结果。是否确认覆盖？</value>
+  </data>
+  <data name="Gui_ConfirmOverwriteTitle" xml:space="preserve">
+    <value>确认覆盖非空目录</value>
+  </data>
+  <data name="Gui_CopiedHashesFeedback" xml:space="preserve">
+    <value>已复制 {0} 个游戏的哈希到剪贴板</value>
+  </data>
+  <data name="Gui_CopyHashes" xml:space="preserve">
+    <value>复制哈希</value>
+  </data>
+  <data name="Gui_CopyHashesEmptyMessage" xml:space="preserve">
+    <value>当前没有可复制的哈希记录。</value>
+  </data>
+  <data name="Gui_CopyHashesFailedMessage" xml:space="preserve">
+    <value>写入剪贴板失败：{0}</value>
+  </data>
+  <data name="Gui_CopyHashesFailedTitle" xml:space="preserve">
+    <value>复制失败</value>
+  </data>
+  <data name="Gui_DefaultOutputRootFailed" xml:space="preserve">
+    <value>确定默认输出目录失败：{0}；请点击「浏览…」手动选择。</value>
+  </data>
+  <data name="Gui_DefaultSettingsPathFailed" xml:space="preserve">
+    <value>获取默认设置路径失败：{0}；本次将不保存设置。</value>
+  </data>
+  <data name="Gui_DetailContentHash" xml:space="preserve">
+    <value>内容哈希：</value>
+  </data>
+  <data name="Gui_DetailDbPath" xml:space="preserve">
+    <value>数据库路径：</value>
+  </data>
+  <data name="Gui_DetailFileHash" xml:space="preserve">
+    <value>文件哈希：</value>
+  </data>
+  <data name="Gui_DetailListSeparator" xml:space="preserve">
+    <value>，</value>
+  </data>
+  <data name="Gui_DetailVerdict" xml:space="preserve">
+    <value>比对结论：</value>
+  </data>
+  <data name="Gui_DialogTitleDataDirUnwritable" xml:space="preserve">
+    <value>数据目录不可写</value>
+  </data>
+  <data name="Gui_DialogTitleDefaultDataDirFailed" xml:space="preserve">
+    <value>无法写入默认数据目录</value>
+  </data>
+  <data name="Gui_DialogTitleSelectedDirUnwritable" xml:space="preserve">
+    <value>所选目录不可写</value>
+  </data>
+  <data name="Gui_DpiConfiguredLog" xml:space="preserve">
+    <value>DPI 模式已配置：actual={0}, setResult={1}</value>
+  </data>
+  <data name="Gui_EnableVisualStylesFailedLog" xml:space="preserve">
+    <value>Application.EnableVisualStyles 失败（将沿用应用清单中的视觉样式）：{0}</value>
+  </data>
+  <data name="Gui_ExceptionOmitted" xml:space="preserve">
+    <value>--- {0} (已省略重复或过深嵌套) ---</value>
+  </data>
+  <data name="Gui_ExportCancelledLog" xml:space="preserve">
+    <value>==&gt; 导出任务已取消。</value>
+  </data>
+  <data name="Gui_ExportCancelledProgress" xml:space="preserve">
+    <value>导出已取消</value>
+  </data>
+  <data name="Gui_FatalErrorMessage" xml:space="preserve">
+    <value>错误信息：{0}</value>
+  </data>
+  <data name="Gui_FatalErrorType" xml:space="preserve">
+    <value>错误类型：{0}</value>
+  </data>
+  <data name="Gui_FatalLogDirUnwritable" xml:space="preserve">
+    <value>日志目录不可写</value>
+  </data>
+  <data name="Gui_FatalLogNotWritten" xml:space="preserve">
+    <value>未能写入日志文件（{0}）。</value>
+  </data>
+  <data name="Gui_FatalLogWrittenHeader" xml:space="preserve">
+    <value>完整错误日志已写入：</value>
+  </data>
+  <data name="Gui_FatalRootCause" xml:space="preserve">
+    <value>根本原因：{0}: {1}</value>
+  </data>
+  <data name="Gui_FatalRuntimeLine" xml:space="preserve">
+    <value>窗口程序运行过程中发生未处理的错误。</value>
+  </data>
+  <data name="Gui_FatalScreenshotHint" xml:space="preserve">
+    <value>请将本提示窗口截图发送给开发者，以便定位问题原因。</value>
+  </data>
+  <data name="Gui_FatalSendLogHint" xml:space="preserve">
+    <value>请将该日志文件发送给开发者，以便定位问题原因。</value>
+  </data>
+  <data name="Gui_FatalStartupLine" xml:space="preserve">
+    <value>窗口程序启动失败。</value>
+  </data>
+  <data name="Gui_FatalTitleRuntime" xml:space="preserve">
+    <value>窗口程序运行出错</value>
+  </data>
+  <data name="Gui_FatalTitleStartup" xml:space="preserve">
+    <value>窗口程序启动失败</value>
+  </data>
+  <data name="Gui_FatalUnknownError" xml:space="preserve">
+    <value>错误信息：发生未知的未处理错误。</value>
+  </data>
+  <data name="Gui_FolderDialogDataRoot" xml:space="preserve">
+    <value>选择可写的数据根目录（用于保存日志、设置和默认导出结果）</value>
+  </data>
+  <data name="Gui_FontDefaultName" xml:space="preserve">
+    <value>默认字体</value>
+  </data>
+  <data name="Gui_FontFallbackToFamily" xml:space="preserve">
+    <value>创建{0}时首选字体「{1}」不可用，已回退到「{2}」。</value>
+  </data>
+  <data name="Gui_FontFallbackToMessageBox" xml:space="preserve">
+    <value>创建{0}失败，已回退到系统字体 SystemFonts.MessageBoxFont（{1}）{2}。</value>
+  </data>
+  <data name="Gui_FontFallbackToUltimate" xml:space="preserve">
+    <value>创建{0}失败，已回退到兜底字体「{1}」{2}。</value>
+  </data>
+  <data name="Gui_FontMessageBoxUnavailable" xml:space="preserve">
+    <value>SystemFonts.MessageBoxFont: 不可用</value>
+  </data>
+  <data name="Gui_FontNotInstalled" xml:space="preserve">
+    <value>{0}: 字体未安装或不支持所需字重</value>
+  </data>
+  <data name="Gui_FontReasonClause" xml:space="preserve">
+    <value>（原因：{0}）</value>
+  </data>
+  <data name="Gui_FontRoleLog" xml:space="preserve">
+    <value>日志等宽字体</value>
+  </data>
+  <data name="Gui_FontRolePrimaryButton" xml:space="preserve">
+    <value>主按钮字体</value>
+  </data>
+  <data name="Gui_FontRoleUi" xml:space="preserve">
+    <value>界面字体</value>
+  </data>
+  <data name="Gui_FontRoleVerdict" xml:space="preserve">
+    <value>结论标题字体</value>
+  </data>
+  <data name="Gui_GamesGroupTitle" xml:space="preserve">
+    <value>1. 游戏（自动扫描 Steam 库，默认全选）</value>
+  </data>
+  <data name="Gui_InvalidOutputMessage" xml:space="preserve">
+    <value>输出位置检查未通过：{0}</value>
+  </data>
+  <data name="Gui_InvalidOutputTitle" xml:space="preserve">
+    <value>输出目录无效</value>
+  </data>
+  <data name="Gui_LoadSettingsFailed" xml:space="preserve">
+    <value>读取设置失败（{0}）：{1}；已改用默认设置。</value>
+  </data>
+  <data name="Gui_LogConstructingMainForm" xml:space="preserve">
+    <value>正在构造主窗口 MainForm...</value>
+  </data>
+  <data name="Gui_LogContext" xml:space="preserve">
+    <value>上下文: {0}</value>
+  </data>
+  <data name="Gui_LogEnteringMessageLoop" xml:space="preserve">
+    <value>主窗口构造完成，正在进入消息循环 Application.Run...</value>
+  </data>
+  <data name="Gui_LogExiting" xml:space="preserve">
+    <value>窗口程序退出（退出码：{0}）。</value>
+  </data>
+  <data name="Gui_LogMainFormShown" xml:space="preserve">
+    <value>主窗口已显示（Shown）。</value>
+  </data>
+  <data name="Gui_LogNullException" xml:space="preserve">
+    <value>异常对象为空（null）。</value>
+  </data>
+  <data name="Gui_LogSkipNoRoot" xml:space="preserve">
+    <value>未找到可写的数据根目录，已跳过写入日志文件</value>
+  </data>
+  <data name="Gui_LogSkipNoRootWithReason" xml:space="preserve">
+    <value>未找到可写的数据根目录，已跳过写入日志文件：{0}</value>
+  </data>
+  <data name="Gui_LogUnhandledNonException" xml:space="preserve">
+    <value>上下文: {0}
+非 Exception 未处理对象 ({1}): {2}</value>
+  </data>
+  <data name="Gui_LogWriteFailed" xml:space="preserve">
+    <value>无法写入启动日志文件（{0}）：{1}</value>
+  </data>
+  <data name="Gui_ManualGameDialogDesc" xml:space="preserve">
+    <value>请选择 FINAL FANTASY I–VI Pixel Remaster 游戏安装根目录（含 *_Data 文件夹）</value>
+  </data>
+  <data name="Gui_ManualGameDialogInvalidHint" xml:space="preserve">
+    <value>{0}
+
+请选择 FINAL FANTASY I–VI Pixel Remaster 的游戏安装根目录（包含对应 *_Data 文件夹）。</value>
+  </data>
+  <data name="Gui_ManualGameDialogInvalidTitle" xml:space="preserve">
+    <value>不支持的游戏目录</value>
+  </data>
+  <data name="Gui_ManualGamePathEmpty" xml:space="preserve">
+    <value>请选择游戏目录</value>
+  </data>
+  <data name="Gui_ManualGamePathInvalid" xml:space="preserve">
+    <value>游戏目录路径格式无效：{0}（{1}）</value>
+  </data>
+  <data name="Gui_MissingCliDialogTitle" xml:space="preserve">
+    <value>缺少命令行程序</value>
+  </data>
+  <data name="Gui_MissingCliMessage" xml:space="preserve">
+    <value>找不到命令行导出程序：{0}。
+
+预期位置：{1}
+
+请确认压缩包已完整解压，并且 {0} 与 ffpr-export-gui.exe 位于同一文件夹。</value>
+  </data>
+  <data name="Gui_NoGameSelectedMessage" xml:space="preserve">
+    <value>请至少勾选一个要导出的游戏。</value>
+  </data>
+  <data name="Gui_NoGameSelectedTitle" xml:space="preserve">
+    <value>未选择游戏</value>
+  </data>
+  <data name="Gui_NoGamesFoundHint" xml:space="preserve">
+    <value>未自动找到 FF1–FF6，请点击“手动选择游戏目录…”添加</value>
+  </data>
+  <data name="Gui_NoStackTrace" xml:space="preserve">
+    <value>  (无堆栈信息)</value>
+  </data>
+  <data name="Gui_NoWritePermission" xml:space="preserve">
+    <value>没有写入权限</value>
+  </data>
+  <data name="Gui_OpenFolderFailedMessage" xml:space="preserve">
+    <value>打开输出文件夹失败（{0}）：{1}</value>
+  </data>
+  <data name="Gui_OpenFolderFailedTitle" xml:space="preserve">
+    <value>打开失败</value>
+  </data>
+  <data name="Gui_OpenFolderNotCreatedMessage" xml:space="preserve">
+    <value>输出文件夹尚未创建，请先执行导出或确认输出根目录是否存在。</value>
+  </data>
+  <data name="Gui_OpenFolderNotCreatedTitle" xml:space="preserve">
+    <value>无法打开文件夹</value>
+  </data>
+  <data name="Gui_OpenOutputFolder" xml:space="preserve">
+    <value>打开输出文件夹</value>
+  </data>
+  <data name="Gui_OutputDirFilesystemRoot" xml:space="preserve">
+    <value>输出目录不能直接指向磁盘根目录：{0}</value>
+  </data>
+  <data name="Gui_OutputDirOverlapGame" xml:space="preserve">
+    <value>输出目录不能与游戏目录重叠或互为父子目录：{0}</value>
+  </data>
+  <data name="Gui_OutputGroupTitle" xml:space="preserve">
+    <value>2. 输出位置</value>
+  </data>
+  <data name="Gui_OutputPreviewInvalidRoot" xml:space="preserve">
+    <value>子目录预览：输出根目录路径格式无效</value>
+  </data>
+  <data name="Gui_OutputPreviewMany" xml:space="preserve">
+    <value>子目录预览：将分别输出到 {0}、{1} 等 {2} 个子目录</value>
+  </data>
+  <data name="Gui_OutputPreviewNeedGame" xml:space="preserve">
+    <value>子目录预览：请至少勾选一个游戏</value>
+  </data>
+  <data name="Gui_OutputPreviewNeedRoot" xml:space="preserve">
+    <value>子目录预览：请先指定输出根目录</value>
+  </data>
+  <data name="Gui_OutputPreviewPrefix" xml:space="preserve">
+    <value>子目录预览：</value>
+  </data>
+  <data name="Gui_OutputPreviewSingle" xml:space="preserve">
+    <value>子目录预览：{0}{1}</value>
+  </data>
+  <data name="Gui_OutputPreviewTwo" xml:space="preserve">
+    <value>子目录预览：将分别输出到 {0}、{1} 共 2 个子目录</value>
+  </data>
+  <data name="Gui_OutputPreviewWithHint" xml:space="preserve">
+    <value>{0}（提示：{1}）</value>
+  </data>
+  <data name="Gui_OutputRootEmpty" xml:space="preserve">
+    <value>输出根目录不能为空</value>
+  </data>
+  <data name="Gui_OutputRootLabel" xml:space="preserve">
+    <value>输出根目录：</value>
+  </data>
+  <data name="Gui_OutputRootNotDetermined" xml:space="preserve">
+    <value>未能确定可写的数据根目录</value>
+  </data>
+  <data name="Gui_PlanDuplicateTarget" xml:space="preserve">
+    <value>选中的多个游戏映射到了相同的输出目录：{0}（请取消重复勾选或分批导出）</value>
+  </data>
+  <data name="Gui_PlanNoGameSelected" xml:space="preserve">
+    <value>请至少勾选一个要导出的游戏</value>
+  </data>
+  <data name="Gui_PlanOutputRootEmpty" xml:space="preserve">
+    <value>请先填写或选择一个有效的输出根目录</value>
+  </data>
+  <data name="Gui_PlanOutputRootInvalid" xml:space="preserve">
+    <value>输出根目录格式无效：{0}（{1}）</value>
+  </data>
+  <data name="Gui_ProcessStartFailed" xml:space="preserve">
+    <value>无法启动子进程：{0}</value>
+  </data>
+  <data name="Gui_ProgressGamePrefix" xml:space="preserve">
+    <value>第 {0} / {1} 个：{2}</value>
+  </data>
+  <data name="Gui_ProgressGameWithStep" xml:space="preserve">
+    <value>{0}（{1}）</value>
+  </data>
+  <data name="Gui_ProgressStepOnly" xml:space="preserve">
+    <value>步骤 {0}/{1}</value>
+  </data>
+  <data name="Gui_ProgressStepWithDesc" xml:space="preserve">
+    <value>步骤 {0}/{1}：{2}</value>
+  </data>
+  <data name="Gui_Ready" xml:space="preserve">
+    <value>准备就绪</value>
+  </data>
+  <data name="Gui_ReportJsonParseFailed" xml:space="preserve">
+    <value>解析构建报告 JSON 失败（{0}）：{1}</value>
+  </data>
+  <data name="Gui_ReportMissingInDir" xml:space="preserve">
+    <value>输出目录中未找到 *.build.json 构建报告：{0}</value>
+  </data>
+  <data name="Gui_ReportNotFound" xml:space="preserve">
+    <value>找不到构建报告文件：{0}</value>
+  </data>
+  <data name="Gui_ReportReadFailed" xml:space="preserve">
+    <value>读取构建报告失败（{0}）：{1}</value>
+  </data>
+  <data name="Gui_ReportRootNotObject" xml:space="preserve">
+    <value>构建报告根节点必须是 JSON 对象：{0}</value>
+  </data>
+  <data name="Gui_Rescan" xml:space="preserve">
+    <value>重新扫描</value>
+  </data>
+  <data name="Gui_ScanSteamFailed" xml:space="preserve">
+    <value>扫描 Steam 游戏库失败：{0}；请点击「手动选择游戏目录…」添加。</value>
+  </data>
+  <data name="Gui_ScanSteamSecurity" xml:space="preserve">
+    <value>扫描 Steam 游戏库时受安全策略限制：{0}；请点击「手动选择游戏目录…」添加。</value>
+  </data>
+  <data name="Gui_ScanSteamUnauthorized" xml:space="preserve">
+    <value>扫描 Steam 游戏库时无权访问注册表或目录：{0}；请点击「手动选择游戏目录…」添加。</value>
+  </data>
+  <data name="Gui_ScanningSteam" xml:space="preserve">
+    <value>正在扫描 Steam 游戏库……</value>
+  </data>
+  <data name="Gui_SelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="Gui_SelectedDirStillUnwritable" xml:space="preserve">
+    <value>所选目录仍无法写入（{0}）：{1}。
+
+请换一个可写文件夹重试，或点击「取消」退出。</value>
+  </data>
+  <data name="Gui_SelectionSummary" xml:space="preserve">
+    <value>已选 {0} / {1} 个游戏</value>
+  </data>
+  <data name="Gui_SelfTestAgpFailed" xml:space="preserve">
+    <value>错误：GUI 自检失败：{0}</value>
+  </data>
+  <data name="Gui_SelfTestCliFound" xml:space="preserve">
+    <value>已找到 {0}</value>
+  </data>
+  <data name="Gui_SelfTestCliNotFound" xml:space="preserve">
+    <value>未检测到同目录 ffpr-export.exe（非打包目录）</value>
+  </data>
+  <data name="Gui_SelfTestConstructedLog" xml:space="preserve">
+    <value>[self-test] MainForm 构造、CreateControl() 与初始化完成（MinimumSize={0}）。</value>
+  </data>
+  <data name="Gui_SelfTestConstructingLog" xml:space="preserve">
+    <value>[self-test] 正在构造 MainForm 并执行 CreateControl() 与初始化流程...</value>
+  </data>
+  <data name="Gui_SelfTestCoreFailed" xml:space="preserve">
+    <value>GUI 核心自检失败：参数、默认输出目录或设置路径初始化为空</value>
+  </data>
+  <data name="Gui_SelfTestFailureHeader" xml:space="preserve">
+    <value>错误：GUI 自检失败。</value>
+  </data>
+  <data name="Gui_SelfTestHandleFailed" xml:space="preserve">
+    <value>主窗口句柄未能成功创建（IsHandleCreated=false）</value>
+  </data>
+  <data name="Gui_SelfTestLogCreateFailed" xml:space="preserve">
+    <value>未能创建日志</value>
+  </data>
+  <data name="Gui_SelfTestLogFileLine" xml:space="preserve">
+    <value>日志文件：{0}</value>
+  </data>
+  <data name="Gui_SelfTestLogPath" xml:space="preserve">
+    <value>日志：{0}</value>
+  </data>
+  <data name="Gui_SelfTestLogUnavailable" xml:space="preserve">
+    <value>日志不可用（{0}）</value>
+  </data>
+  <data name="Gui_SelfTestLogUnavailableLine" xml:space="preserve">
+    <value>日志文件：不可用（{0}）</value>
+  </data>
+  <data name="Gui_SelfTestMinWidthFailed" xml:space="preserve">
+    <value>主窗口最小宽度不满足要求：{0}</value>
+  </data>
+  <data name="Gui_SelfTestMissingCliFallback" xml:space="preserve">
+    <value>同目录缺少 {0}：{1}</value>
+  </data>
+  <data name="Gui_SelfTestPassedLog" xml:space="preserve">
+    <value>[self-test] 自检通过（{0}；完整性级别：{1}；数据根目录：{2}）。</value>
+  </data>
+  <data name="Gui_SelfTestPassedStdout" xml:space="preserve">
+    <value>自检通过：WinForms 主窗口构造、CreateControl() 与核心依赖加载正常（{0}；完整性级别：{1}；数据目录：{2}；{3}）。</value>
+  </data>
+  <data name="Gui_SelfTestUnhandledNonException" xml:space="preserve">
+    <value>错误：GUI 自检遇到非 Exception 未处理错误。</value>
+  </data>
+  <data name="Gui_SettingsCorruptJson" xml:space="preserve">
+    <value>读取设置失败：设置文件已损坏，JSON 解析出错（{0}）：{1}；已改用默认设置。</value>
+  </data>
+  <data name="Gui_SettingsEmptyOrInvalid" xml:space="preserve">
+    <value>读取设置失败：设置文件内容为空或格式无效（{0}）；已改用默认设置。</value>
+  </data>
+  <data name="Gui_SettingsMigrateReadFailed" xml:space="preserve">
+    <value>检测到旧设置文件但读取失败，未能迁移（{0}）：{1}</value>
+  </data>
+  <data name="Gui_SettingsMigrateRenameFailed" xml:space="preserve">
+    <value>已将旧设置写入新位置（{0}），但将旧文件改名为 {1} 失败：{2}。</value>
+  </data>
+  <data name="Gui_SettingsMigrateWriteFailed" xml:space="preserve">
+    <value>已读取旧设置（{0}），但写入新位置失败（{1}）：{2}；旧文件已保留。</value>
+  </data>
+  <data name="Gui_SettingsMigratedInfo" xml:space="preserve">
+    <value>已将旧设置从 {0} 迁移至 {1}（旧文件已改名为 {2}）。</value>
+  </data>
+  <data name="Gui_SettingsPathInvalid" xml:space="preserve">
+    <value>读取设置失败：设置文件路径无效（{0}）：{1}；已改用默认设置。</value>
+  </data>
+  <data name="Gui_SettingsPathIsDir" xml:space="preserve">
+    <value>读取设置失败：设置路径指向目录而非文件（{0}）；已改用默认设置。</value>
+  </data>
+  <data name="Gui_SettingsUnauthorized" xml:space="preserve">
+    <value>读取设置失败：没有读取权限（{0}）：{1}；已改用默认设置。</value>
+  </data>
+  <data name="Gui_StartExport" xml:space="preserve">
+    <value>开始导出</value>
+  </data>
+  <data name="Gui_StartupLoadException" xml:space="preserve">
+    <value>初始化主窗口状态时发生异常：{0}；您仍可手动选择目录。</value>
+  </data>
+  <data name="Gui_StatusDataDir" xml:space="preserve">
+    <value>数据目录：{0}</value>
+  </data>
+  <data name="Gui_StatusDataDirNotReady" xml:space="preserve">
+    <value>数据目录：（未就绪）</value>
+  </data>
+  <data name="Gui_StatusIntegrity" xml:space="preserve">
+    <value>完整性级别：{0}</value>
+  </data>
+  <data name="Gui_TempRedirectFailedLog" xml:space="preserve">
+    <value>配置数据根目录 tmp 子目录失败：{0}</value>
+  </data>
+  <data name="Gui_TempRedirectedLog" xml:space="preserve">
+    <value>进程临时目录已指向数据根目录子目录：{0}</value>
+  </data>
+  <data name="Gui_VerdictCliFailed" xml:space="preserve">
+    <value>命令行导出失败（退出码 {0}），请查看上方日志</value>
+  </data>
+  <data name="Gui_VerdictCliFailedWithReason" xml:space="preserve">
+    <value>命令行导出失败（退出码 {0}）：{1}</value>
+  </data>
+  <data name="Gui_VerdictDetailCancelled" xml:space="preserve">
+    <value>✗ 已取消：导出任务被用户中断</value>
+  </data>
+  <data name="Gui_VerdictDetailFailed" xml:space="preserve">
+    <value>✗ 导出失败：{0}</value>
+  </data>
+  <data name="Gui_VerdictDetailUnknown" xml:space="preserve">
+    <value>✗ 未知比对结论（status={0}）{1}</value>
+  </data>
+  <data name="Gui_VerdictDetailWithNotes" xml:space="preserve">
+    <value>{0} {1}{2}（{3}）</value>
+  </data>
+  <data name="Gui_VerdictErrorUserCancelled" xml:space="preserve">
+    <value>用户已取消导出</value>
+  </data>
+  <data name="Gui_VerdictFileHashOnlyNote" xml:space="preserve">
+    <value>仅文件哈希不同，内容哈希一致</value>
+  </data>
+  <data name="Gui_VerdictMissingReport" xml:space="preserve">
+    <value>未在输出目录读取到 *.build.json：{0}</value>
+  </data>
+  <data name="Gui_VerdictPartialSuffix" xml:space="preserve">
+    <value>（存在部分资源告警）</value>
+  </data>
+  <data name="Gui_VerdictPlaceholderIdle" xml:space="preserve">
+    <value>（导出完成后在此显示比对结论）</value>
+  </data>
+  <data name="Gui_VerdictPlaceholderWaiting" xml:space="preserve">
+    <value>（等待导出结果……）</value>
+  </data>
+  <data name="Gui_VerdictReferenceDatePart" xml:space="preserve">
+    <value>对照登记：{0}</value>
+  </data>
+  <data name="Gui_VerdictRegisteredDatePart" xml:space="preserve">
+    <value>登记日期：{0}</value>
+  </data>
+  <data name="Gui_VerdictShortCancelled" xml:space="preserve">
+    <value>已取消</value>
+  </data>
+  <data name="Gui_VerdictShortFailed" xml:space="preserve">
+    <value>导出失败</value>
+  </data>
+  <data name="Gui_VerdictShortHashMismatch" xml:space="preserve">
+    <value>哈希不同</value>
+  </data>
+  <data name="Gui_VerdictShortMatched" xml:space="preserve">
+    <value>与登记的版本一致</value>
+  </data>
+  <data name="Gui_VerdictShortNewVersion" xml:space="preserve">
+    <value>新版本，未登记</value>
+  </data>
+  <data name="Gui_VerdictShortUnknown" xml:space="preserve">
+    <value>未知比对结论</value>
+  </data>
+  <data name="Gui_VerdictSourcePart" xml:space="preserve">
+    <value>来源：{0}</value>
+  </data>
+  <data name="Gui_VerdictStatusNotCompleted" xml:space="preserve">
+    <value>构建报告状态不是 completed（当前为 {0}）：{1}</value>
+  </data>
+  <data name="Gui_VerdictTableDiffCountNote" xml:space="preserve">
+    <value>差异表 {0} 张</value>
+  </data>
+  <data name="Gui_WindowTitle" xml:space="preserve">
+    <value>FFPR 导出工具 v{0} — FINAL FANTASY I–VI Pixel Remaster</value>
+  </data>
+  <data name="Integrity_BadBufferLen" xml:space="preserve">
+    <value>TokenIntegrityLevel 缓冲区长度异常（{0}）</value>
+  </data>
+  <data name="Integrity_High" xml:space="preserve">
+    <value>高完整性（High）</value>
+  </data>
+  <data name="Integrity_Low" xml:space="preserve">
+    <value>低完整性（Low）</value>
+  </data>
+  <data name="Integrity_Medium" xml:space="preserve">
+    <value>中完整性（Medium）</value>
+  </data>
+  <data name="Integrity_NonWindows" xml:space="preserve">
+    <value>非 Windows 平台</value>
+  </data>
+  <data name="Integrity_NullSid" xml:space="preserve">
+    <value>TokenIntegrityLevel SID 为空</value>
+  </data>
+  <data name="Integrity_NullSubAuth" xml:space="preserve">
+    <value>GetSidSubAuthority 返回空指针</value>
+  </data>
+  <data name="Integrity_NullSubAuthCount" xml:space="preserve">
+    <value>GetSidSubAuthorityCount 返回空指针</value>
+  </data>
+  <data name="Integrity_OpenTokenFailed" xml:space="preserve">
+    <value>OpenProcessToken 失败（Win32={0}）</value>
+  </data>
+  <data name="Integrity_QueryLenFailed" xml:space="preserve">
+    <value>GetTokenInformation 查询长度失败（Win32={0}）</value>
+  </data>
+  <data name="Integrity_ReadTokenFailed" xml:space="preserve">
+    <value>GetTokenInformation 读取失败（Win32={0}）</value>
+  </data>
+  <data name="Integrity_System" xml:space="preserve">
+    <value>系统级（System）</value>
+  </data>
+  <data name="Integrity_Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="Integrity_Untrusted" xml:space="preserve">
+    <value>不受信任（Untrusted）</value>
+  </data>
+  <data name="Integrity_ZeroSubAuth" xml:space="preserve">
+    <value>Integrity SID 缺少 SubAuthority</value>
+  </data>
+  <data name="Inventory_BundleFailed" xml:space="preserve">
+    <value>盘点 bundle 失败：{0}：{1}</value>
+  </data>
+  <data name="Inventory_Completed" xml:space="preserve">
+    <value>[{0}] 盘点完成：Unity {1}，Steam buildid {2}，bundle {3} 个，*_Data {4} 个，总资产 {5} 个，失败 {6} 个，耗时 {7:F2}s -&gt; {8}</value>
+  </data>
+  <data name="Inventory_DataFileFailed" xml:space="preserve">
+    <value>盘点数据文件失败：{0}：{1}</value>
+  </data>
+  <data name="Inventory_MissingBundle" xml:space="preserve">
+    <value>目录中声明的 bundle 文件不存在：{0}</value>
+  </data>
+  <data name="Inventory_UnknownArg" xml:space="preserve">
+    <value>inventory 收到未知参数：{0}</value>
+  </data>
+  <data name="KnownBuilds_ComparisonHeader" xml:space="preserve">
+    <value>已知版本比对（来源：{0}）：{1}</value>
+  </data>
+  <data name="KnownBuilds_DiffAdded" xml:space="preserve">
+    <value>  + {0}（当前 {1} 行，登记无此表）</value>
+  </data>
+  <data name="KnownBuilds_DiffChangedDiffRows" xml:space="preserve">
+    <value>  ~ {0}（行数：登记 {1} -&gt; 当前 {2}，表内容 sha256 不同）</value>
+  </data>
+  <data name="KnownBuilds_DiffChangedSameRows" xml:space="preserve">
+    <value>  ~ {0}（行数同为 {1}，表内容 sha256 不同）</value>
+  </data>
+  <data name="KnownBuilds_DiffRemoved" xml:space="preserve">
+    <value>  - {0}（登记 {1} 行，当前缺少此表）</value>
+  </data>
+  <data name="KnownBuilds_DiffTableCount" xml:space="preserve">
+    <value>  差异表共 {0} 张：</value>
+  </data>
+  <data name="KnownBuilds_FileShaMismatchOnly" xml:space="preserve">
+    <value>  所有表内容一致（content_sha256 相同），仅数据库文件 file_sha256 不同</value>
+  </data>
+  <data name="KnownBuilds_HashMismatch" xml:space="preserve">
+    <value>游戏版本已登记，但数据库哈希不同</value>
+  </data>
+  <data name="KnownBuilds_InvalidFormatGameArray" xml:space="preserve">
+    <value>已知版本登记表中游戏 {0} 的值必须是 JSON 数组：{1}</value>
+  </data>
+  <data name="KnownBuilds_InvalidFormatRoot" xml:space="preserve">
+    <value>已知版本登记表格式错误（应为按游戏分组的 JSON 对象）：{0}</value>
+  </data>
+  <data name="KnownBuilds_Matched" xml:space="preserve">
+    <value>与登记的版本一致</value>
+  </data>
+  <data name="KnownBuilds_MatchedRegisteredAt" xml:space="preserve">
+    <value>  匹配登记日期：{0}</value>
+  </data>
+  <data name="KnownBuilds_MissingEmbeddedResource" xml:space="preserve">
+    <value>程序内缺少嵌入资源：{0}</value>
+  </data>
+  <data name="KnownBuilds_NewGameVersion" xml:space="preserve">
+    <value>新的游戏版本，未登记</value>
+  </data>
+  <data name="KnownBuilds_NoTableHashes" xml:space="preserve">
+    <value>  未提供逐表哈希，无法列出表级差异</value>
+  </data>
+  <data name="KnownBuilds_NullGameEntries" xml:space="preserve">
+    <value>已知版本登记表中游戏 {0} 解析为空：{1}</value>
+  </data>
+  <data name="KnownBuilds_ParseFailed" xml:space="preserve">
+    <value>解析已知版本登记表失败：{0}：{1}</value>
+  </data>
+  <data name="KnownBuilds_ReferenceRegisteredAt" xml:space="preserve">
+    <value>  对照登记日期：{0}</value>
+  </data>
+  <data name="Lang_InvalidValue" xml:space="preserve">
+    <value>不支持的语言：{0}；可选值：en、zh-Hans、ja</value>
+  </data>
+  <data name="Lang_Label" xml:space="preserve">
+    <value>语言：</value>
+  </data>
+  <data name="OutputGuard_ClearedDir" xml:space="preserve">
+    <value>已清空输出目录：{0}；删除文件数：{1}</value>
+  </data>
+  <data name="OutputGuard_ClearingDir" xml:space="preserve">
+    <value>即将清空输出目录：{0}；文件数：{1}</value>
+  </data>
+  <data name="OutputGuard_DepsRoot" xml:space="preserve">
+    <value>--out 不能直接指向依赖根目录 {0}：{1}</value>
+  </data>
+  <data name="OutputGuard_DirNotEmpty" xml:space="preserve">
+    <value>输出目录非空：{0}；如需清空并重新生成，请加 --force</value>
+  </data>
+  <data name="OutputGuard_NotOwnDir" xml:space="preserve">
+    <value>{0} 不是 {1} 的输出目录，拒绝清空或复用；请换一个空目录或手动清理后重试</value>
+  </data>
+  <data name="OutputGuard_OutEmpty" xml:space="preserve">
+    <value>--out 不能为空</value>
+  </data>
+  <data name="OutputGuard_OverlapGame" xml:space="preserve">
+    <value>--out 不能与游戏目录重叠或互为父子目录：{0}</value>
+  </data>
+  <data name="OutputGuard_PathTraversal" xml:space="preserve">
+    <value>目标路径越界：{0}</value>
+  </data>
+  <data name="OutputGuard_PreserveOtherCommand" xml:space="preserve">
+    <value>保留其他子命令的输出目录：{0}/</value>
+  </data>
+  <data name="OutputGuard_ProtectedDepsFfpr" xml:space="preserve">
+    <value>--out 不能直接指向受保护目录 {0}/ffpr 本身：{1}</value>
+  </data>
+  <data name="OutputGuard_ProtectedDepsSubdir" xml:space="preserve">
+    <value>--out 不能指向受保护目录 {0} 或其内部：{1}</value>
+  </data>
+  <data name="OutputGuard_ResumeMode" xml:space="preserve">
+    <value>续跑模式：复用已有输出目录 {0}（已导出文件将跳过）</value>
+  </data>
+  <data name="OutputGuard_WrongCommand" xml:space="preserve">
+    <value>{0} 是 {1} {2} 的输出目录，不能由 {3} 清空或复用</value>
+  </data>
+  <data name="OutputGuard_WrongGame" xml:space="preserve">
+    <value>{0} 是 {1} 的输出目录，不能用于 {2}（如需更换请另选目录）</value>
+  </data>
+  <data name="PeVersion_DataRvaUnmapped" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：无法将版本数据 RVA 0x{1:X} 映射到文件偏移</value>
+  </data>
+  <data name="PeVersion_FileTooSmall" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：文件过小，不是有效的 PE 文件</value>
+  </data>
+  <data name="PeVersion_InvalidOptionalHeaderSize" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：Optional Header 大小异常</value>
+  </data>
+  <data name="PeVersion_InvalidVersionLength" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：版本资源长度异常（{1} 字节）</value>
+  </data>
+  <data name="PeVersion_MissingMz" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：缺少 MZ 头</value>
+  </data>
+  <data name="PeVersion_MissingPeSignature" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：缺少 PE 签名</value>
+  </data>
+  <data name="PeVersion_PeOffsetOutOfRange" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：PE 头偏移越界</value>
+  </data>
+  <data name="PeVersion_ReadOutOfRange" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：读取偏移 0x{1:X}（长度 {2}）越界</value>
+  </data>
+  <data name="PeVersion_ResourceRvaUnmapped" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：无法将资源目录 RVA 0x{1:X} 映射到文件偏移</value>
+  </data>
+  <data name="PeVersion_SectionTableOutOfRange" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：节表越界</value>
+  </data>
+  <data name="PeVersion_UnexpectedEof" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：文件意外截断</value>
+  </data>
+  <data name="PeVersion_UnseekableStream" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：不支持定位的输入流</value>
+  </data>
+  <data name="PeVersion_UnsupportedMagic" xml:space="preserve">
+    <value>解析 PE 版本资源失败：{0}：不支持的 PE Optional Header 魔数 0x{1:X4}</value>
+  </data>
+  <data name="Unity_MissingMonoBehaviourBaseTemplate" xml:space="preserve">
+    <value>缺少 MonoBehaviour 基础模板（PathId={0}）</value>
+  </data>
+  <data name="Unity_MissingTypeTreeAndCpp2Il" xml:space="preserve">
+    <value>MonoBehaviour 缺少类型树且无法通过 IL2CPP 解析剩余 {0} 字节（PathId={1}, Script={2}）</value>
+  </data>
+  <data name="Wizard_AdviceDiskSpace" xml:space="preserve">
+    <value>请确认目标磁盘剩余空间充足，且旧数据库文件未被其他软件占用后重试。</value>
+  </data>
+  <data name="Wizard_AdviceGeneric" xml:space="preserve">
+    <value>请核对游戏目录与输出目录后重试；如需排查详情，可在命令行运行 ffpr-export build-db --game "&lt;游戏目录&gt;" --keep-json 查看完整日志。</value>
+  </data>
+  <data name="Wizard_AdviceInvalidData" xml:space="preserve">
+    <value>请确认所选目录是未损坏的 FINAL FANTASY I–VI Pixel Remaster 安装根目录（含 *_Data 文件夹），或在 Steam 中验证文件完整性后重试。</value>
+  </data>
+  <data name="Wizard_AdviceMissingFiles" xml:space="preserve">
+    <value>请确认游戏目录完整且已通过 Steam 下载完成，可在 Steam 中对该游戏执行“验证游戏文件的完整性”后重试。</value>
+  </data>
+  <data name="Wizard_AdviceOutputOccupied" xml:space="preserve">
+    <value>请重新运行向导并选择一个空目录或新的输出目录名称，或手动清理目标目录后重试。</value>
+  </data>
+  <data name="Wizard_AdvicePermission" xml:space="preserve">
+    <value>请检查输出目录是否具有写入权限，建议改选到桌面、文档或其他可写磁盘目录后重试。</value>
+  </data>
+  <data name="Wizard_AllOption" xml:space="preserve">
+    <value>  [{0}] 全部（依次构建以上 {1} 个游戏）</value>
+  </data>
+  <data name="Wizard_BatchForeignSubdir" xml:space="preserve">
+    <value>错误：子目录非空且不是 {0} 的建库目录：{1}</value>
+  </data>
+  <data name="Wizard_BatchGameOutputInvalid" xml:space="preserve">
+    <value>错误：{0} 输出目录无效：{1}，请重新选择输出根目录。</value>
+  </data>
+  <data name="Wizard_BatchItemHeader" xml:space="preserve">
+    <value>[{0}/{1}] 开始构建：{2}（{3}）</value>
+  </data>
+  <data name="Wizard_BatchOutputPrompt" xml:space="preserve">
+    <value>直接回车使用默认根目录，或粘贴其他输出根目录路径（可带引号）：</value>
+  </data>
+  <data name="Wizard_BatchOverwriteHint" xml:space="preserve">
+    <value>提示：部分游戏输出子目录已存在上次建库结果，确认后将自动覆盖重建。</value>
+  </data>
+  <data name="Wizard_BatchSubdirItem" xml:space="preserve">
+    <value>  - {0}（{1}） -&gt; {2}</value>
+  </data>
+  <data name="Wizard_BatchSubdirsList" xml:space="preserve">
+    <value>各游戏将分别输出到对应的子目录：</value>
+  </data>
+  <data name="Wizard_BuildDbExitCode" xml:space="preserve">
+    <value>建库命令返回错误退出码 {0}</value>
+  </data>
+  <data name="Wizard_BuildFailedLog" xml:space="preserve">
+    <value>错误：[{0}] 建库失败：{1}</value>
+  </data>
+  <data name="Wizard_Cancelled" xml:space="preserve">
+    <value>已取消操作。</value>
+  </data>
+  <data name="Wizard_ChooseEmptyDir" xml:space="preserve">
+    <value>请换一个空目录或新的目录路径。</value>
+  </data>
+  <data name="Wizard_ChooseEmptyRoot" xml:space="preserve">
+    <value>请换一个空目录或新的输出根目录。</value>
+  </data>
+  <data name="Wizard_CliHint" xml:space="preserve">
+    <value>提示：按提示完成选择即可生成 SQLite 数据库；命令行用法请运行 ffpr-export --help。</value>
+  </data>
+  <data name="Wizard_ComparisonMatchedDetail" xml:space="preserve">
+    <value>{0}（登记日期：{1}{2}）</value>
+  </data>
+  <data name="Wizard_ComparisonMismatchDetail" xml:space="preserve">
+    <value>{0}（差异表 {1} 张{2}）</value>
+  </data>
+  <data name="Wizard_ComparisonNotRead" xml:space="preserve">
+    <value>（未读取到构建报告中的比对结果）</value>
+  </data>
+  <data name="Wizard_ComparisonWithSource" xml:space="preserve">
+    <value>{0}（来源：{1}）</value>
+  </data>
+  <data name="Wizard_ConfirmBatchGameDir" xml:space="preserve">
+    <value>     游戏目录：{0}</value>
+  </data>
+  <data name="Wizard_ConfirmBatchHeader" xml:space="preserve">
+    <value>  共计划依次构建 {0} 个游戏：</value>
+  </data>
+  <data name="Wizard_ConfirmBatchItem" xml:space="preserve">
+    <value>  {0}. {1}（{2}，构建号：{3}）</value>
+  </data>
+  <data name="Wizard_ConfirmBatchOutputDir" xml:space="preserve">
+    <value>     输出目录：{0}{1}</value>
+  </data>
+  <data name="Wizard_ConfirmPrompt" xml:space="preserve">
+    <value>按回车开始建库（输入 n 取消）：</value>
+  </data>
+  <data name="Wizard_ConfirmValidInstallDir" xml:space="preserve">
+    <value>请确认目录是 FINAL FANTASY I–VI Pixel Remaster 的安装根目录（含 *_Data 文件夹），然后重新输入。</value>
+  </data>
+  <data name="Wizard_DefaultOutputDir" xml:space="preserve">
+    <value>默认输出目录：{0}</value>
+  </data>
+  <data name="Wizard_DefaultOutputRoot" xml:space="preserve">
+    <value>默认输出根目录：{0}</value>
+  </data>
+  <data name="Wizard_DirNotFound" xml:space="preserve">
+    <value>错误：目录不存在：{0}，请检查路径后重新输入。</value>
+  </data>
+  <data name="Wizard_FinalSummaryBatch" xml:space="preserve">
+    <value>全部游戏构建汇总（共 {0} 个：成功 {1}，部分告警 {2}，失败 {3}）：</value>
+  </data>
+  <data name="Wizard_FinalSummarySingle" xml:space="preserve">
+    <value>构建结果汇总：</value>
+  </data>
+  <data name="Wizard_ForeignOutputDir" xml:space="preserve">
+    <value>错误：输出目录非空且不是 {0} 的建库目录：{1}</value>
+  </data>
+  <data name="Wizard_FoundGames" xml:space="preserve">
+    <value>找到 {0} 个支持的游戏：</value>
+  </data>
+  <data name="Wizard_GameIdentified" xml:space="preserve">
+    <value>已识别游戏：{0}（{1}，Steam 构建号：{2}）</value>
+  </data>
+  <data name="Wizard_GameListDir" xml:space="preserve">
+    <value>      目录：{0}</value>
+  </data>
+  <data name="Wizard_GameListItem" xml:space="preserve">
+    <value>  [{0}] {1}（{2}） | Steam 构建号：{3}</value>
+  </data>
+  <data name="Wizard_InvalidConfirmInput" xml:space="preserve">
+    <value>输入无效：直接按回车开始，或输入 n 取消。</value>
+  </data>
+  <data name="Wizard_InvalidGameChoice" xml:space="preserve">
+    <value>输入无效，请输入 0 到 {0} 之间的编号（或输入 q 退出）。</value>
+  </data>
+  <data name="Wizard_InvalidOutputDir" xml:space="preserve">
+    <value>错误：输出目录无效：{0}，请重新输入。</value>
+  </data>
+  <data name="Wizard_InvalidOutputRoot" xml:space="preserve">
+    <value>错误：输出根目录格式无效：{0}，请重新输入。</value>
+  </data>
+  <data name="Wizard_InvalidPathFormat" xml:space="preserve">
+    <value>错误：路径格式无效（{0}），请重新输入。</value>
+  </data>
+  <data name="Wizard_ManualOption" xml:space="preserve">
+    <value>  [0] 手动输入其他游戏目录</value>
+  </data>
+  <data name="Wizard_ManualPathPrompt" xml:space="preserve">
+    <value>请粘贴 Steam 游戏目录路径（支持带空格或两端带引号，直接回车退出）：</value>
+  </data>
+  <data name="Wizard_NextStep" xml:space="preserve">
+    <value>下一步建议：{0}</value>
+  </data>
+  <data name="Wizard_NoGamesFound" xml:space="preserve">
+    <value>未在本地 Steam 游戏库中自动找到 FINAL FANTASY I–VI Pixel Remaster。</value>
+  </data>
+  <data name="Wizard_OverwriteNoteBatch" xml:space="preserve">
+    <value>（覆盖旧构建）</value>
+  </data>
+  <data name="Wizard_OverwriteNoteSingle" xml:space="preserve">
+    <value>（将覆盖上次建库结果）</value>
+  </data>
+  <data name="Wizard_OwnDirWillOverwrite" xml:space="preserve">
+    <value>提示：该目录已包含上次建库结果，确认后将自动清空并重新构建。</value>
+  </data>
+  <data name="Wizard_PartialWarningAdvice" xml:space="preserve">
+    <value>部分资源导出存在告警或失败，可查看输出目录中的 *.sqlite.build.json，或在命令行附加 --keep-json 排查明细。</value>
+  </data>
+  <data name="Wizard_PressEnterToExit" xml:space="preserve">
+    <value>按回车退出……</value>
+  </data>
+  <data name="Wizard_RangeChoiceHint" xml:space="preserve">
+    <value>1–{0} 单个游戏</value>
+  </data>
+  <data name="Wizard_ReportNotRead" xml:space="preserve">
+    <value>（未读取到构建报告）</value>
+  </data>
+  <data name="Wizard_ResultContentHash" xml:space="preserve">
+    <value>  内容哈希 (content_sha256)：{0}</value>
+  </data>
+  <data name="Wizard_ResultDbPath" xml:space="preserve">
+    <value>  数据库路径：{0}</value>
+  </data>
+  <data name="Wizard_ResultError" xml:space="preserve">
+    <value>  错误：{0}</value>
+  </data>
+  <data name="Wizard_ResultFileHash" xml:space="preserve">
+    <value>  文件哈希 (file_sha256)：{0}</value>
+  </data>
+  <data name="Wizard_ResultHint" xml:space="preserve">
+    <value>  提示：{0}</value>
+  </data>
+  <data name="Wizard_ResultKnownBuilds" xml:space="preserve">
+    <value>  known-builds.json 比对：{0}</value>
+  </data>
+  <data name="Wizard_ResultNextStep" xml:space="preserve">
+    <value>  下一步建议：{0}</value>
+  </data>
+  <data name="Wizard_ResultStageTimings" xml:space="preserve">
+    <value>  分步耗时：{0}</value>
+  </data>
+  <data name="Wizard_ResultStatus" xml:space="preserve">
+    <value>  状态：{0}（总耗时 {1:F2}s）</value>
+  </data>
+  <data name="Wizard_ScanError" xml:space="preserve">
+    <value>提示：自动扫描 Steam 目录时出现问题（{0}），将改为手动输入目录。</value>
+  </data>
+  <data name="Wizard_SelectGamePrompt" xml:space="preserve">
+    <value>请输入编号选择游戏（{0}，{1} 全部，0 手动输入，q 退出）：</value>
+  </data>
+  <data name="Wizard_SingleChoiceHint" xml:space="preserve">
+    <value>1 选择该游戏</value>
+  </data>
+  <data name="Wizard_SingleOutputPrompt" xml:space="preserve">
+    <value>直接回车使用默认目录，或粘贴其他输出目录路径（可带引号）：</value>
+  </data>
+  <data name="Wizard_SourcePart" xml:space="preserve">
+    <value>，来源：{0}</value>
+  </data>
+  <data name="Wizard_StatusFailed" xml:space="preserve">
+    <value>  状态：失败（耗时 {0:F2}s）</value>
+  </data>
+  <data name="Wizard_StatusPartial" xml:space="preserve">
+    <value>完成（存在部分资源告警）</value>
+  </data>
+  <data name="Wizard_StatusSuccess" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="Wizard_Step1Header" xml:space="preserve">
+    <value>[步骤 1/4] 正在自动定位 Steam 与已安装的 FF1–FF6 游戏……</value>
+  </data>
+  <data name="Wizard_Step2BatchHeader" xml:space="preserve">
+    <value>[步骤 2/4] 设置批量输出根目录</value>
+  </data>
+  <data name="Wizard_Step2SingleHeader" xml:space="preserve">
+    <value>[步骤 2/4] 设置输出目录</value>
+  </data>
+  <data name="Wizard_Step3Header" xml:space="preserve">
+    <value>[步骤 3/4] 确认建库信息</value>
+  </data>
+  <data name="Wizard_Step4Header" xml:space="preserve">
+    <value>[步骤 4/4] 开始导出并构建数据库……</value>
+  </data>
+  <data name="Wizard_SummaryBuildId" xml:space="preserve">
+    <value>  Steam 构建号：{0}</value>
+  </data>
+  <data name="Wizard_SummaryGame" xml:space="preserve">
+    <value>  游戏：{0}（{1}）</value>
+  </data>
+  <data name="Wizard_SummaryGameDir" xml:space="preserve">
+    <value>  游戏目录：{0}</value>
+  </data>
+  <data name="Wizard_SummaryOutputDir" xml:space="preserve">
+    <value>  输出目录：{0}{1}</value>
+  </data>
+  <data name="Wizard_TimingDbBuild" xml:space="preserve">
+    <value>建库</value>
+  </data>
+  <data name="Wizard_TimingDbHash" xml:space="preserve">
+    <value>哈希</value>
+  </data>
+  <data name="Wizard_TimingExport" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="Wizard_TimingGameVersion" xml:space="preserve">
+    <value>版本识别</value>
+  </data>
+  <data name="Wizard_TimingInventory" xml:space="preserve">
+    <value>盘点</value>
+  </data>
+  <data name="Wizard_Title" xml:space="preserve">
+    <value>{0} {1} — FINAL FANTASY I–VI Pixel Remaster 导出与建库向导</value>
+  </data>
+  <data name="Wizard_UnexpectedError" xml:space="preserve">
+    <value>错误：向导运行发生意外异常：{0}</value>
+  </data>
+</root>

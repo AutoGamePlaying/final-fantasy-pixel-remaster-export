@@ -1,0 +1,1659 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Agp_AllUnixCandidatesFailed" xml:space="preserve">
+    <value>すべての既定候補ディレクトリに書き込めません</value>
+  </data>
+  <data name="Agp_AllWinCandidatesFailed" xml:space="preserve">
+    <value>%LOCALAPPDATA% を含むすべての既定候補ディレクトリに書き込めません</value>
+  </data>
+  <data name="Agp_BannerFallback" xml:space="preserve">
+    <value>データフォルダ：{0}（理由：{1}）</value>
+  </data>
+  <data name="Agp_BannerLowIlLocalLow" xml:space="preserve">
+    <value>データフォルダ：{0}（理由：低整合性レベルで実行されているため %LOCALAPPDATA% に書き込めず、LocalLow を使用しています。動作には問題ありません）。zip ファイルに低整合性フラグが付いていることが主な原因です。推奨対処：zip を右クリック → プロパティ →「許可する」にチェックを入れ、エクスプローラーで再展開してください。</value>
+  </data>
+  <data name="Agp_BannerLowIlOther" xml:space="preserve">
+    <value>データフォルダ：{0}（ヒント：低整合性レベルで実行されています。展開ファイルに低整合性フラグが付いていることが主な原因です。推奨対処：zip を右クリック → プロパティ →「許可する」にチェックを入れ、エクスプローラーで再展開してください。現在のフォルダのままでも正常に使用できます。）</value>
+  </data>
+  <data name="Agp_BasePathNullOrEmpty" xml:space="preserve">
+    <value>ベースパスが空であるか NUL 文字を含んでいます</value>
+  </data>
+  <data name="Agp_CliAllFailedGuidance" xml:space="preserve">
+    <value>環境変数 {0} に書き込み可能なフォルダを指定して再試行してください。セキュリティソフトやコントロールされたフォルダーアクセスに遮断される場合は、本ツールを許可リストに追加してください。それでも解決しない場合の最終手段として、フォルダ権限の確認または管理者として実行をお試しください。</value>
+  </data>
+  <data name="Agp_CliAllFailedIntro" xml:space="preserve">
+    <value>書き込み可能なデータルートディレクトリが見つかりませんでした。試した候補はすべて失敗しました</value>
+  </data>
+  <data name="Agp_CliAllFailedLowIl" xml:space="preserve">
+    <value>現在のプロセスは低整合性レベルで実行されています。zip を右クリック → プロパティ →「許可する」を選び、エクスプローラーで再展開してください。</value>
+  </data>
+  <data name="Agp_CliAllFailedNoDetails" xml:space="preserve">
+    <value>{0}。</value>
+  </data>
+  <data name="Agp_CliAllFailedWithDetails" xml:space="preserve">
+    <value>{0}（{1}）。</value>
+  </data>
+  <data name="Agp_CombineLocalAppDataFailed" xml:space="preserve">
+    <value>%LOCALAPPDATA%\{0} のパス結合に失敗しました：{1}</value>
+  </data>
+  <data name="Agp_CombineLocalLowFailed" xml:space="preserve">
+    <value>LocalLow\{0} のパス結合に失敗しました：{1}</value>
+  </data>
+  <data name="Agp_CombineLocalShareFailed" xml:space="preserve">
+    <value>~/.local/share/{0} のパス結合に失敗しました：{1}</value>
+  </data>
+  <data name="Agp_CombinePortableFailed" xml:space="preserve">
+    <value>ポータブルフォルダ {0} のパス結合に失敗しました：{1}</value>
+  </data>
+  <data name="Agp_CombineUserProfileFailed" xml:space="preserve">
+    <value>ユーザーディレクトリ {0} のパス結合に失敗しました：{1}</value>
+  </data>
+  <data name="Agp_CombineXdgFailed" xml:space="preserve">
+    <value>${0}/{1} のパス結合に失敗しました：{2}</value>
+  </data>
+  <data name="Agp_CrossPlatformNoProbe" xml:space="preserve">
+    <value>クロスプラットフォームパス検証に書き込み確認関数が指定されていません</value>
+  </data>
+  <data name="Agp_DirNotWritable" xml:space="preserve">
+    <value>ディレクトリに書き込めません</value>
+  </data>
+  <data name="Agp_EmptyBaseOrTarget" xml:space="preserve">
+    <value>実行ディレクトリまたは対象パスが空です</value>
+  </data>
+  <data name="Agp_EmptyDirPath" xml:space="preserve">
+    <value>ディレクトリパスが空です</value>
+  </data>
+  <data name="Agp_EnvDirNotWritable" xml:space="preserve">
+    <value>環境変数 {0} で指定されたディレクトリに書き込めません（{1}）：{2}。書き込み権限を確認するか、{0} を変更または解除してから再試行してください。</value>
+  </data>
+  <data name="Agp_EnvPathInvalid" xml:space="preserve">
+    <value>環境変数 {0} で指定されたパスが無効です（{1}）：{2}。{0} を修正または解除してから再試行してください。</value>
+  </data>
+  <data name="Agp_GuiAllFailedAttempted" xml:space="preserve">
+    <value>試行したディレクトリ：{0}</value>
+  </data>
+  <data name="Agp_GuiAllFailedFolderPrompt" xml:space="preserve">
+    <value>「OK」をクリックするとフォルダ選択ダイアログが開きます。データ保存用の書き込み可能なディレクトリを指定してください（可能な場合、実行ファイル横の agp-location.txt に保存されます）。</value>
+  </data>
+  <data name="Agp_GuiAllFailedIntro" xml:space="preserve">
+    <value>書き込み可能なデータルートディレクトリが見つかりませんでした（ログ、設定、既定の出力先に書き込み権限が必要です）。</value>
+  </data>
+  <data name="Agp_GuiAllFailedLastResort" xml:space="preserve">
+    <value>別のフォルダを指定しても失敗する場合の最終手段として、フォルダ権限を確認するか管理者として実行してください。</value>
+  </data>
+  <data name="Agp_GuiAllFailedLowIl1" xml:space="preserve">
+    <value>アプリが低整合性レベルで実行されていることを検出しました。展開されたファイルに低整合性フラグが付いていることが主な原因です。</value>
+  </data>
+  <data name="Agp_GuiAllFailedLowIl2" xml:space="preserve">
+    <value>推奨対処：zip を右クリック → プロパティ →「許可する」にチェックを入れ、エクスプローラーで再展開してください。</value>
+  </data>
+  <data name="Agp_GuiAllFailedSecurity" xml:space="preserve">
+    <value>セキュリティソフトまたは Windows のコントロールされたフォルダーアクセスによってブロックされている可能性があります。本ツールを許可リストに追加するか、別の書き込み可能なフォルダを選択してください。</value>
+  </data>
+  <data name="Agp_ListSeparator" xml:space="preserve">
+    <value>；</value>
+  </data>
+  <data name="Agp_LocationFilePathInvalid" xml:space="preserve">
+    <value>{0} 内のパスが無効です：{1}</value>
+  </data>
+  <data name="Agp_NoBaseDir" xml:space="preserve">
+    <value>実行ファイルのディレクトリを特定できませんでした</value>
+  </data>
+  <data name="Agp_NoHomeDir" xml:space="preserve">
+    <value>HOME が未設定で、OS からもホームディレクトリを取得できませんでした</value>
+  </data>
+  <data name="Agp_NoLocalAppData" xml:space="preserve">
+    <value>OS から LocalApplicationData が返されず、LOCALAPPDATA も未設定です</value>
+  </data>
+  <data name="Agp_NoLocalLowDir" xml:space="preserve">
+    <value>Windows の LocalLow ディレクトリを特定できませんでした</value>
+  </data>
+  <data name="Agp_NoUserProfile" xml:space="preserve">
+    <value>OS から UserProfile が返されず、USERPROFILE も未設定です</value>
+  </data>
+  <data name="Agp_PathNullOrEmpty" xml:space="preserve">
+    <value>パスが空であるか NUL 文字を含んでいます</value>
+  </data>
+  <data name="Agp_ReadEnvFailed" xml:space="preserve">
+    <value>環境変数 {0} の読み取りに失敗しました：{1}</value>
+  </data>
+  <data name="Agp_ReasonDefaultUnwritable" xml:space="preserve">
+    <value>既定のデータディレクトリに書き込めません</value>
+  </data>
+  <data name="Agp_ReasonLocalAppDataUnwritable" xml:space="preserve">
+    <value>%LOCALAPPDATA% に書き込めません</value>
+  </data>
+  <data name="Agp_RootNotReady" xml:space="preserve">
+    <value>データルートディレクトリが準備できていません</value>
+  </data>
+  <data name="Agp_UnwritableShort" xml:space="preserve">
+    <value>書き込み不可</value>
+  </data>
+  <data name="Asset_ContainerPathEmpty" xml:space="preserve">
+    <value>コンテナパスの変換結果が空になりました：{0}</value>
+  </data>
+  <data name="Asset_ContainerPathTraversal" xml:space="preserve">
+    <value>コンテナパスに不正な相対パス要素が含まれています：{0}</value>
+  </data>
+  <data name="BuildDb_CleanedTempJson" xml:space="preserve">
+    <value>[{0}] 一時エクスポートディレクトリを削除しました：{1}（{2} ms）</value>
+  </data>
+  <data name="BuildDb_ClearingOutput" xml:space="preserve">
+    <value>出力ディレクトリを消去します：{0}（ファイル数：{1}）</value>
+  </data>
+  <data name="BuildDb_Completed" xml:space="preserve">
+    <value>[{0}] データベース構築完了：{1}（レポート：{2}、合計 {3:F2}s）</value>
+  </data>
+  <data name="BuildDb_DbBuildFailed" xml:space="preserve">
+    <value>db build の実行に失敗しました（データベース：{0}、終了コード：{1}）：{2}</value>
+  </data>
+  <data name="BuildDb_DbFileMissing" xml:space="preserve">
+    <value>db build は完了しましたが、データベースファイルが生成されませんでした：{0}</value>
+  </data>
+  <data name="BuildDb_DbHashFailed" xml:space="preserve">
+    <value>db hash の実行に失敗しました（データベース：{0}、終了コード：{1}）：{2}</value>
+  </data>
+  <data name="BuildDb_DbHashesInfo" xml:space="preserve">
+    <value>[{0}] データベースハッシュ：file_sha256={1}、content_sha256={2}（{3} テーブル）</value>
+  </data>
+  <data name="BuildDb_DbSubcommandUnavailableForBuild" xml:space="preserve">
+    <value>データベース構築に失敗しました：このビルドには db サブコマンドが含まれていません。</value>
+  </data>
+  <data name="BuildDb_DbSubcommandUnavailableForHash" xml:space="preserve">
+    <value>データベースのハッシュ計算に失敗しました：このビルドには db サブコマンドが含まれていません。</value>
+  </data>
+  <data name="BuildDb_FingerprintInfo" xml:space="preserve">
+    <value>[{0}] リソースフィンガープリント：{1}（catalog.json + {2} 個の bundle、{3} バイトをハッシュ計算、所要時間 {4} ms）</value>
+  </data>
+  <data name="BuildDb_GameInfo" xml:space="preserve">
+    <value>[{0}] ゲーム：{1}（AppID={2}、Unity {3}）</value>
+  </data>
+  <data name="BuildDb_HashJsonMissingFields" xml:space="preserve">
+    <value>db hash が返した JSON に必須フィールド（file_sha256/content_sha256/tables）がありません：{0}</value>
+  </data>
+  <data name="BuildDb_HelpText" xml:space="preserve">
+    <value>使い方：
+  ffpr-export build-db --game "&lt;Steam ゲームディレクトリ&gt;" [--out &lt;ディレクトリ&gt;] [--steam-buildid &lt;ID&gt;] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
+
+オプション：
+  --game &lt;ディレクトリ&gt;    Steam ゲームのインストールディレクトリ（FF1–FF6 を自動識別）
+  --out &lt;ディレクトリ&gt;     出力ディレクトリ（既定値：%LOCALAPPDATA%\agp\ffpr-export\output\&lt;ffN&gt;-&lt;Steam ビルド ID&gt;、AGP_HOME で上書き可能）
+  --steam-buildid &lt;ID&gt;     appmanifest_&lt;appid&gt;.acf が読めない場合に Steam ビルド ID を手動指定
+  --keep-json              中間の &lt;out&gt;/json/ エクスポートディレクトリを保持（既定では構築後に自動削除）
+  --jobs &lt;N&gt;               並列スレッド数（既定値：min(CPU コア数, 8)）
+  --force                  既存の build-db 出力ディレクトリを消去してから再構築
+  --progress-json          人間向けログと併せて機械可読な @@progress JSON 進捗行を出力
+  --lang &lt;言語&gt;            表示言語：en（既定）、zh-Hans、ja（環境変数 AGP_LANG でも指定可能）
+  --help                   このヘルプを表示</value>
+  </data>
+  <data name="BuildDb_MissingGameArg" xml:space="preserve">
+    <value>build-db には必須引数 --game &lt;Steam ゲームディレクトリ&gt; が必要です</value>
+  </data>
+  <data name="BuildDb_NotOwnDirectory" xml:space="preserve">
+    <value>{0} は {1} の出力ディレクトリではないため消去できません。空のディレクトリを指定するか、手動で整理してから再試行してください。</value>
+  </data>
+  <data name="BuildDb_OutputNotEmpty" xml:space="preserve">
+    <value>出力ディレクトリが空ではありません：{0}。消去して再構築するには --force を指定してください。</value>
+  </data>
+  <data name="BuildDb_ParseHashJsonFailed" xml:space="preserve">
+    <value>db hash が出力した JSON の解析に失敗しました（データベース：{0}）：{1}</value>
+  </data>
+  <data name="BuildDb_Step1" xml:space="preserve">
+    <value>==&gt; [{0}] ステップ 1/6：ゲームバージョンとリソースフィンガープリントを識別中</value>
+  </data>
+  <data name="BuildDb_Step2" xml:space="preserve">
+    <value>==&gt; [{0}] ステップ 2/6：プロセス内で inventory と export を実行中</value>
+  </data>
+  <data name="BuildDb_Step3" xml:space="preserve">
+    <value>==&gt; [{0}] ステップ 3/6：プロセス内で db build を実行して {1} を構築中</value>
+  </data>
+  <data name="BuildDb_Step4" xml:space="preserve">
+    <value>==&gt; [{0}] ステップ 4/6：プロセス内で db hash --json を実行してデータベースハッシュを計算中</value>
+  </data>
+  <data name="BuildDb_Step5" xml:space="preserve">
+    <value>==&gt; [{0}] ステップ 5/6：既知ビルド一覧（known-builds.json）と照合中</value>
+  </data>
+  <data name="BuildDb_Step6" xml:space="preserve">
+    <value>==&gt; [{0}] ステップ 6/6：ビルドレポート {1} を書き込み中</value>
+  </data>
+  <data name="BuildDb_UnknownArg" xml:space="preserve">
+    <value>build-db の不明な引数です：{0}</value>
+  </data>
+  <data name="BuildDb_UnknownCommand" xml:space="preserve">
+    <value>不明なコマンド</value>
+  </data>
+  <data name="BuildDb_VersionInfo" xml:space="preserve">
+    <value>[{0}] Steam ビルド ID：{1}（取得元：{2}）；exe バージョン：FileVersion={3}、ProductVersion={4}</value>
+  </data>
+  <data name="BuildDb_WrongCommandDirectory" xml:space="preserve">
+    <value>{0} は {1} {2} の出力ディレクトリのため、build-db で消去することはできません。</value>
+  </data>
+  <data name="Catalog_NotFound" xml:space="preserve">
+    <value>Addressables カタログファイルが見つかりません：{0}</value>
+  </data>
+  <data name="Cli_HelpText" xml:space="preserve">
+    <value>{0} {1} — FINAL FANTASY I–VI Pixel Remaster アセット棚卸し・エクスポート・SQLite 構築ツール
+
+使い方：
+  ffpr-export build-db  --game &lt;Steam ゲームディレクトリ&gt; [--out &lt;出力ディレクトリ&gt;] [--steam-buildid &lt;ID&gt;] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
+  ffpr-export inventory --game &lt;Steam ゲームディレクトリ&gt; [--out &lt;出力ディレクトリ&gt;] [--jobs N] [--force] [--lang en|zh-Hans|ja]
+  ffpr-export export    --game &lt;Steam ゲームディレクトリ&gt; [--out &lt;出力ディレクトリ&gt;] [--jobs N] [--force] [--lang en|zh-Hans|ja]
+  ffpr-export db        &lt;build|hash|stats|sql&gt; ... [--lang en|zh-Hans|ja]
+
+オプション：
+  --game &lt;ディレクトリ&gt;  Steam ゲームのインストールディレクトリ（FF1–FF6、Unity バージョン、Steam buildid を自動検出）
+  --out &lt;ディレクトリ&gt;   出力ディレクトリ（build-db の既定値は %LOCALAPPDATA%\agp\ffpr-export\output\&lt;ffN&gt;-&lt;Steam ビルド ID&gt;、AGP_HOME で上書き可能；inventory/export の既定値は .deps/ffpr/&lt;ffN&gt;/...）
+  --jobs &lt;N&gt;             並列スレッド数（既定値：min(CPU コア数, 8)）
+  --force                既存の出力ディレクトリを消去（本ツールの同じサブコマンドの manifest.json があるディレクトリのみ許可）
+  --lang &lt;言語&gt;          表示言語：en（既定）、zh-Hans、ja（環境変数 AGP_LANG でも指定可能）
+  --progress-json        機械可読な @@progress JSON 進捗行を出力（build-db のみ、GUI 向け）
+  --version              ツールおよび AssetsTools.NET のバージョンを表示
+  --help                 このヘルプを表示</value>
+  </data>
+  <data name="Cli_JobsMustBePositive" xml:space="preserve">
+    <value>--jobs には正の整数を指定してください：{0}</value>
+  </data>
+  <data name="Cli_OptionRequiresValue" xml:space="preserve">
+    <value>オプション {0} には値が必要です</value>
+  </data>
+  <data name="Cli_UnknownSubcommand" xml:space="preserve">
+    <value>不明なサブコマンドです：{0}（利用可能なコマンド：build-db、inventory、export、db）</value>
+  </data>
+  <data name="Common_ErrorPrefix" xml:space="preserve">
+    <value>エラー：{0}</value>
+  </data>
+  <data name="Common_InfoPrefix" xml:space="preserve">
+    <value>ヒント：{0}</value>
+  </data>
+  <data name="Common_None" xml:space="preserve">
+    <value>なし</value>
+  </data>
+  <data name="Common_NoneParen" xml:space="preserve">
+    <value>（なし）</value>
+  </data>
+  <data name="Common_Null" xml:space="preserve">
+    <value>空</value>
+  </data>
+  <data name="Common_ReadFailed" xml:space="preserve">
+    <value>&lt;読み取り失敗: {0}&gt;</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>不明</value>
+  </data>
+  <data name="Common_UnknownError" xml:space="preserve">
+    <value>不明なエラー</value>
+  </data>
+  <data name="Common_WarningPrefix" xml:space="preserve">
+    <value>警告：{0}</value>
+  </data>
+  <data name="Db_BuildComplete" xml:space="preserve">
+    <value>構築完了：{0}（ゲーム {1}、schema v{2}、SQLite {3}、{4}、所要時間 {5} ms）</value>
+  </data>
+  <data name="Db_BuildContentHash" xml:space="preserve">
+    <value>コンテンツハッシュ（content_sha256）：{0}</value>
+  </data>
+  <data name="Db_BuildFileHash" xml:space="preserve">
+    <value>ファイルハッシュ（file_sha256）：{0}</value>
+  </data>
+  <data name="Db_BuildIssuesCount" xml:space="preserve">
+    <value>構築時の問題（build_issue）：計 {0} 件</value>
+  </data>
+  <data name="Db_BuildIssuesZero" xml:space="preserve">
+    <value>構築時の問題（build_issue）：0 件</value>
+  </data>
+  <data name="Db_BuildManifest" xml:space="preserve">
+    <value>マニフェスト：{0}</value>
+  </data>
+  <data name="Db_BuildMissingExport" xml:space="preserve">
+    <value>db build には --export &lt;エクスポートディレクトリ&gt; 引数が必要です</value>
+  </data>
+  <data name="Db_BuildMissingOut" xml:space="preserve">
+    <value>db build には --out &lt;データベースファイルパス&gt; 引数が必要です</value>
+  </data>
+  <data name="Db_BuildStageNote" xml:space="preserve">
+    <value>  備考={0}</value>
+  </data>
+  <data name="Db_BuildStageReport" xml:space="preserve">
+    <value>ステージレポート：</value>
+  </data>
+  <data name="Db_BuildUnknownArg" xml:space="preserve">
+    <value>db build の不明な引数です：{0}</value>
+  </data>
+  <data name="Db_ExportDirNotFound" xml:space="preserve">
+    <value>エクスポートディレクトリが存在しません：{0}</value>
+  </data>
+  <data name="Db_FileNotFound" xml:space="preserve">
+    <value>データベースファイルが存在しません：{0}</value>
+  </data>
+  <data name="Db_GridBlobTooShort" xml:space="preserve">
+    <value>グリッドレイヤーのバイナリ長が不足しています：{0} バイト（最低 {1} バイト必要）</value>
+  </data>
+  <data name="Db_GridCoordOutOfRange" xml:space="preserve">
+    <value>グリッド座標が範囲外です：({0}, {1}) はサイズ {2}x{3} の範囲外です</value>
+  </data>
+  <data name="Db_HashDatabase" xml:space="preserve">
+    <value>データベース：{0}</value>
+  </data>
+  <data name="Db_HashExtraPositional" xml:space="preserve">
+    <value>db hash に余分な位置引数があります：{0}</value>
+  </data>
+  <data name="Db_HashFormat" xml:space="preserve">
+    <value>ハッシュ形式：v{0}（schema v{1}、SQLite {2}）</value>
+  </data>
+  <data name="Db_HashMissingDb" xml:space="preserve">
+    <value>db hash には &lt;データベース&gt; パス引数が必要です</value>
+  </data>
+  <data name="Db_HashTablesHeader" xml:space="preserve">
+    <value>通常テーブルのハッシュ（計 {0} テーブル）：</value>
+  </data>
+  <data name="Db_HashUnknownArg" xml:space="preserve">
+    <value>db hash の不明な引数です：{0}</value>
+  </data>
+  <data name="Db_HelpText" xml:space="preserve">
+    <value>ffpr-export db — FF1–6 Pixel Remaster SQLite データベース構築・読み取り専用クエリツール
+
+使い方：
+  ffpr-export db build --export &lt;.deps/ffpr/ffN/export&gt; --out &lt;ffN.sqlite&gt; [--jobs N] [--lang en|zh-Hans|ja]
+  ffpr-export db hash  &lt;データベース&gt; [--json] [--lang en|zh-Hans|ja]
+  ffpr-export db stats &lt;データベース&gt; [--lang en|zh-Hans|ja]
+  ffpr-export db sql   &lt;データベース&gt; "&lt;SELECT ...&gt;" [--lang en|zh-Hans|ja]</value>
+  </data>
+  <data name="Db_MissingOutArg" xml:space="preserve">
+    <value>--out &lt;データベースファイルパス&gt; 引数が指定されていません</value>
+  </data>
+  <data name="Db_OutIsDirectory" xml:space="preserve">
+    <value>--out には既存のディレクトリではなくファイルパスを指定してください：{0}</value>
+  </data>
+  <data name="Db_OutProtectedDir" xml:space="preserve">
+    <value>--out で保護対象ディレクトリ {0}/{1} に書き込むことはできません：{2}</value>
+  </data>
+  <data name="Db_SchemaVersionMismatch" xml:space="preserve">
+    <value>データベースのスキーマバージョンが一致しません（ファイル：{0}、期待 v{1}、実際 v{2}）。データベースを再構築してください。</value>
+  </data>
+  <data name="Db_SqlAllowedStartOnly" xml:space="preserve">
+    <value>読み取り専用クエリは SELECT / WITH / EXPLAIN / VALUES のみ許可されます（入力：{0}）</value>
+  </data>
+  <data name="Db_SqlEmpty" xml:space="preserve">
+    <value>SQL クエリを空にすることはできません</value>
+  </data>
+  <data name="Db_SqlExtraPositional" xml:space="preserve">
+    <value>db sql に余分な位置引数があります：{0}</value>
+  </data>
+  <data name="Db_SqlForbiddenKeyword" xml:space="preserve">
+    <value>読み取り専用でない SQL 文を拒否しました：禁止キーワード {0} が含まれています</value>
+  </data>
+  <data name="Db_SqlMissingDb" xml:space="preserve">
+    <value>db sql には &lt;データベース&gt; パス引数が必要です</value>
+  </data>
+  <data name="Db_SqlMissingQuery" xml:space="preserve">
+    <value>db sql には読み取り専用 SQL クエリ引数が必要です</value>
+  </data>
+  <data name="Db_SqlMultiStatement" xml:space="preserve">
+    <value>読み取り専用クエリでは単一の SQL 文のみ許可されます（複数文は拒否されます）</value>
+  </data>
+  <data name="Db_SqlNoExecutable" xml:space="preserve">
+    <value>SQL クエリに実行可能なステートメントが含まれていません</value>
+  </data>
+  <data name="Db_SqlUnknownArg" xml:space="preserve">
+    <value>db sql の不明な引数です：{0}</value>
+  </data>
+  <data name="Db_SqliteVersionNull" xml:space="preserve">
+    <value>sqlite_version() のクエリ結果が null でした</value>
+  </data>
+  <data name="Db_StageFailed" xml:space="preserve">
+    <value>構築ステージ '{0}' が失敗しました：{1}</value>
+  </data>
+  <data name="Db_StatsAreaRow" xml:space="preserve">
+    <value>  {0,-14} {1,10}（{2} テーブル）</value>
+  </data>
+  <data name="Db_StatsAreaSummaryHeader" xml:space="preserve">
+    <value>領域別の行数集計：</value>
+  </data>
+  <data name="Db_StatsExtraPositional" xml:space="preserve">
+    <value>db stats に余分な位置引数があります：{0}</value>
+  </data>
+  <data name="Db_StatsFileSize" xml:space="preserve">
+    <value>ファイルサイズ：{0} バイト（{1}）、SQLite {2}</value>
+  </data>
+  <data name="Db_StatsMetaHeader" xml:space="preserve">
+    <value>メタ情報（meta）：</value>
+  </data>
+  <data name="Db_StatsMissingDb" xml:space="preserve">
+    <value>db stats には &lt;データベース&gt; パス引数が必要です</value>
+  </data>
+  <data name="Db_StatsTableRowsHeader" xml:space="preserve">
+    <value>テーブル別行数：</value>
+  </data>
+  <data name="Db_StatsUnknownArg" xml:space="preserve">
+    <value>db stats の不明な引数です：{0}</value>
+  </data>
+  <data name="Db_UnknownSubcommand" xml:space="preserve">
+    <value>不明な db サブコマンドです：{0}（利用可能なサブコマンド：build、hash、stats、sql）</value>
+  </data>
+  <data name="Db_UnsupportedCanonicalType" xml:space="preserve">
+    <value>正規化コンテンツハッシュで未対応の SQLite 値型です：{0}</value>
+  </data>
+  <data name="Db_UnsupportedGridEncoding" xml:space="preserve">
+    <value>未対応のマップグリッドエンコーディングです：{0}</value>
+  </data>
+  <data name="Db_WriteFixtureCreated" xml:space="preserve">
+    <value>合成エクスポートディレクトリを生成しました：{0}</value>
+  </data>
+  <data name="Db_WriteFixtureDirNotEmpty" xml:space="preserve">
+    <value>合成フィクスチャの出力ディレクトリが空ではありません：{0}</value>
+  </data>
+  <data name="Db_WriteFixtureMissingOut" xml:space="preserve">
+    <value>db write-fixture には --out &lt;ディレクトリ&gt; 引数が必要です</value>
+  </data>
+  <data name="Db_WriteFixtureUnknownArg" xml:space="preserve">
+    <value>db write-fixture の不明な引数です：{0}</value>
+  </data>
+  <data name="Export_BundleFailed" xml:space="preserve">
+    <value>エクスポートに失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Export_BundleOpenFailed" xml:space="preserve">
+    <value>bundle を開くかエクスポートできませんでした：{0}：{1}</value>
+  </data>
+  <data name="Export_Completed" xml:space="preserve">
+    <value>[{0}] エクスポート完了：成功 {1} 件（新規 {2}、再開スキップ {3}）、スキップ {4}、失敗 {5}、出力ファイル {6} 件（再開 {7}）、出力 {8} バイト、MonoBehaviour(TypeTree={9}, Cpp2IL={10}, BaseOnly={11})、所要時間 {12:F2}s -&gt; {13}</value>
+  </data>
+  <data name="Export_DataFileOpenFailed" xml:space="preserve">
+    <value>データファイルを開くかエクスポートできませんでした：{0}：{1}</value>
+  </data>
+  <data name="Export_DataTextAssetFailed" xml:space="preserve">
+    <value>データ TextAsset のエクスポートに失敗しました：{0} (PathId={1})：{2}</value>
+  </data>
+  <data name="Export_MissingBundle" xml:space="preserve">
+    <value>catalog.json に記載された bundle ファイルが見つかりません：{0}</value>
+  </data>
+  <data name="Export_MonoBehaviourFailed" xml:space="preserve">
+    <value>MonoBehaviour のエクスポートに失敗しました：{0} (PathId={1})：{2}</value>
+  </data>
+  <data name="Export_StandaloneMonoBehaviourFailed" xml:space="preserve">
+    <value>MonoBehaviour のエクスポートに失敗しました：{0} ({1})：{2}</value>
+  </data>
+  <data name="Export_TextAssetFailed" xml:space="preserve">
+    <value>TextAsset のエクスポートに失敗しました：{0} ({1})：{2}</value>
+  </data>
+  <data name="Export_UnknownArg" xml:space="preserve">
+    <value>export の不明な引数です：{0}</value>
+  </data>
+  <data name="GameDetector_DirNotFound" xml:space="preserve">
+    <value>ゲームディレクトリが存在しません：{0}</value>
+  </data>
+  <data name="GameDetector_MissingDataDir" xml:space="preserve">
+    <value>{0}（{1}）を検出しましたが、データディレクトリが見つかりません：{2}</value>
+  </data>
+  <data name="GameDetector_MissingGameArg" xml:space="preserve">
+    <value>--game &lt;Steam ゲームディレクトリ&gt; 引数が指定されていません</value>
+  </data>
+  <data name="GameDetector_UnityVersionNotFound" xml:space="preserve">
+    <value>アセットファイルヘッダーから Unity バージョンを読み取れませんでした（データディレクトリ：{0}）</value>
+  </data>
+  <data name="GameDetector_UnrecognizedDir" xml:space="preserve">
+    <value>ディレクトリから FINAL FANTASY I–VI Pixel Remaster を識別できませんでした（既知の exe または *_Data フォルダが見つかりません）：{0}</value>
+  </data>
+  <data name="GameVersion_BinaryNotFound" xml:space="preserve">
+    <value>警告：{0} が見つからないため、SHA-256 ハッシュは null として記録されます。</value>
+  </data>
+  <data name="GameVersion_ExeNotFound" xml:space="preserve">
+    <value>警告：ゲーム実行ファイル {0} が見つからないため、exe バージョン情報は null として記録されます。</value>
+  </data>
+  <data name="GameVersion_FingerprintMissingCatalog" xml:space="preserve">
+    <value>リソースフィンガープリントの計算に失敗しました：カタログファイルがありません：{0}</value>
+  </data>
+  <data name="GameVersion_FingerprintMissingDataDir" xml:space="preserve">
+    <value>リソースフィンガープリントの計算に失敗しました：データディレクトリが存在しません：{0}</value>
+  </data>
+  <data name="GameVersion_IgnoreManualBuildId" xml:space="preserve">
+    <value>ヒント：{1} から buildid={0} を読み取ったため、--steam-buildid {2} は無視されます</value>
+  </data>
+  <data name="GameVersion_ManifestMissingBuildId" xml:space="preserve">
+    <value>警告：{0} に buildid がなく --steam-buildid も未指定のため、Steam ビルド ID は null として記録されます。</value>
+  </data>
+  <data name="GameVersion_NoManifestNoManualBuildId" xml:space="preserve">
+    <value>警告：{0} が見つからず（2 階層上を確認）--steam-buildid も未指定のため、Steam ビルド ID は null として記録されます。</value>
+  </data>
+  <data name="GameVersion_ReadManifestFailed" xml:space="preserve">
+    <value>Steam マニフェストの読み取りに失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Gui_AddGameFolder" xml:space="preserve">
+    <value>ゲームフォルダを追加...</value>
+  </data>
+  <data name="Gui_AgpExplicitEnvFailedFallback" xml:space="preserve">
+    <value>環境変数 {0} で指定されたディレクトリに書き込めません。変更または解除して再試行してください。</value>
+  </data>
+  <data name="Gui_ArgGameDirEmpty" xml:space="preserve">
+    <value>ゲームディレクトリを空にすることはできません</value>
+  </data>
+  <data name="Gui_ArgOutputDirEmpty" xml:space="preserve">
+    <value>出力ディレクトリを空にすることはできません</value>
+  </data>
+  <data name="Gui_BatchClearForeignErrorLog" xml:space="preserve">
+    <value>エラー：ディレクトリの消去に失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Gui_BatchClearForeignReadError" xml:space="preserve">
+    <value>既存ディレクトリの消去に失敗しました：{0}</value>
+  </data>
+  <data name="Gui_BatchClearingForeignLog" xml:space="preserve">
+    <value>上書き確認済みのディレクトリを消去しています：{0}</value>
+  </data>
+  <data name="Gui_BatchFinishedSummary" xml:space="preserve">
+    <value>すべてのエクスポートが完了しました（計 {0} 件：成功 {1}、ハッシュ不一致 {2}、失敗 {3}）</value>
+  </data>
+  <data name="Gui_BatchForceHintLog" xml:space="preserve">
+    <value>ヒント：出力ディレクトリに前回の構築結果があるため、--force を付けて自動的に再構築します。</value>
+  </data>
+  <data name="Gui_BatchItemCancelledLog" xml:space="preserve">
+    <value>[{0}] キャンセルされました。</value>
+  </data>
+  <data name="Gui_BatchItemGameDirLog" xml:space="preserve">
+    <value>ゲームディレクトリ：{0}</value>
+  </data>
+  <data name="Gui_BatchItemOutputDirLog" xml:space="preserve">
+    <value>出力ディレクトリ：{0}</value>
+  </data>
+  <data name="Gui_BatchItemStartLog" xml:space="preserve">
+    <value>[{0}/{1}] エクスポート開始：{2}（ビルド ID：{3}）</value>
+  </data>
+  <data name="Gui_BatchLaunchCliErrorLog" xml:space="preserve">
+    <value>エラー：{0} の起動または実行に失敗しました：{1}</value>
+  </data>
+  <data name="Gui_Browse" xml:space="preserve">
+    <value>参照...</value>
+  </data>
+  <data name="Gui_BrowseOutputDialogDesc" xml:space="preserve">
+    <value>エクスポートの出力ルートディレクトリを選択してください（ゲームごとに &lt;ffN&gt;-&lt;ビルド ID&gt; サブディレクトリが作成されます）</value>
+  </data>
+  <data name="Gui_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="Gui_CancellingLog" xml:space="preserve">
+    <value>==&gt; キャンセル要求を受信しました。エクスポート子プロセスツリーを終了しています...</value>
+  </data>
+  <data name="Gui_CancellingProgress" xml:space="preserve">
+    <value>エクスポートをキャンセルし、子プロセスを終了しています...</value>
+  </data>
+  <data name="Gui_CliCheckErrorWarning" xml:space="preserve">
+    <value>CLI 実行ファイル {0} の確認中にエラーが発生しました：{1}。</value>
+  </data>
+  <data name="Gui_CliNotFoundWarning" xml:space="preserve">
+    <value>同一ディレクトリに CLI 実行ファイル {0} が見つかりません（想定位置：{1}）。zip 全体を展開したか確認してください。</value>
+  </data>
+  <data name="Gui_ClipboardDbPath" xml:space="preserve">
+    <value>データベースパス: {0}</value>
+  </data>
+  <data name="Gui_ClipboardHeader" xml:space="preserve">
+    <value>[{0}] {1} | ビルド ID: {2} | 判定: {3}</value>
+  </data>
+  <data name="Gui_ColBuildId" xml:space="preserve">
+    <value>ビルド ID</value>
+  </data>
+  <data name="Gui_ColDbPath" xml:space="preserve">
+    <value>データベースパス</value>
+  </data>
+  <data name="Gui_ColDirectory" xml:space="preserve">
+    <value>ディレクトリ</value>
+  </data>
+  <data name="Gui_ColGame" xml:space="preserve">
+    <value>ゲーム</value>
+  </data>
+  <data name="Gui_ColVerdict" xml:space="preserve">
+    <value>判定</value>
+  </data>
+  <data name="Gui_CompletionGroupTitle" xml:space="preserve">
+    <value>3. 完了結果</value>
+  </data>
+  <data name="Gui_ConfirmCloseMessage" xml:space="preserve">
+    <value>現在エクスポートを実行中です。エクスポートをキャンセルしてウィンドウを閉じますか？</value>
+  </data>
+  <data name="Gui_ConfirmCloseTitle" xml:space="preserve">
+    <value>終了の確認</value>
+  </data>
+  <data name="Gui_ConfirmOverwriteMessage" xml:space="preserve">
+    <value>以下の出力ディレクトリはすでに存在し空ではなく、ffpr-export が作成したディレクトリでもありません：
+
+{0}
+
+続行するとこれらのディレクトリ内の既存ファイルが削除され、新しいエクスポート結果が書き込まれます。上書きしてもよろしいですか？</value>
+  </data>
+  <data name="Gui_ConfirmOverwriteTitle" xml:space="preserve">
+    <value>空でないディレクトリの上書き確認</value>
+  </data>
+  <data name="Gui_CopiedHashesFeedback" xml:space="preserve">
+    <value>{0} 本のゲームのハッシュをクリップボードにコピーしました</value>
+  </data>
+  <data name="Gui_CopyHashes" xml:space="preserve">
+    <value>ハッシュをコピー</value>
+  </data>
+  <data name="Gui_CopyHashesEmptyMessage" xml:space="preserve">
+    <value>コピー可能なハッシュ記録がまだありません。</value>
+  </data>
+  <data name="Gui_CopyHashesFailedMessage" xml:space="preserve">
+    <value>クリップボードへの書き込みに失敗しました：{0}</value>
+  </data>
+  <data name="Gui_CopyHashesFailedTitle" xml:space="preserve">
+    <value>コピー失敗</value>
+  </data>
+  <data name="Gui_DefaultOutputRootFailed" xml:space="preserve">
+    <value>既定の出力ディレクトリの特定に失敗しました：{0}。「参照...」から手動で選択してください。</value>
+  </data>
+  <data name="Gui_DefaultSettingsPathFailed" xml:space="preserve">
+    <value>既定の設定パスの取得に失敗しました：{0}。このセッションでは設定は保存されません。</value>
+  </data>
+  <data name="Gui_DetailContentHash" xml:space="preserve">
+    <value>コンテンツハッシュ：</value>
+  </data>
+  <data name="Gui_DetailDbPath" xml:space="preserve">
+    <value>データベースパス：</value>
+  </data>
+  <data name="Gui_DetailFileHash" xml:space="preserve">
+    <value>ファイルハッシュ：</value>
+  </data>
+  <data name="Gui_DetailListSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="Gui_DetailVerdict" xml:space="preserve">
+    <value>照合結果：</value>
+  </data>
+  <data name="Gui_DialogTitleDataDirUnwritable" xml:space="preserve">
+    <value>データディレクトリに書き込めません</value>
+  </data>
+  <data name="Gui_DialogTitleDefaultDataDirFailed" xml:space="preserve">
+    <value>既定のデータディレクトリに書き込めません</value>
+  </data>
+  <data name="Gui_DialogTitleSelectedDirUnwritable" xml:space="preserve">
+    <value>選択したディレクトリに書き込めません</value>
+  </data>
+  <data name="Gui_DpiConfiguredLog" xml:space="preserve">
+    <value>DPI モードを設定しました：actual={0}, setResult={1}</value>
+  </data>
+  <data name="Gui_EnableVisualStylesFailedLog" xml:space="preserve">
+    <value>Application.EnableVisualStyles に失敗しました（app.manifest のビジュアルスタイルを引き続き使用します）：{0}</value>
+  </data>
+  <data name="Gui_ExceptionOmitted" xml:space="preserve">
+    <value>--- {0} (重複または深すぎるネストのため省略) ---</value>
+  </data>
+  <data name="Gui_ExportCancelledLog" xml:space="preserve">
+    <value>==&gt; エクスポート処理をキャンセルしました。</value>
+  </data>
+  <data name="Gui_ExportCancelledProgress" xml:space="preserve">
+    <value>エクスポートをキャンセルしました</value>
+  </data>
+  <data name="Gui_FatalErrorMessage" xml:space="preserve">
+    <value>エラーメッセージ：{0}</value>
+  </data>
+  <data name="Gui_FatalErrorType" xml:space="preserve">
+    <value>エラーの種類：{0}</value>
+  </data>
+  <data name="Gui_FatalLogDirUnwritable" xml:space="preserve">
+    <value>ログディレクトリに書き込めません</value>
+  </data>
+  <data name="Gui_FatalLogNotWritten" xml:space="preserve">
+    <value>ログファイルを書き込めませんでした（{0}）。</value>
+  </data>
+  <data name="Gui_FatalLogWrittenHeader" xml:space="preserve">
+    <value>詳細なエラーログが次の場所に書き込まれました：</value>
+  </data>
+  <data name="Gui_FatalRootCause" xml:space="preserve">
+    <value>根本原因：{0}: {1}</value>
+  </data>
+  <data name="Gui_FatalRuntimeLine" xml:space="preserve">
+    <value>アプリケーションの実行中に未処理のエラーが発生しました。</value>
+  </data>
+  <data name="Gui_FatalScreenshotHint" xml:space="preserve">
+    <value>原因調査のため、このダイアログのスクリーンショットを開発者へお送りください。</value>
+  </data>
+  <data name="Gui_FatalSendLogHint" xml:space="preserve">
+    <value>原因調査のため、このログファイルを開発者へお送りください。</value>
+  </data>
+  <data name="Gui_FatalStartupLine" xml:space="preserve">
+    <value>アプリケーションの起動に失敗しました。</value>
+  </data>
+  <data name="Gui_FatalTitleRuntime" xml:space="preserve">
+    <value>アプリ実行エラー</value>
+  </data>
+  <data name="Gui_FatalTitleStartup" xml:space="preserve">
+    <value>アプリの起動に失敗しました</value>
+  </data>
+  <data name="Gui_FatalUnknownError" xml:space="preserve">
+    <value>エラーメッセージ：不明な未処理エラーが発生しました。</value>
+  </data>
+  <data name="Gui_FolderDialogDataRoot" xml:space="preserve">
+    <value>書き込み可能なデータルートディレクトリを選択してください（ログ、設定、既定の出力先に使用されます）</value>
+  </data>
+  <data name="Gui_FontDefaultName" xml:space="preserve">
+    <value>既定フォント</value>
+  </data>
+  <data name="Gui_FontFallbackToFamily" xml:space="preserve">
+    <value>{0} の優先フォント「{1}」が利用できないため、「{2}」にフォールバックしました。</value>
+  </data>
+  <data name="Gui_FontFallbackToMessageBox" xml:space="preserve">
+    <value>{0} の作成に失敗したため、SystemFonts.MessageBoxFont（{1}）にフォールバックしました{2}。</value>
+  </data>
+  <data name="Gui_FontFallbackToUltimate" xml:space="preserve">
+    <value>{0} の作成に失敗したため、フォールバックフォント「{1}」を使用します{2}。</value>
+  </data>
+  <data name="Gui_FontMessageBoxUnavailable" xml:space="preserve">
+    <value>SystemFonts.MessageBoxFont: 利用不可</value>
+  </data>
+  <data name="Gui_FontNotInstalled" xml:space="preserve">
+    <value>{0}: フォントが未インストールか指定スタイルに非対応</value>
+  </data>
+  <data name="Gui_FontReasonClause" xml:space="preserve">
+    <value>（理由：{0}）</value>
+  </data>
+  <data name="Gui_FontRoleLog" xml:space="preserve">
+    <value>ログ用等幅フォント</value>
+  </data>
+  <data name="Gui_FontRolePrimaryButton" xml:space="preserve">
+    <value>メインボタンフォント</value>
+  </data>
+  <data name="Gui_FontRoleUi" xml:space="preserve">
+    <value>UI フォント</value>
+  </data>
+  <data name="Gui_FontRoleVerdict" xml:space="preserve">
+    <value>判定見出しフォント</value>
+  </data>
+  <data name="Gui_GamesGroupTitle" xml:space="preserve">
+    <value>1. ゲーム（Steam ライブラリを自動スキャン、既定で全選択）</value>
+  </data>
+  <data name="Gui_InvalidOutputMessage" xml:space="preserve">
+    <value>出力先の確認に失敗しました：{0}</value>
+  </data>
+  <data name="Gui_InvalidOutputTitle" xml:space="preserve">
+    <value>無効な出力ディレクトリ</value>
+  </data>
+  <data name="Gui_LoadSettingsFailed" xml:space="preserve">
+    <value>設定の読み込みに失敗しました（{0}）：{1}。既定の設定を使用します。</value>
+  </data>
+  <data name="Gui_LogConstructingMainForm" xml:space="preserve">
+    <value>メインウィンドウ MainForm を構築しています...</value>
+  </data>
+  <data name="Gui_LogContext" xml:space="preserve">
+    <value>コンテキスト: {0}</value>
+  </data>
+  <data name="Gui_LogEnteringMessageLoop" xml:space="preserve">
+    <value>MainForm の構築が完了しました。Application.Run メッセージループに入ります...</value>
+  </data>
+  <data name="Gui_LogExiting" xml:space="preserve">
+    <value>GUI を終了します（終了コード：{0}）。</value>
+  </data>
+  <data name="Gui_LogMainFormShown" xml:space="preserve">
+    <value>メインウィンドウが表示されました（Shown）。</value>
+  </data>
+  <data name="Gui_LogNullException" xml:space="preserve">
+    <value>例外オブジェクトが null です。</value>
+  </data>
+  <data name="Gui_LogSkipNoRoot" xml:space="preserve">
+    <value>書き込み可能なデータルートが見つからないため、ログファイルの作成をスキップしました</value>
+  </data>
+  <data name="Gui_LogSkipNoRootWithReason" xml:space="preserve">
+    <value>書き込み可能なデータルートが見つからないため、ログファイルの作成をスキップしました：{0}</value>
+  </data>
+  <data name="Gui_LogUnhandledNonException" xml:space="preserve">
+    <value>コンテキスト: {0}
+未処理の非 Exception オブジェクト ({1}): {2}</value>
+  </data>
+  <data name="Gui_LogWriteFailed" xml:space="preserve">
+    <value>起動ログファイルに書き込めませんでした（{0}）：{1}</value>
+  </data>
+  <data name="Gui_ManualGameDialogDesc" xml:space="preserve">
+    <value>FINAL FANTASY I–VI Pixel Remaster のインストールルートフォルダ（*_Data を含む）を選択してください</value>
+  </data>
+  <data name="Gui_ManualGameDialogInvalidHint" xml:space="preserve">
+    <value>{0}
+
+FINAL FANTASY I–VI Pixel Remaster のインストールルート（対応する *_Data フォルダを含む）を選択してください。</value>
+  </data>
+  <data name="Gui_ManualGameDialogInvalidTitle" xml:space="preserve">
+    <value>未対応のゲームディレクトリ</value>
+  </data>
+  <data name="Gui_ManualGamePathEmpty" xml:space="preserve">
+    <value>ゲームディレクトリを選択してください</value>
+  </data>
+  <data name="Gui_ManualGamePathInvalid" xml:space="preserve">
+    <value>ゲームディレクトリのパス形式が無効です：{0}（{1}）</value>
+  </data>
+  <data name="Gui_MissingCliDialogTitle" xml:space="preserve">
+    <value>CLI 実行ファイルが見つかりません</value>
+  </data>
+  <data name="Gui_MissingCliMessage" xml:space="preserve">
+    <value>CLI エクスポートツールが見つかりません：{0}。
+
+想定位置：{1}
+
+zip アーカイブ全体を展開し、{0} と ffpr-export-gui.exe を同じフォルダに配置してください。</value>
+  </data>
+  <data name="Gui_NoGameSelectedMessage" xml:space="preserve">
+    <value>エクスポートするゲームを 1 つ以上選択してください。</value>
+  </data>
+  <data name="Gui_NoGameSelectedTitle" xml:space="preserve">
+    <value>ゲーム未選択</value>
+  </data>
+  <data name="Gui_NoGamesFoundHint" xml:space="preserve">
+    <value>FF1–FF6 が自動検出されませんでした。「ゲームフォルダを追加...」から追加してください。</value>
+  </data>
+  <data name="Gui_NoStackTrace" xml:space="preserve">
+    <value>  (スタックトレースなし)</value>
+  </data>
+  <data name="Gui_NoWritePermission" xml:space="preserve">
+    <value>書き込み権限がありません</value>
+  </data>
+  <data name="Gui_OpenFolderFailedMessage" xml:space="preserve">
+    <value>出力フォルダを開けませんでした（{0}）：{1}</value>
+  </data>
+  <data name="Gui_OpenFolderFailedTitle" xml:space="preserve">
+    <value>開くことができませんでした</value>
+  </data>
+  <data name="Gui_OpenFolderNotCreatedMessage" xml:space="preserve">
+    <value>出力フォルダがまだ作成されていません。先にエクスポートを実行するか、出力ルートが存在するか確認してください。</value>
+  </data>
+  <data name="Gui_OpenFolderNotCreatedTitle" xml:space="preserve">
+    <value>フォルダを開けません</value>
+  </data>
+  <data name="Gui_OpenOutputFolder" xml:space="preserve">
+    <value>出力フォルダを開く</value>
+  </data>
+  <data name="Gui_OutputDirFilesystemRoot" xml:space="preserve">
+    <value>出力ディレクトリにドライブやファイルシステムのルートを直接指定することはできません：{0}</value>
+  </data>
+  <data name="Gui_OutputDirOverlapGame" xml:space="preserve">
+    <value>出力ディレクトリはゲームディレクトリと重複・親子関係にすることはできません：{0}</value>
+  </data>
+  <data name="Gui_OutputGroupTitle" xml:space="preserve">
+    <value>2. 出力先</value>
+  </data>
+  <data name="Gui_OutputPreviewInvalidRoot" xml:space="preserve">
+    <value>サブディレクトリプレビュー：出力ルートパスの形式が無効です</value>
+  </data>
+  <data name="Gui_OutputPreviewMany" xml:space="preserve">
+    <value>サブディレクトリプレビュー：{0}、{1} など計 {2} 個のサブディレクトリに出力します</value>
+  </data>
+  <data name="Gui_OutputPreviewNeedGame" xml:space="preserve">
+    <value>サブディレクトリプレビュー：ゲームを 1 つ以上選択してください</value>
+  </data>
+  <data name="Gui_OutputPreviewNeedRoot" xml:space="preserve">
+    <value>サブディレクトリプレビュー：出力ルートディレクトリを指定してください</value>
+  </data>
+  <data name="Gui_OutputPreviewPrefix" xml:space="preserve">
+    <value>サブディレクトリプレビュー：</value>
+  </data>
+  <data name="Gui_OutputPreviewSingle" xml:space="preserve">
+    <value>サブディレクトリプレビュー：{0}{1}</value>
+  </data>
+  <data name="Gui_OutputPreviewTwo" xml:space="preserve">
+    <value>サブディレクトリプレビュー：{0}、{1} の計 2 つのサブディレクトリに出力します</value>
+  </data>
+  <data name="Gui_OutputPreviewWithHint" xml:space="preserve">
+    <value>{0}（ヒント：{1}）</value>
+  </data>
+  <data name="Gui_OutputRootEmpty" xml:space="preserve">
+    <value>出力ルートディレクトリを空にすることはできません</value>
+  </data>
+  <data name="Gui_OutputRootLabel" xml:space="preserve">
+    <value>出力ルート：</value>
+  </data>
+  <data name="Gui_OutputRootNotDetermined" xml:space="preserve">
+    <value>書き込み可能なデータルートディレクトリを特定できませんでした</value>
+  </data>
+  <data name="Gui_PlanDuplicateTarget" xml:space="preserve">
+    <value>選択された複数のゲームが同じ出力ディレクトリに割り当てられています：{0}（重複のチェックを外すか分けて実行してください）</value>
+  </data>
+  <data name="Gui_PlanNoGameSelected" xml:space="preserve">
+    <value>エクスポートするゲームを 1 つ以上選択してください</value>
+  </data>
+  <data name="Gui_PlanOutputRootEmpty" xml:space="preserve">
+    <value>先に有効な出力ルートディレクトリを入力または選択してください</value>
+  </data>
+  <data name="Gui_PlanOutputRootInvalid" xml:space="preserve">
+    <value>出力ルートのパス形式が無効です：{0}（{1}）</value>
+  </data>
+  <data name="Gui_ProcessStartFailed" xml:space="preserve">
+    <value>子プロセスを起動できません：{0}</value>
+  </data>
+  <data name="Gui_ProgressGamePrefix" xml:space="preserve">
+    <value>{0} / {1} 本目：{2}</value>
+  </data>
+  <data name="Gui_ProgressGameWithStep" xml:space="preserve">
+    <value>{0}（{1}）</value>
+  </data>
+  <data name="Gui_ProgressStepOnly" xml:space="preserve">
+    <value>ステップ {0}/{1}</value>
+  </data>
+  <data name="Gui_ProgressStepWithDesc" xml:space="preserve">
+    <value>ステップ {0}/{1}：{2}</value>
+  </data>
+  <data name="Gui_Ready" xml:space="preserve">
+    <value>準備完了</value>
+  </data>
+  <data name="Gui_ReportJsonParseFailed" xml:space="preserve">
+    <value>ビルドレポートの JSON 解析に失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Gui_ReportMissingInDir" xml:space="preserve">
+    <value>出力ディレクトリに *.build.json ビルドレポートが見つかりません：{0}</value>
+  </data>
+  <data name="Gui_ReportNotFound" xml:space="preserve">
+    <value>ビルドレポートファイルが見つかりません：{0}</value>
+  </data>
+  <data name="Gui_ReportReadFailed" xml:space="preserve">
+    <value>ビルドレポートの読み取りに失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Gui_ReportRootNotObject" xml:space="preserve">
+    <value>ビルドレポートのルートは JSON オブジェクトである必要があります：{0}</value>
+  </data>
+  <data name="Gui_Rescan" xml:space="preserve">
+    <value>再スキャン</value>
+  </data>
+  <data name="Gui_ScanSteamFailed" xml:space="preserve">
+    <value>Steam ライブラリのスキャンに失敗しました：{0}。「ゲームフォルダを追加...」から手動で追加してください。</value>
+  </data>
+  <data name="Gui_ScanSteamSecurity" xml:space="preserve">
+    <value>Steam ライブラリのスキャンがセキュリティポリシーにより制限されました：{0}。「ゲームフォルダを追加...」から手動で追加してください。</value>
+  </data>
+  <data name="Gui_ScanSteamUnauthorized" xml:space="preserve">
+    <value>Steam ライブラリまたはレジストリのスキャン時にアクセスが拒否されました：{0}。「ゲームフォルダを追加...」から手動で追加してください。</value>
+  </data>
+  <data name="Gui_ScanningSteam" xml:space="preserve">
+    <value>Steam ライブラリをスキャン中...</value>
+  </data>
+  <data name="Gui_SelectAll" xml:space="preserve">
+    <value>すべて選択</value>
+  </data>
+  <data name="Gui_SelectedDirStillUnwritable" xml:space="preserve">
+    <value>選択したディレクトリには書き込めませんでした（{0}）：{1}。
+
+別の書き込み可能なフォルダを選んで再試行するか、「キャンセル」で終了してください。</value>
+  </data>
+  <data name="Gui_SelectionSummary" xml:space="preserve">
+    <value>{0} / {1} 本のゲームを選択中</value>
+  </data>
+  <data name="Gui_SelfTestAgpFailed" xml:space="preserve">
+    <value>エラー：GUI セルフテストに失敗しました：{0}</value>
+  </data>
+  <data name="Gui_SelfTestCliFound" xml:space="preserve">
+    <value>{0} を検出</value>
+  </data>
+  <data name="Gui_SelfTestCliNotFound" xml:space="preserve">
+    <value>同一ディレクトリに ffpr-export.exe が見つかりません（未パッケージ環境）</value>
+  </data>
+  <data name="Gui_SelfTestConstructedLog" xml:space="preserve">
+    <value>[self-test] MainForm の構築・CreateControl()・初期化が完了しました（MinimumSize={0}）。</value>
+  </data>
+  <data name="Gui_SelfTestConstructingLog" xml:space="preserve">
+    <value>[self-test] MainForm を構築し、CreateControl() と初期化を実行しています...</value>
+  </data>
+  <data name="Gui_SelfTestCoreFailed" xml:space="preserve">
+    <value>GUI コアセルフテストに失敗しました：引数・既定出力先・設定パスの初期化結果が空です</value>
+  </data>
+  <data name="Gui_SelfTestFailureHeader" xml:space="preserve">
+    <value>エラー：GUI セルフテストに失敗しました。</value>
+  </data>
+  <data name="Gui_SelfTestHandleFailed" xml:space="preserve">
+    <value>メインウィンドウのネイティブハンドルが作成されませんでした（IsHandleCreated=false）</value>
+  </data>
+  <data name="Gui_SelfTestLogCreateFailed" xml:space="preserve">
+    <value>ログを作成できませんでした</value>
+  </data>
+  <data name="Gui_SelfTestLogFileLine" xml:space="preserve">
+    <value>ログファイル：{0}</value>
+  </data>
+  <data name="Gui_SelfTestLogPath" xml:space="preserve">
+    <value>ログ：{0}</value>
+  </data>
+  <data name="Gui_SelfTestLogUnavailable" xml:space="preserve">
+    <value>ログ利用不可（{0}）</value>
+  </data>
+  <data name="Gui_SelfTestLogUnavailableLine" xml:space="preserve">
+    <value>ログファイル：利用不可（{0}）</value>
+  </data>
+  <data name="Gui_SelfTestMinWidthFailed" xml:space="preserve">
+    <value>メインウィンドウの最小幅が要件を満たしていません：{0}</value>
+  </data>
+  <data name="Gui_SelfTestMissingCliFallback" xml:space="preserve">
+    <value>同じディレクトリに {0} が見つかりません：{1}</value>
+  </data>
+  <data name="Gui_SelfTestPassedLog" xml:space="preserve">
+    <value>[self-test] セルフテスト合格（{0}；整合性レベル：{1}；データルート：{2}）。</value>
+  </data>
+  <data name="Gui_SelfTestPassedStdout" xml:space="preserve">
+    <value>セルフテスト合格：WinForms MainForm の構築、CreateControl()、コア依存関係の読み込みは正常です（{0}；整合性レベル：{1}；データフォルダ：{2}；{3}）。</value>
+  </data>
+  <data name="Gui_SelfTestUnhandledNonException" xml:space="preserve">
+    <value>エラー：GUI セルフテストで未処理の非 Exception エラーが発生しました。</value>
+  </data>
+  <data name="Gui_SettingsCorruptJson" xml:space="preserve">
+    <value>設定の読み込みに失敗しました：設定ファイルが破損しています（{0} の JSON 解析エラー）：{1}。既定の設定を使用します。</value>
+  </data>
+  <data name="Gui_SettingsEmptyOrInvalid" xml:space="preserve">
+    <value>設定の読み込みに失敗しました：設定ファイルが空または不正な形式です（{0}）。既定の設定を使用します。</value>
+  </data>
+  <data name="Gui_SettingsMigrateReadFailed" xml:space="preserve">
+    <value>旧設定ファイルを検出しましたが読み込みに失敗したため移行できませんでした（{0}）：{1}</value>
+  </data>
+  <data name="Gui_SettingsMigrateRenameFailed" xml:space="preserve">
+    <value>旧設定を新しい場所（{0}）へ保存しましたが、旧ファイルのリネーム（{1}）に失敗しました：{2}。</value>
+  </data>
+  <data name="Gui_SettingsMigrateWriteFailed" xml:space="preserve">
+    <value>旧設定（{0}）を読み込みましたが、新しい場所（{1}）への書き込みに失敗しました：{2}。旧ファイルは保持されています。</value>
+  </data>
+  <data name="Gui_SettingsMigratedInfo" xml:space="preserve">
+    <value>旧設定を {0} から {1} へ移行しました（旧ファイルは {2} にリネーム済み）。</value>
+  </data>
+  <data name="Gui_SettingsPathInvalid" xml:space="preserve">
+    <value>設定の読み込みに失敗しました：設定ファイルパスが無効です（{0}）：{1}。既定の設定を使用します。</value>
+  </data>
+  <data name="Gui_SettingsPathIsDir" xml:space="preserve">
+    <value>設定の読み込みに失敗しました：設定パスがファイルではなくディレクトリを指しています（{0}）。既定の設定を使用します。</value>
+  </data>
+  <data name="Gui_SettingsUnauthorized" xml:space="preserve">
+    <value>設定の読み込みに失敗しました：読み取り権限がありません（{0}）：{1}。既定の設定を使用します。</value>
+  </data>
+  <data name="Gui_StartExport" xml:space="preserve">
+    <value>エクスポート開始</value>
+  </data>
+  <data name="Gui_StartupLoadException" xml:space="preserve">
+    <value>メインウィンドウの初期化中にエラーが発生しました：{0}。手動でゲームフォルダを追加できます。</value>
+  </data>
+  <data name="Gui_StatusDataDir" xml:space="preserve">
+    <value>データフォルダ：{0}</value>
+  </data>
+  <data name="Gui_StatusDataDirNotReady" xml:space="preserve">
+    <value>データフォルダ：（未準備）</value>
+  </data>
+  <data name="Gui_StatusIntegrity" xml:space="preserve">
+    <value>整合性レベル：{0}</value>
+  </data>
+  <data name="Gui_TempRedirectFailedLog" xml:space="preserve">
+    <value>データルート配下の tmp サブディレクトリの設定に失敗しました：{0}</value>
+  </data>
+  <data name="Gui_TempRedirectedLog" xml:space="preserve">
+    <value>プロセス一時ディレクトリをデータルート配下に設定しました：{0}</value>
+  </data>
+  <data name="Gui_VerdictCliFailed" xml:space="preserve">
+    <value>CLI エクスポートが失敗しました（終了コード {0}）。上のログを確認してください</value>
+  </data>
+  <data name="Gui_VerdictCliFailedWithReason" xml:space="preserve">
+    <value>CLI エクスポートが失敗しました（終了コード {0}）：{1}</value>
+  </data>
+  <data name="Gui_VerdictDetailCancelled" xml:space="preserve">
+    <value>✗ キャンセル済み：エクスポート処理がユーザーにより中断されました</value>
+  </data>
+  <data name="Gui_VerdictDetailFailed" xml:space="preserve">
+    <value>✗ エクスポート失敗：{0}</value>
+  </data>
+  <data name="Gui_VerdictDetailUnknown" xml:space="preserve">
+    <value>✗ 不明な照合結果（status={0}）{1}</value>
+  </data>
+  <data name="Gui_VerdictDetailWithNotes" xml:space="preserve">
+    <value>{0} {1}{2}（{3}）</value>
+  </data>
+  <data name="Gui_VerdictErrorUserCancelled" xml:space="preserve">
+    <value>ユーザーがエクスポートをキャンセルしました</value>
+  </data>
+  <data name="Gui_VerdictFileHashOnlyNote" xml:space="preserve">
+    <value>ファイルハッシュのみ相違（コンテンツハッシュ一致）</value>
+  </data>
+  <data name="Gui_VerdictMissingReport" xml:space="preserve">
+    <value>出力ディレクトリから *.build.json を読み取れませんでした：{0}</value>
+  </data>
+  <data name="Gui_VerdictPartialSuffix" xml:space="preserve">
+    <value>（一部アセットに警告あり）</value>
+  </data>
+  <data name="Gui_VerdictPlaceholderIdle" xml:space="preserve">
+    <value>（エクスポート完了後に照合結果がここに表示されます）</value>
+  </data>
+  <data name="Gui_VerdictPlaceholderWaiting" xml:space="preserve">
+    <value>（エクスポート結果を待っています...）</value>
+  </data>
+  <data name="Gui_VerdictReferenceDatePart" xml:space="preserve">
+    <value>比較対象：{0}</value>
+  </data>
+  <data name="Gui_VerdictRegisteredDatePart" xml:space="preserve">
+    <value>登録日：{0}</value>
+  </data>
+  <data name="Gui_VerdictShortCancelled" xml:space="preserve">
+    <value>キャンセル済み</value>
+  </data>
+  <data name="Gui_VerdictShortFailed" xml:space="preserve">
+    <value>エクスポート失敗</value>
+  </data>
+  <data name="Gui_VerdictShortHashMismatch" xml:space="preserve">
+    <value>ハッシュ不一致</value>
+  </data>
+  <data name="Gui_VerdictShortMatched" xml:space="preserve">
+    <value>登録済みビルドと一致</value>
+  </data>
+  <data name="Gui_VerdictShortNewVersion" xml:space="preserve">
+    <value>新バージョン（未登録）</value>
+  </data>
+  <data name="Gui_VerdictShortUnknown" xml:space="preserve">
+    <value>不明な照合結果</value>
+  </data>
+  <data name="Gui_VerdictSourcePart" xml:space="preserve">
+    <value>取得元：{0}</value>
+  </data>
+  <data name="Gui_VerdictStatusNotCompleted" xml:space="preserve">
+    <value>ビルドレポートの状態が completed ではありません（現在：{0}）：{1}</value>
+  </data>
+  <data name="Gui_VerdictTableDiffCountNote" xml:space="preserve">
+    <value>差分テーブル {0} 件</value>
+  </data>
+  <data name="Gui_WindowTitle" xml:space="preserve">
+    <value>FFPR エクスポートツール v{0} — FINAL FANTASY I–VI Pixel Remaster</value>
+  </data>
+  <data name="Integrity_BadBufferLen" xml:space="preserve">
+    <value>TokenIntegrityLevel のバッファ長が不正です（{0}）</value>
+  </data>
+  <data name="Integrity_High" xml:space="preserve">
+    <value>高整合性（High）</value>
+  </data>
+  <data name="Integrity_Low" xml:space="preserve">
+    <value>低整合性（Low）</value>
+  </data>
+  <data name="Integrity_Medium" xml:space="preserve">
+    <value>中整合性（Medium）</value>
+  </data>
+  <data name="Integrity_NonWindows" xml:space="preserve">
+    <value>非 Windows プラットフォーム</value>
+  </data>
+  <data name="Integrity_NullSid" xml:space="preserve">
+    <value>TokenIntegrityLevel の SID が null です</value>
+  </data>
+  <data name="Integrity_NullSubAuth" xml:space="preserve">
+    <value>GetSidSubAuthority が null ポインタを返しました</value>
+  </data>
+  <data name="Integrity_NullSubAuthCount" xml:space="preserve">
+    <value>GetSidSubAuthorityCount が null ポインタを返しました</value>
+  </data>
+  <data name="Integrity_OpenTokenFailed" xml:space="preserve">
+    <value>OpenProcessToken に失敗しました（Win32={0}）</value>
+  </data>
+  <data name="Integrity_QueryLenFailed" xml:space="preserve">
+    <value>GetTokenInformation のサイズ取得に失敗しました（Win32={0}）</value>
+  </data>
+  <data name="Integrity_ReadTokenFailed" xml:space="preserve">
+    <value>GetTokenInformation の読み取りに失敗しました（Win32={0}）</value>
+  </data>
+  <data name="Integrity_System" xml:space="preserve">
+    <value>システム（System）</value>
+  </data>
+  <data name="Integrity_Unknown" xml:space="preserve">
+    <value>不明</value>
+  </data>
+  <data name="Integrity_Untrusted" xml:space="preserve">
+    <value>信頼されていない（Untrusted）</value>
+  </data>
+  <data name="Integrity_ZeroSubAuth" xml:space="preserve">
+    <value>Integrity SID に SubAuthority がありません</value>
+  </data>
+  <data name="Inventory_BundleFailed" xml:space="preserve">
+    <value>bundle の棚卸しに失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Inventory_Completed" xml:space="preserve">
+    <value>[{0}] 棚卸し完了：Unity {1}、Steam buildid {2}、bundle {3} 件、*_Data {4} 件、総アセット {5} 件、失敗 {6} 件、所要時間 {7:F2}s -&gt; {8}</value>
+  </data>
+  <data name="Inventory_DataFileFailed" xml:space="preserve">
+    <value>データファイルの棚卸しに失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="Inventory_MissingBundle" xml:space="preserve">
+    <value>catalog.json に記載された bundle ファイルが見つかりません：{0}</value>
+  </data>
+  <data name="Inventory_UnknownArg" xml:space="preserve">
+    <value>inventory の不明な引数です：{0}</value>
+  </data>
+  <data name="KnownBuilds_ComparisonHeader" xml:space="preserve">
+    <value>既知ビルド照合（取得元：{0}）：{1}</value>
+  </data>
+  <data name="KnownBuilds_DiffAdded" xml:space="preserve">
+    <value>  + {0}（現在 {1} 行、登録ビルドには存在しません）</value>
+  </data>
+  <data name="KnownBuilds_DiffChangedDiffRows" xml:space="preserve">
+    <value>  ~ {0}（行数：登録 {1} -&gt; 現在 {2}、テーブル sha256 が異なります）</value>
+  </data>
+  <data name="KnownBuilds_DiffChangedSameRows" xml:space="preserve">
+    <value>  ~ {0}（行数は同じ {1} 行、テーブル sha256 が異なります）</value>
+  </data>
+  <data name="KnownBuilds_DiffRemoved" xml:space="preserve">
+    <value>  - {0}（登録ビルドは {1} 行、現在は欠落）</value>
+  </data>
+  <data name="KnownBuilds_DiffTableCount" xml:space="preserve">
+    <value>  差分のあるテーブル（{0} 件）：</value>
+  </data>
+  <data name="KnownBuilds_FileShaMismatchOnly" xml:space="preserve">
+    <value>  すべてのテーブル内容は一致しています（content_sha256 同一）。ファイルハッシュ file_sha256 のみ異なります。</value>
+  </data>
+  <data name="KnownBuilds_HashMismatch" xml:space="preserve">
+    <value>ゲームバージョンは登録済みですが、データベースハッシュが異なります</value>
+  </data>
+  <data name="KnownBuilds_InvalidFormatGameArray" xml:space="preserve">
+    <value>既知ビルド一覧のゲーム '{0}' の値は JSON 配列である必要があります：{1}</value>
+  </data>
+  <data name="KnownBuilds_InvalidFormatRoot" xml:space="preserve">
+    <value>既知ビルド一覧の形式が不正です（ゲームごとにグループ化された JSON オブジェクトである必要があります）：{0}</value>
+  </data>
+  <data name="KnownBuilds_Matched" xml:space="preserve">
+    <value>登録済みビルドと一致</value>
+  </data>
+  <data name="KnownBuilds_MatchedRegisteredAt" xml:space="preserve">
+    <value>  一致した登録日：{0}</value>
+  </data>
+  <data name="KnownBuilds_MissingEmbeddedResource" xml:space="preserve">
+    <value>実行ファイル内に埋め込みリソースがありません：{0}</value>
+  </data>
+  <data name="KnownBuilds_NewGameVersion" xml:space="preserve">
+    <value>新しいゲームバージョン（未登録）</value>
+  </data>
+  <data name="KnownBuilds_NoTableHashes" xml:space="preserve">
+    <value>  テーブルごとのハッシュが提供されていないため、テーブル単位の差分を表示できません。</value>
+  </data>
+  <data name="KnownBuilds_NullGameEntries" xml:space="preserve">
+    <value>既知ビルド一覧のゲーム '{0}' の読み込み結果が空です：{1}</value>
+  </data>
+  <data name="KnownBuilds_ParseFailed" xml:space="preserve">
+    <value>既知ビルド一覧の解析に失敗しました（{0}）：{1}</value>
+  </data>
+  <data name="KnownBuilds_ReferenceRegisteredAt" xml:space="preserve">
+    <value>  比較対象の登録日：{0}</value>
+  </data>
+  <data name="Lang_InvalidValue" xml:space="preserve">
+    <value>サポートされていない言語です：{0}（指定可能な値：en、zh-Hans、ja）</value>
+  </data>
+  <data name="Lang_Label" xml:space="preserve">
+    <value>言語：</value>
+  </data>
+  <data name="OutputGuard_ClearedDir" xml:space="preserve">
+    <value>出力ディレクトリを消去しました：{0}（削除ファイル数：{1}）</value>
+  </data>
+  <data name="OutputGuard_ClearingDir" xml:space="preserve">
+    <value>出力ディレクトリを消去します：{0}（ファイル数：{1}）</value>
+  </data>
+  <data name="OutputGuard_DepsRoot" xml:space="preserve">
+    <value>--out に依存ルートディレクトリ {0} を直接指定することはできません：{1}</value>
+  </data>
+  <data name="OutputGuard_DirNotEmpty" xml:space="preserve">
+    <value>出力ディレクトリが空ではありません：{0}。消去して再生成するには --force を指定してください。</value>
+  </data>
+  <data name="OutputGuard_NotOwnDir" xml:space="preserve">
+    <value>{0} は {1} の出力ディレクトリではないため、消去または再利用できません。空のディレクトリを指定するか、手動で整理してから再試行してください。</value>
+  </data>
+  <data name="OutputGuard_OutEmpty" xml:space="preserve">
+    <value>--out を空にすることはできません</value>
+  </data>
+  <data name="OutputGuard_OverlapGame" xml:space="preserve">
+    <value>--out はゲームディレクトリと重複・親子関係にすることはできません：{0}</value>
+  </data>
+  <data name="OutputGuard_PathTraversal" xml:space="preserve">
+    <value>出力先パスがディレクトリ外を指しています：{0}</value>
+  </data>
+  <data name="OutputGuard_PreserveOtherCommand" xml:space="preserve">
+    <value>他のサブコマンドの出力ディレクトリを保持します：{0}/</value>
+  </data>
+  <data name="OutputGuard_ProtectedDepsFfpr" xml:space="preserve">
+    <value>--out に保護対象ディレクトリ {0}/ffpr 自体を指定することはできません：{1}</value>
+  </data>
+  <data name="OutputGuard_ProtectedDepsSubdir" xml:space="preserve">
+    <value>--out に保護対象ディレクトリ {0} またはその配下を指定することはできません：{1}</value>
+  </data>
+  <data name="OutputGuard_ResumeMode" xml:space="preserve">
+    <value>再開モード：既存の出力ディレクトリ {0} を再利用します（エクスポート済みファイルはスキップされます）</value>
+  </data>
+  <data name="OutputGuard_WrongCommand" xml:space="preserve">
+    <value>{0} は {1} {2} の出力ディレクトリのため、{3} で消去または再利用できません。</value>
+  </data>
+  <data name="OutputGuard_WrongGame" xml:space="preserve">
+    <value>{0} は {1} 用の出力ディレクトリのため、{2} には使用できません（別のディレクトリを指定してください）。</value>
+  </data>
+  <data name="PeVersion_DataRvaUnmapped" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：バージョンデータ RVA 0x{1:X} をファイルオフセットに変換できません</value>
+  </data>
+  <data name="PeVersion_FileTooSmall" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：ファイルサイズが小さすぎ、有効な PE ファイルではありません</value>
+  </data>
+  <data name="PeVersion_InvalidOptionalHeaderSize" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：Optional Header のサイズが不正です</value>
+  </data>
+  <data name="PeVersion_InvalidVersionLength" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：バージョンリソース長が不正です（{1} バイト）</value>
+  </data>
+  <data name="PeVersion_MissingMz" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：MZ ヘッダーがありません</value>
+  </data>
+  <data name="PeVersion_MissingPeSignature" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：PE シグネチャがありません</value>
+  </data>
+  <data name="PeVersion_PeOffsetOutOfRange" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：PE ヘッダーのオフセットが範囲外です</value>
+  </data>
+  <data name="PeVersion_ReadOutOfRange" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：オフセット 0x{1:X}（長さ {2}）の読み取りが範囲外です</value>
+  </data>
+  <data name="PeVersion_ResourceRvaUnmapped" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：リソースディレクトリ RVA 0x{1:X} をファイルオフセットに変換できません</value>
+  </data>
+  <data name="PeVersion_SectionTableOutOfRange" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：セクションテーブルが範囲外です</value>
+  </data>
+  <data name="PeVersion_UnexpectedEof" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：ファイルが途中で終了しています</value>
+  </data>
+  <data name="PeVersion_UnseekableStream" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：シーク不可の入力ストリームです</value>
+  </data>
+  <data name="PeVersion_UnsupportedMagic" xml:space="preserve">
+    <value>PE バージョンリソースの解析に失敗しました（{0}）：未対応の PE Optional Header マジック値 0x{1:X4}</value>
+  </data>
+  <data name="Unity_MissingMonoBehaviourBaseTemplate" xml:space="preserve">
+    <value>MonoBehaviour の基本テンプレートが見つかりません（PathId={0}）</value>
+  </data>
+  <data name="Unity_MissingTypeTreeAndCpp2Il" xml:space="preserve">
+    <value>MonoBehaviour に TypeTree がなく、残りの {0} バイトを IL2CPP で逆シリアル化できませんでした（PathId={1}、Script={2}）</value>
+  </data>
+  <data name="Wizard_AdviceDiskSpace" xml:space="preserve">
+    <value>対象ドライブの空き容量が十分にあること、および既存のデータベースファイルが他のアプリで使用中でないことを確認して再試行してください。</value>
+  </data>
+  <data name="Wizard_AdviceGeneric" xml:space="preserve">
+    <value>ゲームディレクトリと出力ディレクトリを確認して再試行してください。詳細ログは CLI で ffpr-export build-db --game "&lt;ゲームディレクトリ&gt;" --keep-json を実行して確認できます。</value>
+  </data>
+  <data name="Wizard_AdviceInvalidData" xml:space="preserve">
+    <value>選択したディレクトリが破損していない FINAL FANTASY I–VI Pixel Remaster のインストールルート（*_Data を含む）であることを確認するか、Steam で整合性を確認して再試行してください。</value>
+  </data>
+  <data name="Wizard_AdviceMissingFiles" xml:space="preserve">
+    <value>ゲームディレクトリが完全で Steam からのダウンロードが完了しているか確認してください。Steam で「ゲームファイルの整合性を確認」を実行してから再試行してください。</value>
+  </data>
+  <data name="Wizard_AdviceOutputOccupied" xml:space="preserve">
+    <value>ウィザードを再実行して空のディレクトリまたは新しい出力ディレクトリを指定するか、対象ディレクトリを手動で整理して再試行してください。</value>
+  </data>
+  <data name="Wizard_AdvicePermission" xml:space="preserve">
+    <value>出力ディレクトリへの書き込み権限を確認するか、デスクトップやドキュメントなど書き込み可能なフォルダを選択して再試行してください。</value>
+  </data>
+  <data name="Wizard_AllOption" xml:space="preserve">
+    <value>  [{0}] すべて（上記の {1} 本を順番に構築）</value>
+  </data>
+  <data name="Wizard_BatchForeignSubdir" xml:space="preserve">
+    <value>エラー：サブディレクトリが空ではなく、{0} が作成したディレクトリでもありません：{1}</value>
+  </data>
+  <data name="Wizard_BatchGameOutputInvalid" xml:space="preserve">
+    <value>エラー：{0} の出力ディレクトリが無効です：{1}。別の出力ルートを選択してください。</value>
+  </data>
+  <data name="Wizard_BatchItemHeader" xml:space="preserve">
+    <value>[{0}/{1}] 構築開始：{2}（{3}）</value>
+  </data>
+  <data name="Wizard_BatchOutputPrompt" xml:space="preserve">
+    <value>Enter キーで既定のルートを使用するか、別の出力ルートパスを貼り付けてください（引用符可）：</value>
+  </data>
+  <data name="Wizard_BatchOverwriteHint" xml:space="preserve">
+    <value>ヒント：一部のゲーム用サブディレクトリに前回の構築結果があります。確認後に自動で上書き再構築します。</value>
+  </data>
+  <data name="Wizard_BatchSubdirItem" xml:space="preserve">
+    <value>  - {0}（{1}） -&gt; {2}</value>
+  </data>
+  <data name="Wizard_BatchSubdirsList" xml:space="preserve">
+    <value>各ゲームはそれぞれ対応するサブディレクトリに出力されます：</value>
+  </data>
+  <data name="Wizard_BuildDbExitCode" xml:space="preserve">
+    <value>build-db コマンドがエラーコード {0} で終了しました</value>
+  </data>
+  <data name="Wizard_BuildFailedLog" xml:space="preserve">
+    <value>エラー：[{0}] 構築に失敗しました：{1}</value>
+  </data>
+  <data name="Wizard_Cancelled" xml:space="preserve">
+    <value>操作をキャンセルしました。</value>
+  </data>
+  <data name="Wizard_ChooseEmptyDir" xml:space="preserve">
+    <value>空のディレクトリまたは新しいディレクトリパスを指定してください。</value>
+  </data>
+  <data name="Wizard_ChooseEmptyRoot" xml:space="preserve">
+    <value>空のディレクトリまたは新しい出力ルートを指定してください。</value>
+  </data>
+  <data name="Wizard_CliHint" xml:space="preserve">
+    <value>ヒント：案内に従って選択すると SQLite データベースを作成できます。CLI の使い方は ffpr-export --help を実行してください。</value>
+  </data>
+  <data name="Wizard_ComparisonMatchedDetail" xml:space="preserve">
+    <value>{0}（登録日：{1}{2}）</value>
+  </data>
+  <data name="Wizard_ComparisonMismatchDetail" xml:space="preserve">
+    <value>{0}（差分テーブル {1} 件{2}）</value>
+  </data>
+  <data name="Wizard_ComparisonNotRead" xml:space="preserve">
+    <value>（ビルドレポートから照合結果を読み取れませんでした）</value>
+  </data>
+  <data name="Wizard_ComparisonWithSource" xml:space="preserve">
+    <value>{0}（取得元：{1}）</value>
+  </data>
+  <data name="Wizard_ConfirmBatchGameDir" xml:space="preserve">
+    <value>     ゲームディレクトリ：{0}</value>
+  </data>
+  <data name="Wizard_ConfirmBatchHeader" xml:space="preserve">
+    <value>  以下の {0} 本のゲームを順番に構築します：</value>
+  </data>
+  <data name="Wizard_ConfirmBatchItem" xml:space="preserve">
+    <value>  {0}. {1}（{2}、ビルド ID：{3}）</value>
+  </data>
+  <data name="Wizard_ConfirmBatchOutputDir" xml:space="preserve">
+    <value>     出力ディレクトリ：{0}{1}</value>
+  </data>
+  <data name="Wizard_ConfirmPrompt" xml:space="preserve">
+    <value>Enter キーで構築を開始します（キャンセルするには n を入力）：</value>
+  </data>
+  <data name="Wizard_ConfirmValidInstallDir" xml:space="preserve">
+    <value>FINAL FANTASY I–VI Pixel Remaster のインストールルート（*_Data フォルダを含む）であることを確認して、もう一度入力してください。</value>
+  </data>
+  <data name="Wizard_DefaultOutputDir" xml:space="preserve">
+    <value>既定の出力ディレクトリ：{0}</value>
+  </data>
+  <data name="Wizard_DefaultOutputRoot" xml:space="preserve">
+    <value>既定の出力ルート：{0}</value>
+  </data>
+  <data name="Wizard_DirNotFound" xml:space="preserve">
+    <value>エラー：ディレクトリが存在しません：{0}。パスを確認して再入力してください。</value>
+  </data>
+  <data name="Wizard_FinalSummaryBatch" xml:space="preserve">
+    <value>一括構築のまとめ（全 {0} 件：成功 {1}、一部警告 {2}、失敗 {3}）：</value>
+  </data>
+  <data name="Wizard_FinalSummarySingle" xml:space="preserve">
+    <value>構築結果のまとめ：</value>
+  </data>
+  <data name="Wizard_ForeignOutputDir" xml:space="preserve">
+    <value>エラー：出力ディレクトリが空ではなく、{0} が作成したディレクトリでもありません：{1}</value>
+  </data>
+  <data name="Wizard_FoundGames" xml:space="preserve">
+    <value>対応ゲームが {0} 本見つかりました：</value>
+  </data>
+  <data name="Wizard_GameIdentified" xml:space="preserve">
+    <value>ゲームを識別しました：{0}（{1}、Steam ビルド ID：{2}）</value>
+  </data>
+  <data name="Wizard_GameListDir" xml:space="preserve">
+    <value>      ディレクトリ：{0}</value>
+  </data>
+  <data name="Wizard_GameListItem" xml:space="preserve">
+    <value>  [{0}] {1}（{2}） | Steam ビルド ID：{3}</value>
+  </data>
+  <data name="Wizard_InvalidConfirmInput" xml:space="preserve">
+    <value>入力が無効です。Enter キーで開始するか、n を入力してキャンセルしてください。</value>
+  </data>
+  <data name="Wizard_InvalidGameChoice" xml:space="preserve">
+    <value>入力が無効です。0 から {0} の番号を入力してください（終了するには q）。</value>
+  </data>
+  <data name="Wizard_InvalidOutputDir" xml:space="preserve">
+    <value>エラー：出力ディレクトリが無効です：{0}。もう一度入力してください。</value>
+  </data>
+  <data name="Wizard_InvalidOutputRoot" xml:space="preserve">
+    <value>エラー：出力ルートのパス形式が無効です：{0}。もう一度入力してください。</value>
+  </data>
+  <data name="Wizard_InvalidPathFormat" xml:space="preserve">
+    <value>エラー：パスの形式が無効です（{0}）。もう一度入力してください。</value>
+  </data>
+  <data name="Wizard_ManualOption" xml:space="preserve">
+    <value>  [0] 別のゲームディレクトリを手動で入力</value>
+  </data>
+  <data name="Wizard_ManualPathPrompt" xml:space="preserve">
+    <value>Steam ゲームディレクトリのパスを貼り付けてください（スペースや引用符付きでも可、空のまま Enter で終了）：</value>
+  </data>
+  <data name="Wizard_NextStep" xml:space="preserve">
+    <value>次の手順：{0}</value>
+  </data>
+  <data name="Wizard_NoGamesFound" xml:space="preserve">
+    <value>ローカルの Steam ライブラリから FINAL FANTASY I–VI Pixel Remaster が見つかりませんでした。</value>
+  </data>
+  <data name="Wizard_OverwriteNoteBatch" xml:space="preserve">
+    <value>（既存ビルドを上書き）</value>
+  </data>
+  <data name="Wizard_OverwriteNoteSingle" xml:space="preserve">
+    <value>（前回の構築結果を上書きします）</value>
+  </data>
+  <data name="Wizard_OwnDirWillOverwrite" xml:space="preserve">
+    <value>ヒント：このディレクトリには前回の構築結果があります。確認後に自動で消去して再構築します。</value>
+  </data>
+  <data name="Wizard_PartialWarningAdvice" xml:space="preserve">
+    <value>一部のアセットで警告またはエラーが発生しました。出力ディレクトリの *.sqlite.build.json を確認するか、CLI で --keep-json を付けて詳細を確認してください。</value>
+  </data>
+  <data name="Wizard_PressEnterToExit" xml:space="preserve">
+    <value>Enter キーを押して終了してください...</value>
+  </data>
+  <data name="Wizard_RangeChoiceHint" xml:space="preserve">
+    <value>1–{0} で単一ゲーム</value>
+  </data>
+  <data name="Wizard_ReportNotRead" xml:space="preserve">
+    <value>（ビルドレポートを読み取れませんでした）</value>
+  </data>
+  <data name="Wizard_ResultContentHash" xml:space="preserve">
+    <value>  コンテンツハッシュ (content_sha256)：{0}</value>
+  </data>
+  <data name="Wizard_ResultDbPath" xml:space="preserve">
+    <value>  データベースパス：{0}</value>
+  </data>
+  <data name="Wizard_ResultError" xml:space="preserve">
+    <value>  エラー：{0}</value>
+  </data>
+  <data name="Wizard_ResultFileHash" xml:space="preserve">
+    <value>  ファイルハッシュ (file_sha256)：{0}</value>
+  </data>
+  <data name="Wizard_ResultHint" xml:space="preserve">
+    <value>  ヒント：{0}</value>
+  </data>
+  <data name="Wizard_ResultKnownBuilds" xml:space="preserve">
+    <value>  known-builds.json 照合：{0}</value>
+  </data>
+  <data name="Wizard_ResultNextStep" xml:space="preserve">
+    <value>  次の手順：{0}</value>
+  </data>
+  <data name="Wizard_ResultStageTimings" xml:space="preserve">
+    <value>  ステージ別所要時間：{0}</value>
+  </data>
+  <data name="Wizard_ResultStatus" xml:space="preserve">
+    <value>  状態：{0}（合計 {1:F2}s）</value>
+  </data>
+  <data name="Wizard_ScanError" xml:space="preserve">
+    <value>ヒント：Steam ライブラリの自動スキャン中に問題が発生したため（{0}）、手動入力に切り替えます。</value>
+  </data>
+  <data name="Wizard_SelectGamePrompt" xml:space="preserve">
+    <value>番号を入力してください（{0}、{1} で全選択、0 で手動入力、q で終了）：</value>
+  </data>
+  <data name="Wizard_SingleChoiceHint" xml:space="preserve">
+    <value>1 でこのゲームを選択</value>
+  </data>
+  <data name="Wizard_SingleOutputPrompt" xml:space="preserve">
+    <value>Enter キーで既定のディレクトリを使用するか、別の出力先パスを貼り付けてください（引用符可）：</value>
+  </data>
+  <data name="Wizard_SourcePart" xml:space="preserve">
+    <value>、取得元：{0}</value>
+  </data>
+  <data name="Wizard_StatusFailed" xml:space="preserve">
+    <value>  状態：失敗（所要時間 {0:F2}s）</value>
+  </data>
+  <data name="Wizard_StatusPartial" xml:space="preserve">
+    <value>完了（一部アセットに警告あり）</value>
+  </data>
+  <data name="Wizard_StatusSuccess" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="Wizard_Step1Header" xml:space="preserve">
+    <value>[ステップ 1/4] Steam とインストール済みの FF1–FF6 を自動検索しています...</value>
+  </data>
+  <data name="Wizard_Step2BatchHeader" xml:space="preserve">
+    <value>[ステップ 2/4] 一括出力のルートディレクトリを設定</value>
+  </data>
+  <data name="Wizard_Step2SingleHeader" xml:space="preserve">
+    <value>[ステップ 2/4] 出力ディレクトリを設定</value>
+  </data>
+  <data name="Wizard_Step3Header" xml:space="preserve">
+    <value>[ステップ 3/4] 構築内容の確認</value>
+  </data>
+  <data name="Wizard_Step4Header" xml:space="preserve">
+    <value>[ステップ 4/4] エクスポートとデータベース構築を開始します...</value>
+  </data>
+  <data name="Wizard_SummaryBuildId" xml:space="preserve">
+    <value>  Steam ビルド ID：{0}</value>
+  </data>
+  <data name="Wizard_SummaryGame" xml:space="preserve">
+    <value>  ゲーム：{0}（{1}）</value>
+  </data>
+  <data name="Wizard_SummaryGameDir" xml:space="preserve">
+    <value>  ゲームディレクトリ：{0}</value>
+  </data>
+  <data name="Wizard_SummaryOutputDir" xml:space="preserve">
+    <value>  出力ディレクトリ：{0}{1}</value>
+  </data>
+  <data name="Wizard_TimingDbBuild" xml:space="preserve">
+    <value>DB 構築</value>
+  </data>
+  <data name="Wizard_TimingDbHash" xml:space="preserve">
+    <value>ハッシュ</value>
+  </data>
+  <data name="Wizard_TimingExport" xml:space="preserve">
+    <value>エクスポート</value>
+  </data>
+  <data name="Wizard_TimingGameVersion" xml:space="preserve">
+    <value>バージョン識別</value>
+  </data>
+  <data name="Wizard_TimingInventory" xml:space="preserve">
+    <value>棚卸し</value>
+  </data>
+  <data name="Wizard_Title" xml:space="preserve">
+    <value>{0} {1} — FINAL FANTASY I–VI Pixel Remaster エクスポート＆構築ウィザード</value>
+  </data>
+  <data name="Wizard_UnexpectedError" xml:space="preserve">
+    <value>エラー：ウィザード実行中に予期しない例外が発生しました：{0}</value>
+  </data>
+</root>

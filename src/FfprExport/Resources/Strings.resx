@@ -1,0 +1,1659 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Agp_AllUnixCandidatesFailed" xml:space="preserve">
+    <value>All default candidate directories are not writable</value>
+  </data>
+  <data name="Agp_AllWinCandidatesFailed" xml:space="preserve">
+    <value>All default candidate directories including %LOCALAPPDATA% are not writable</value>
+  </data>
+  <data name="Agp_BannerFallback" xml:space="preserve">
+    <value>Data folder: {0} (Reason: {1})</value>
+  </data>
+  <data name="Agp_BannerLowIlLocalLow" xml:space="preserve">
+    <value>Data folder: {0} (Reason: running at Low integrity level, so %LOCALAPPDATA% is not writable; using LocalLow instead — everything will work normally). This usually happens when the zip carries a Mark of the Web / Low-IL flag; recommended fix: right-click the zip -&gt; Properties -&gt; Unblock, then re-extract with File Explorer.</value>
+  </data>
+  <data name="Agp_BannerLowIlOther" xml:space="preserve">
+    <value>Data folder: {0} (Note: running at Low integrity level, usually caused by a Low-IL flag on extracted files; recommended fix: right-click the zip -&gt; Properties -&gt; Unblock, then re-extract with File Explorer. The current folder works normally.)</value>
+  </data>
+  <data name="Agp_BasePathNullOrEmpty" xml:space="preserve">
+    <value>Base path is empty or contains NUL characters</value>
+  </data>
+  <data name="Agp_CliAllFailedGuidance" xml:space="preserve">
+    <value>Set environment variable {0} to a writable folder and retry. If blocked by antivirus or Controlled Folder Access, add this tool to your allowlist. As a last resort, check folder permissions or run as administrator.</value>
+  </data>
+  <data name="Agp_CliAllFailedIntro" xml:space="preserve">
+    <value>Could not find a writable data root directory; all candidate directories failed</value>
+  </data>
+  <data name="Agp_CliAllFailedLowIl" xml:space="preserve">
+    <value>The process is running at Low integrity level; right-click the zip -&gt; Properties -&gt; Unblock, then re-extract with File Explorer. </value>
+  </data>
+  <data name="Agp_CliAllFailedNoDetails" xml:space="preserve">
+    <value>{0}. </value>
+  </data>
+  <data name="Agp_CliAllFailedWithDetails" xml:space="preserve">
+    <value>{0} ({1}). </value>
+  </data>
+  <data name="Agp_CombineLocalAppDataFailed" xml:space="preserve">
+    <value>Failed to combine %LOCALAPPDATA%\{0}: {1}</value>
+  </data>
+  <data name="Agp_CombineLocalLowFailed" xml:space="preserve">
+    <value>Failed to combine LocalLow\{0}: {1}</value>
+  </data>
+  <data name="Agp_CombineLocalShareFailed" xml:space="preserve">
+    <value>Failed to combine ~/.local/share/{0}: {1}</value>
+  </data>
+  <data name="Agp_CombinePortableFailed" xml:space="preserve">
+    <value>Failed to combine portable folder {0}: {1}</value>
+  </data>
+  <data name="Agp_CombineUserProfileFailed" xml:space="preserve">
+    <value>Failed to combine user profile folder {0}: {1}</value>
+  </data>
+  <data name="Agp_CombineXdgFailed" xml:space="preserve">
+    <value>Failed to combine ${0}/{1}: {2}</value>
+  </data>
+  <data name="Agp_CrossPlatformNoProbe" xml:space="preserve">
+    <value>Cross-platform path simulation did not inject a writability probe</value>
+  </data>
+  <data name="Agp_DirNotWritable" xml:space="preserve">
+    <value>directory is not writable</value>
+  </data>
+  <data name="Agp_EmptyBaseOrTarget" xml:space="preserve">
+    <value>Executable directory or target path is empty</value>
+  </data>
+  <data name="Agp_EmptyDirPath" xml:space="preserve">
+    <value>Directory path is empty</value>
+  </data>
+  <data name="Agp_EnvDirNotWritable" xml:space="preserve">
+    <value>The directory specified by {0} is not writable ({1}): {2}. Check permissions on that directory, or change/unset {0} and try again.</value>
+  </data>
+  <data name="Agp_EnvPathInvalid" xml:space="preserve">
+    <value>The path specified by {0} is invalid ({1}): {2}. Fix or unset {0} and try again.</value>
+  </data>
+  <data name="Agp_GuiAllFailedAttempted" xml:space="preserve">
+    <value>Attempted directories: {0}</value>
+  </data>
+  <data name="Agp_GuiAllFailedFolderPrompt" xml:space="preserve">
+    <value>Click OK to open 'Choose Folder...' and pick a writable directory for app data (the path will be saved to agp-location.txt next to the executable if possible).</value>
+  </data>
+  <data name="Agp_GuiAllFailedIntro" xml:space="preserve">
+    <value>Could not find a writable data root directory (write access is required for logs, settings, and default exports).</value>
+  </data>
+  <data name="Agp_GuiAllFailedLastResort" xml:space="preserve">
+    <value>If choosing another folder still fails, as a last resort check folder permissions or run as administrator.</value>
+  </data>
+  <data name="Agp_GuiAllFailedLowIl1" xml:space="preserve">
+    <value>Detected that the app is running at Low integrity level, usually caused by a Low-IL flag on extracted files.</value>
+  </data>
+  <data name="Agp_GuiAllFailedLowIl2" xml:space="preserve">
+    <value>Recommended fix: right-click the zip -&gt; Properties -&gt; Unblock, then re-extract with File Explorer.</value>
+  </data>
+  <data name="Agp_GuiAllFailedSecurity" xml:space="preserve">
+    <value>Access may be blocked by security software or Windows Controlled Folder Access. Add this tool to your allowlist or choose another writable folder.</value>
+  </data>
+  <data name="Agp_ListSeparator" xml:space="preserve">
+    <value>; </value>
+  </data>
+  <data name="Agp_LocationFilePathInvalid" xml:space="preserve">
+    <value>Invalid path in {0}: {1}</value>
+  </data>
+  <data name="Agp_NoBaseDir" xml:space="preserve">
+    <value>Could not determine executable directory</value>
+  </data>
+  <data name="Agp_NoHomeDir" xml:space="preserve">
+    <value>HOME is unset and the OS did not return a user home directory</value>
+  </data>
+  <data name="Agp_NoLocalAppData" xml:space="preserve">
+    <value>OS did not return LocalApplicationData and LOCALAPPDATA is unset</value>
+  </data>
+  <data name="Agp_NoLocalLowDir" xml:space="preserve">
+    <value>Could not determine Windows LocalLow directory</value>
+  </data>
+  <data name="Agp_NoUserProfile" xml:space="preserve">
+    <value>OS did not return UserProfile and USERPROFILE is unset</value>
+  </data>
+  <data name="Agp_PathNullOrEmpty" xml:space="preserve">
+    <value>Path is empty or contains NUL characters</value>
+  </data>
+  <data name="Agp_ReadEnvFailed" xml:space="preserve">
+    <value>Failed to read environment variable {0}: {1}</value>
+  </data>
+  <data name="Agp_ReasonDefaultUnwritable" xml:space="preserve">
+    <value>Default data directory is not writable</value>
+  </data>
+  <data name="Agp_ReasonLocalAppDataUnwritable" xml:space="preserve">
+    <value>%LOCALAPPDATA% is not writable</value>
+  </data>
+  <data name="Agp_RootNotReady" xml:space="preserve">
+    <value>Data root directory is not ready</value>
+  </data>
+  <data name="Agp_UnwritableShort" xml:space="preserve">
+    <value>not writable</value>
+  </data>
+  <data name="Asset_ContainerPathEmpty" xml:space="preserve">
+    <value>Container path mapped to an empty relative path: {0}</value>
+  </data>
+  <data name="Asset_ContainerPathTraversal" xml:space="preserve">
+    <value>Container path contains invalid traversal segment: {0}</value>
+  </data>
+  <data name="BuildDb_CleanedTempJson" xml:space="preserve">
+    <value>[{0}] Cleaned up temporary export directory: {1} ({2} ms)</value>
+  </data>
+  <data name="BuildDb_ClearingOutput" xml:space="preserve">
+    <value>Clearing output directory: {0} ({1} files)</value>
+  </data>
+  <data name="BuildDb_Completed" xml:space="preserve">
+    <value>[{0}] Build complete: {1} (report: {2}, total {3:F2}s)</value>
+  </data>
+  <data name="BuildDb_DbBuildFailed" xml:space="preserve">
+    <value>Failed to run db build (database: {0}, exit code: {1}): {2}</value>
+  </data>
+  <data name="BuildDb_DbFileMissing" xml:space="preserve">
+    <value>db build completed without creating the database file: {0}</value>
+  </data>
+  <data name="BuildDb_DbHashFailed" xml:space="preserve">
+    <value>Failed to run db hash (database: {0}, exit code: {1}): {2}</value>
+  </data>
+  <data name="BuildDb_DbHashesInfo" xml:space="preserve">
+    <value>[{0}] Database hashes: file_sha256={1}, content_sha256={2} ({3} tables)</value>
+  </data>
+  <data name="BuildDb_DbSubcommandUnavailableForBuild" xml:space="preserve">
+    <value>Database build failed: this build does not include the db subcommand.</value>
+  </data>
+  <data name="BuildDb_DbSubcommandUnavailableForHash" xml:space="preserve">
+    <value>Database hashing failed: this build does not include the db subcommand.</value>
+  </data>
+  <data name="BuildDb_FingerprintInfo" xml:space="preserve">
+    <value>[{0}] Resource fingerprint: {1} (catalog.json + {2} bundles, {3} bytes hashed in {4} ms)</value>
+  </data>
+  <data name="BuildDb_GameInfo" xml:space="preserve">
+    <value>[{0}] Game: {1} (AppID={2}, Unity {3})</value>
+  </data>
+  <data name="BuildDb_HashJsonMissingFields" xml:space="preserve">
+    <value>JSON returned by db hash is missing required fields (file_sha256/content_sha256/tables): {0}</value>
+  </data>
+  <data name="BuildDb_HelpText" xml:space="preserve">
+    <value>Usage:
+  ffpr-export build-db --game "&lt;Steam game dir&gt;" [--out &lt;dir&gt;] [--steam-buildid &lt;id&gt;] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
+
+Options:
+  --game &lt;dir&gt;             Steam game installation directory (auto-detects FF1–FF6)
+  --out &lt;dir&gt;              Output directory (default: %LOCALAPPDATA%\agp\ffpr-export\output\&lt;ffN&gt;-&lt;Steam buildid&gt;, overridable via AGP_HOME)
+  --steam-buildid &lt;id&gt;     Manually specify Steam Build ID when appmanifest_&lt;appid&gt;.acf cannot be read
+  --keep-json              Keep the intermediate &lt;out&gt;/json/ export directory (removed automatically by default)
+  --jobs &lt;N&gt;               Parallel worker threads (default: min(CPU cores, 8))
+  --force                  Clear an existing build-db output directory before rebuilding
+  --progress-json          Emit machine-readable @@progress JSON lines alongside human-readable logs
+  --lang &lt;code&gt;            Display language: en (default), zh-Hans, or ja (also configurable via AGP_LANG)
+  --help                   Show this help message</value>
+  </data>
+  <data name="BuildDb_MissingGameArg" xml:space="preserve">
+    <value>build-db requires --game &lt;Steam game directory&gt;</value>
+  </data>
+  <data name="BuildDb_NotOwnDirectory" xml:space="preserve">
+    <value>{0} is not an output directory created by {1}; refusing to clear. Choose an empty directory or clean it manually.</value>
+  </data>
+  <data name="BuildDb_OutputNotEmpty" xml:space="preserve">
+    <value>Output directory is not empty: {0}. Pass --force to clear and rebuild.</value>
+  </data>
+  <data name="BuildDb_ParseHashJsonFailed" xml:space="preserve">
+    <value>Failed to parse JSON output from db hash (database: {0}): {1}</value>
+  </data>
+  <data name="BuildDb_Step1" xml:space="preserve">
+    <value>==&gt; [{0}] Step 1/6: Identifying game version and resource fingerprint</value>
+  </data>
+  <data name="BuildDb_Step2" xml:space="preserve">
+    <value>==&gt; [{0}] Step 2/6: Running in-process inventory and export</value>
+  </data>
+  <data name="BuildDb_Step3" xml:space="preserve">
+    <value>==&gt; [{0}] Step 3/6: Running in-process db build to create {1}</value>
+  </data>
+  <data name="BuildDb_Step4" xml:space="preserve">
+    <value>==&gt; [{0}] Step 4/6: Running in-process db hash --json to compute database hashes</value>
+  </data>
+  <data name="BuildDb_Step5" xml:space="preserve">
+    <value>==&gt; [{0}] Step 5/6: Comparing against known-builds.json</value>
+  </data>
+  <data name="BuildDb_Step6" xml:space="preserve">
+    <value>==&gt; [{0}] Step 6/6: Writing build report {1}</value>
+  </data>
+  <data name="BuildDb_UnknownArg" xml:space="preserve">
+    <value>Unknown argument for build-db: {0}</value>
+  </data>
+  <data name="BuildDb_UnknownCommand" xml:space="preserve">
+    <value>unknown command</value>
+  </data>
+  <data name="BuildDb_VersionInfo" xml:space="preserve">
+    <value>[{0}] Steam Build ID: {1} (source: {2}); exe version: FileVersion={3}, ProductVersion={4}</value>
+  </data>
+  <data name="BuildDb_WrongCommandDirectory" xml:space="preserve">
+    <value>{0} is an output directory of '{1} {2}' and cannot be cleared by build-db.</value>
+  </data>
+  <data name="Catalog_NotFound" xml:space="preserve">
+    <value>Addressables catalog file not found: {0}</value>
+  </data>
+  <data name="Cli_HelpText" xml:space="preserve">
+    <value>{0} {1} — FINAL FANTASY I–VI Pixel Remaster asset inventory, export, and SQLite build tool
+
+Usage:
+  ffpr-export build-db  --game &lt;Steam game dir&gt; [--out &lt;output dir&gt;] [--steam-buildid &lt;id&gt;] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
+  ffpr-export inventory --game &lt;Steam game dir&gt; [--out &lt;output dir&gt;] [--jobs N] [--force] [--lang en|zh-Hans|ja]
+  ffpr-export export    --game &lt;Steam game dir&gt; [--out &lt;output dir&gt;] [--jobs N] [--force] [--lang en|zh-Hans|ja]
+  ffpr-export db        &lt;build|hash|stats|sql&gt; ... [--lang en|zh-Hans|ja]
+
+Options:
+  --game &lt;dir&gt;      Steam game installation directory (auto-detects FF1–FF6, Unity version, and Steam buildid)
+  --out &lt;dir&gt;       Output directory (build-db defaults to %LOCALAPPDATA%\agp\ffpr-export\output\&lt;ffN&gt;-&lt;Steam buildid&gt;, overridable via AGP_HOME; inventory/export default to .deps/ffpr/&lt;ffN&gt;/...)
+  --jobs &lt;N&gt;        Parallel worker threads (default: min(CPU cores, 8))
+  --force           Clear an existing output directory (only allowed for directories containing a matching ffpr-export manifest.json)
+  --lang &lt;code&gt;     Display language: en (default), zh-Hans, or ja (also configurable via AGP_LANG)
+  --progress-json   Emit machine-readable @@progress JSON lines (build-db only, used by the GUI)
+  --version         Print tool and AssetsTools.NET versions
+  --help            Show this help message</value>
+  </data>
+  <data name="Cli_JobsMustBePositive" xml:space="preserve">
+    <value>--jobs must be a positive integer: {0}</value>
+  </data>
+  <data name="Cli_OptionRequiresValue" xml:space="preserve">
+    <value>Option {0} requires a value</value>
+  </data>
+  <data name="Cli_UnknownSubcommand" xml:space="preserve">
+    <value>Unknown subcommand: {0}. Available commands: build-db, inventory, export, db</value>
+  </data>
+  <data name="Common_ErrorPrefix" xml:space="preserve">
+    <value>Error: {0}</value>
+  </data>
+  <data name="Common_InfoPrefix" xml:space="preserve">
+    <value>Info: {0}</value>
+  </data>
+  <data name="Common_None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Common_NoneParen" xml:space="preserve">
+    <value>(None)</value>
+  </data>
+  <data name="Common_Null" xml:space="preserve">
+    <value>null</value>
+  </data>
+  <data name="Common_ReadFailed" xml:space="preserve">
+    <value>&lt;read failed: {0}&gt;</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Common_UnknownError" xml:space="preserve">
+    <value>Unknown error</value>
+  </data>
+  <data name="Common_WarningPrefix" xml:space="preserve">
+    <value>Warning: {0}</value>
+  </data>
+  <data name="Db_BuildComplete" xml:space="preserve">
+    <value>Build complete: {0} (game {1}, schema v{2}, SQLite {3}, {4}, {5} ms)</value>
+  </data>
+  <data name="Db_BuildContentHash" xml:space="preserve">
+    <value>Content hash (content_sha256): {0}</value>
+  </data>
+  <data name="Db_BuildFileHash" xml:space="preserve">
+    <value>File hash (file_sha256): {0}</value>
+  </data>
+  <data name="Db_BuildIssuesCount" xml:space="preserve">
+    <value>Build issues (build_issue): {0} total</value>
+  </data>
+  <data name="Db_BuildIssuesZero" xml:space="preserve">
+    <value>Build issues (build_issue): 0</value>
+  </data>
+  <data name="Db_BuildManifest" xml:space="preserve">
+    <value>Manifest: {0}</value>
+  </data>
+  <data name="Db_BuildMissingExport" xml:space="preserve">
+    <value>db build requires --export &lt;export directory&gt;</value>
+  </data>
+  <data name="Db_BuildMissingOut" xml:space="preserve">
+    <value>db build requires --out &lt;database file path&gt;</value>
+  </data>
+  <data name="Db_BuildStageNote" xml:space="preserve">
+    <value>  note={0}</value>
+  </data>
+  <data name="Db_BuildStageReport" xml:space="preserve">
+    <value>Stage report:</value>
+  </data>
+  <data name="Db_BuildUnknownArg" xml:space="preserve">
+    <value>Unknown argument for db build: {0}</value>
+  </data>
+  <data name="Db_ExportDirNotFound" xml:space="preserve">
+    <value>Export directory does not exist: {0}</value>
+  </data>
+  <data name="Db_FileNotFound" xml:space="preserve">
+    <value>Database file does not exist: {0}</value>
+  </data>
+  <data name="Db_GridBlobTooShort" xml:space="preserve">
+    <value>Grid layer binary blob is too short: {0} bytes (expected at least {1} bytes)</value>
+  </data>
+  <data name="Db_GridCoordOutOfRange" xml:space="preserve">
+    <value>Grid coordinates out of bounds: ({0}, {1}) is outside {2}x{3}</value>
+  </data>
+  <data name="Db_HashDatabase" xml:space="preserve">
+    <value>Database: {0}</value>
+  </data>
+  <data name="Db_HashExtraPositional" xml:space="preserve">
+    <value>Unexpected positional argument for db hash: {0}</value>
+  </data>
+  <data name="Db_HashFormat" xml:space="preserve">
+    <value>Hash format: v{0} (schema v{1}, SQLite {2})</value>
+  </data>
+  <data name="Db_HashMissingDb" xml:space="preserve">
+    <value>db hash requires a &lt;database&gt; path argument</value>
+  </data>
+  <data name="Db_HashTablesHeader" xml:space="preserve">
+    <value>Ordinary table hashes ({0} tables):</value>
+  </data>
+  <data name="Db_HashUnknownArg" xml:space="preserve">
+    <value>Unknown argument for db hash: {0}</value>
+  </data>
+  <data name="Db_HelpText" xml:space="preserve">
+    <value>ffpr-export db — FINAL FANTASY I–VI Pixel Remaster SQLite database build and read-only query tool
+
+Usage:
+  ffpr-export db build --export &lt;.deps/ffpr/ffN/export&gt; --out &lt;ffN.sqlite&gt; [--jobs N] [--lang en|zh-Hans|ja]
+  ffpr-export db hash  &lt;database&gt; [--json] [--lang en|zh-Hans|ja]
+  ffpr-export db stats &lt;database&gt; [--lang en|zh-Hans|ja]
+  ffpr-export db sql   &lt;database&gt; "&lt;SELECT ...&gt;" [--lang en|zh-Hans|ja]</value>
+  </data>
+  <data name="Db_MissingOutArg" xml:space="preserve">
+    <value>Missing --out &lt;database file path&gt; argument</value>
+  </data>
+  <data name="Db_OutIsDirectory" xml:space="preserve">
+    <value>--out must be a file path, not an existing directory: {0}</value>
+  </data>
+  <data name="Db_OutProtectedDir" xml:space="preserve">
+    <value>--out cannot write into protected directory {0}/{1}: {2}</value>
+  </data>
+  <data name="Db_SchemaVersionMismatch" xml:space="preserve">
+    <value>Database schema version mismatch (file: {0}, expected v{1}, actual v{2}); please rebuild the database.</value>
+  </data>
+  <data name="Db_SqlAllowedStartOnly" xml:space="preserve">
+    <value>Read-only query only permits SELECT / WITH / EXPLAIN / VALUES statements; received: {0}</value>
+  </data>
+  <data name="Db_SqlEmpty" xml:space="preserve">
+    <value>SQL query cannot be empty</value>
+  </data>
+  <data name="Db_SqlExtraPositional" xml:space="preserve">
+    <value>Unexpected positional argument for db sql: {0}</value>
+  </data>
+  <data name="Db_SqlForbiddenKeyword" xml:space="preserve">
+    <value>Rejected non-read-only SQL statement: contains disallowed keyword {0}</value>
+  </data>
+  <data name="Db_SqlMissingDb" xml:space="preserve">
+    <value>db sql requires a &lt;database&gt; path argument</value>
+  </data>
+  <data name="Db_SqlMissingQuery" xml:space="preserve">
+    <value>db sql requires a read-only SQL query argument</value>
+  </data>
+  <data name="Db_SqlMultiStatement" xml:space="preserve">
+    <value>Read-only query allows only a single SQL statement; multiple statements are rejected</value>
+  </data>
+  <data name="Db_SqlNoExecutable" xml:space="preserve">
+    <value>SQL query contains no executable statement</value>
+  </data>
+  <data name="Db_SqlUnknownArg" xml:space="preserve">
+    <value>Unknown argument for db sql: {0}</value>
+  </data>
+  <data name="Db_SqliteVersionNull" xml:space="preserve">
+    <value>SELECT sqlite_version() returned null</value>
+  </data>
+  <data name="Db_StageFailed" xml:space="preserve">
+    <value>Build stage '{0}' failed: {1}</value>
+  </data>
+  <data name="Db_StatsAreaRow" xml:space="preserve">
+    <value>  {0,-14} {1,10} ({2} tables)</value>
+  </data>
+  <data name="Db_StatsAreaSummaryHeader" xml:space="preserve">
+    <value>Row counts by area:</value>
+  </data>
+  <data name="Db_StatsExtraPositional" xml:space="preserve">
+    <value>Unexpected positional argument for db stats: {0}</value>
+  </data>
+  <data name="Db_StatsFileSize" xml:space="preserve">
+    <value>File size: {0} bytes ({1}), SQLite {2}</value>
+  </data>
+  <data name="Db_StatsMetaHeader" xml:space="preserve">
+    <value>Metadata (meta):</value>
+  </data>
+  <data name="Db_StatsMissingDb" xml:space="preserve">
+    <value>db stats requires a &lt;database&gt; path argument</value>
+  </data>
+  <data name="Db_StatsTableRowsHeader" xml:space="preserve">
+    <value>Table row counts:</value>
+  </data>
+  <data name="Db_StatsUnknownArg" xml:space="preserve">
+    <value>Unknown argument for db stats: {0}</value>
+  </data>
+  <data name="Db_UnknownSubcommand" xml:space="preserve">
+    <value>Unknown db subcommand: {0}. Available subcommands: build, hash, stats, sql</value>
+  </data>
+  <data name="Db_UnsupportedCanonicalType" xml:space="preserve">
+    <value>Unsupported SQLite value type for canonical content hashing: {0}</value>
+  </data>
+  <data name="Db_UnsupportedGridEncoding" xml:space="preserve">
+    <value>Unsupported map grid encoding: {0}</value>
+  </data>
+  <data name="Db_WriteFixtureCreated" xml:space="preserve">
+    <value>Generated synthetic export directory: {0}</value>
+  </data>
+  <data name="Db_WriteFixtureDirNotEmpty" xml:space="preserve">
+    <value>Synthetic fixture output directory is not empty: {0}</value>
+  </data>
+  <data name="Db_WriteFixtureMissingOut" xml:space="preserve">
+    <value>db write-fixture requires --out &lt;directory&gt;</value>
+  </data>
+  <data name="Db_WriteFixtureUnknownArg" xml:space="preserve">
+    <value>Unknown argument for db write-fixture: {0}</value>
+  </data>
+  <data name="Export_BundleFailed" xml:space="preserve">
+    <value>Export failed ({0}): {1}</value>
+  </data>
+  <data name="Export_BundleOpenFailed" xml:space="preserve">
+    <value>Failed to open or export bundle {0}: {1}</value>
+  </data>
+  <data name="Export_Completed" xml:space="preserve">
+    <value>[{0}] Export complete: {1} exported ({2} new, {3} resumed), {4} skipped, {5} failed, {6} files written ({7} resumed), {8} bytes output, MonoBehaviour(TypeTree={9}, Cpp2IL={10}, BaseOnly={11}), {12:F2}s -&gt; {13}</value>
+  </data>
+  <data name="Export_DataFileOpenFailed" xml:space="preserve">
+    <value>Failed to open or export data file {0}: {1}</value>
+  </data>
+  <data name="Export_DataTextAssetFailed" xml:space="preserve">
+    <value>Failed to export data TextAsset {0} (PathId={1}): {2}</value>
+  </data>
+  <data name="Export_MissingBundle" xml:space="preserve">
+    <value>Bundle file referenced by catalog.json does not exist on disk: {0}</value>
+  </data>
+  <data name="Export_MonoBehaviourFailed" xml:space="preserve">
+    <value>Failed to export MonoBehaviour {0} (PathId={1}): {2}</value>
+  </data>
+  <data name="Export_StandaloneMonoBehaviourFailed" xml:space="preserve">
+    <value>Failed to export MonoBehaviour {0} ({1}): {2}</value>
+  </data>
+  <data name="Export_TextAssetFailed" xml:space="preserve">
+    <value>Failed to export TextAsset {0} ({1}): {2}</value>
+  </data>
+  <data name="Export_UnknownArg" xml:space="preserve">
+    <value>Unknown argument for export: {0}</value>
+  </data>
+  <data name="GameDetector_DirNotFound" xml:space="preserve">
+    <value>Game directory does not exist: {0}</value>
+  </data>
+  <data name="GameDetector_MissingDataDir" xml:space="preserve">
+    <value>Recognized {0} ({1}), but the data directory is missing: {2}</value>
+  </data>
+  <data name="GameDetector_MissingGameArg" xml:space="preserve">
+    <value>Missing --game &lt;Steam game directory&gt; argument</value>
+  </data>
+  <data name="GameDetector_UnityVersionNotFound" xml:space="preserve">
+    <value>Could not read Unity version from asset file headers (data directory: {0})</value>
+  </data>
+  <data name="GameDetector_UnrecognizedDir" xml:space="preserve">
+    <value>Could not identify a FINAL FANTASY I–VI Pixel Remaster game in directory (no known exe or *_Data folder found): {0}</value>
+  </data>
+  <data name="GameVersion_BinaryNotFound" xml:space="preserve">
+    <value>Warning: {0} was not found; its SHA-256 hash will be recorded as null.</value>
+  </data>
+  <data name="GameVersion_ExeNotFound" xml:space="preserve">
+    <value>Warning: Game executable {0} was not found; exe version metadata will be recorded as null.</value>
+  </data>
+  <data name="GameVersion_FingerprintMissingCatalog" xml:space="preserve">
+    <value>Failed to compute resource fingerprint: missing catalog file: {0}</value>
+  </data>
+  <data name="GameVersion_FingerprintMissingDataDir" xml:space="preserve">
+    <value>Failed to compute resource fingerprint: data directory does not exist: {0}</value>
+  </data>
+  <data name="GameVersion_IgnoreManualBuildId" xml:space="preserve">
+    <value>Info: Read buildid={0} from {1}; ignoring --steam-buildid {2}</value>
+  </data>
+  <data name="GameVersion_ManifestMissingBuildId" xml:space="preserve">
+    <value>Warning: {0} has no buildid and --steam-buildid was not provided; Steam build ID will be recorded as null.</value>
+  </data>
+  <data name="GameVersion_NoManifestNoManualBuildId" xml:space="preserve">
+    <value>Warning: {0} was not found (checked two parent directories up) and --steam-buildid was not provided; Steam build ID will be recorded as null.</value>
+  </data>
+  <data name="GameVersion_ReadManifestFailed" xml:space="preserve">
+    <value>Failed to read Steam manifest ({0}): {1}</value>
+  </data>
+  <data name="Gui_AddGameFolder" xml:space="preserve">
+    <value>Add game folder...</value>
+  </data>
+  <data name="Gui_AgpExplicitEnvFailedFallback" xml:space="preserve">
+    <value>The directory specified by environment variable {0} is not writable. Please change or unset it and try again.</value>
+  </data>
+  <data name="Gui_ArgGameDirEmpty" xml:space="preserve">
+    <value>Game directory cannot be empty</value>
+  </data>
+  <data name="Gui_ArgOutputDirEmpty" xml:space="preserve">
+    <value>Output directory cannot be empty</value>
+  </data>
+  <data name="Gui_BatchClearForeignErrorLog" xml:space="preserve">
+    <value>Error: Failed to clear directory ({0}): {1}</value>
+  </data>
+  <data name="Gui_BatchClearForeignReadError" xml:space="preserve">
+    <value>Failed to clear existing directory: {0}</value>
+  </data>
+  <data name="Gui_BatchClearingForeignLog" xml:space="preserve">
+    <value>Clearing confirmed directory before overwrite: {0}</value>
+  </data>
+  <data name="Gui_BatchFinishedSummary" xml:space="preserve">
+    <value>All exports finished ({0} total: {1} passed, {2} hash mismatch, {3} failed)</value>
+  </data>
+  <data name="Gui_BatchForceHintLog" xml:space="preserve">
+    <value>Info: Output directory contains a previous build; passing --force to rebuild automatically.</value>
+  </data>
+  <data name="Gui_BatchItemCancelledLog" xml:space="preserve">
+    <value>[{0}] Cancelled.</value>
+  </data>
+  <data name="Gui_BatchItemGameDirLog" xml:space="preserve">
+    <value>Game directory: {0}</value>
+  </data>
+  <data name="Gui_BatchItemOutputDirLog" xml:space="preserve">
+    <value>Output directory: {0}</value>
+  </data>
+  <data name="Gui_BatchItemStartLog" xml:space="preserve">
+    <value>[{0}/{1}] Starting export: {2} (Build ID: {3})</value>
+  </data>
+  <data name="Gui_BatchLaunchCliErrorLog" xml:space="preserve">
+    <value>Error: Failed to launch or run {0}: {1}</value>
+  </data>
+  <data name="Gui_Browse" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="Gui_BrowseOutputDialogDesc" xml:space="preserve">
+    <value>Choose the export output root directory (each game creates a &lt;ffN&gt;-&lt;buildid&gt; subdirectory inside it)</value>
+  </data>
+  <data name="Gui_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Gui_CancellingLog" xml:space="preserve">
+    <value>==&gt; Cancellation requested; terminating export process tree...</value>
+  </data>
+  <data name="Gui_CancellingProgress" xml:space="preserve">
+    <value>Cancelling export and terminating subprocess...</value>
+  </data>
+  <data name="Gui_CliCheckErrorWarning" xml:space="preserve">
+    <value>Error checking CLI executable {0}: {1}.</value>
+  </data>
+  <data name="Gui_CliNotFoundWarning" xml:space="preserve">
+    <value>Sibling CLI executable {0} was not found (expected at: {1}). Make sure the entire zip archive was extracted.</value>
+  </data>
+  <data name="Gui_ClipboardDbPath" xml:space="preserve">
+    <value>Database path: {0}</value>
+  </data>
+  <data name="Gui_ClipboardHeader" xml:space="preserve">
+    <value>[{0}] {1} | Build ID: {2} | Verdict: {3}</value>
+  </data>
+  <data name="Gui_ColBuildId" xml:space="preserve">
+    <value>Build ID</value>
+  </data>
+  <data name="Gui_ColDbPath" xml:space="preserve">
+    <value>Database Path</value>
+  </data>
+  <data name="Gui_ColDirectory" xml:space="preserve">
+    <value>Directory</value>
+  </data>
+  <data name="Gui_ColGame" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Gui_ColVerdict" xml:space="preserve">
+    <value>Verdict</value>
+  </data>
+  <data name="Gui_CompletionGroupTitle" xml:space="preserve">
+    <value>3. Results</value>
+  </data>
+  <data name="Gui_ConfirmCloseMessage" xml:space="preserve">
+    <value>Export is currently in progress. Cancel the export and close the window?</value>
+  </data>
+  <data name="Gui_ConfirmCloseTitle" xml:space="preserve">
+    <value>Confirm Close</value>
+  </data>
+  <data name="Gui_ConfirmOverwriteMessage" xml:space="preserve">
+    <value>The following output directory(ies) already exist and are non-empty, and were not created by ffpr-export:
+
+{0}
+
+Continuing will delete existing files in those directories and write new export results. Overwrite?</value>
+  </data>
+  <data name="Gui_ConfirmOverwriteTitle" xml:space="preserve">
+    <value>Confirm Overwrite Non-Empty Directory</value>
+  </data>
+  <data name="Gui_CopiedHashesFeedback" xml:space="preserve">
+    <value>Copied hashes for {0} game(s) to clipboard</value>
+  </data>
+  <data name="Gui_CopyHashes" xml:space="preserve">
+    <value>Copy Hashes</value>
+  </data>
+  <data name="Gui_CopyHashesEmptyMessage" xml:space="preserve">
+    <value>There are currently no hashes to copy.</value>
+  </data>
+  <data name="Gui_CopyHashesFailedMessage" xml:space="preserve">
+    <value>Failed to write to clipboard: {0}</value>
+  </data>
+  <data name="Gui_CopyHashesFailedTitle" xml:space="preserve">
+    <value>Copy Failed</value>
+  </data>
+  <data name="Gui_DefaultOutputRootFailed" xml:space="preserve">
+    <value>Failed to determine default output directory: {0}. Click 'Browse...' to select one manually.</value>
+  </data>
+  <data name="Gui_DefaultSettingsPathFailed" xml:space="preserve">
+    <value>Failed to resolve default settings path: {0}; settings will not be saved in this session.</value>
+  </data>
+  <data name="Gui_DetailContentHash" xml:space="preserve">
+    <value>Content hash:</value>
+  </data>
+  <data name="Gui_DetailDbPath" xml:space="preserve">
+    <value>Database path:</value>
+  </data>
+  <data name="Gui_DetailFileHash" xml:space="preserve">
+    <value>File hash:</value>
+  </data>
+  <data name="Gui_DetailListSeparator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="Gui_DetailVerdict" xml:space="preserve">
+    <value>Verdict:</value>
+  </data>
+  <data name="Gui_DialogTitleDataDirUnwritable" xml:space="preserve">
+    <value>Data Directory Not Writable</value>
+  </data>
+  <data name="Gui_DialogTitleDefaultDataDirFailed" xml:space="preserve">
+    <value>Cannot Write Default Data Directory</value>
+  </data>
+  <data name="Gui_DialogTitleSelectedDirUnwritable" xml:space="preserve">
+    <value>Selected Directory Not Writable</value>
+  </data>
+  <data name="Gui_DpiConfiguredLog" xml:space="preserve">
+    <value>DPI mode configured: actual={0}, setResult={1}</value>
+  </data>
+  <data name="Gui_EnableVisualStylesFailedLog" xml:space="preserve">
+    <value>Application.EnableVisualStyles failed (falling back to app.manifest visual styles): {0}</value>
+  </data>
+  <data name="Gui_ExceptionOmitted" xml:space="preserve">
+    <value>--- {0} (omitted duplicate or overly deep nesting) ---</value>
+  </data>
+  <data name="Gui_ExportCancelledLog" xml:space="preserve">
+    <value>==&gt; Export task cancelled.</value>
+  </data>
+  <data name="Gui_ExportCancelledProgress" xml:space="preserve">
+    <value>Export cancelled</value>
+  </data>
+  <data name="Gui_FatalErrorMessage" xml:space="preserve">
+    <value>Error message: {0}</value>
+  </data>
+  <data name="Gui_FatalErrorType" xml:space="preserve">
+    <value>Error type: {0}</value>
+  </data>
+  <data name="Gui_FatalLogDirUnwritable" xml:space="preserve">
+    <value>log directory is not writable</value>
+  </data>
+  <data name="Gui_FatalLogNotWritten" xml:space="preserve">
+    <value>Could not write log file ({0}).</value>
+  </data>
+  <data name="Gui_FatalLogWrittenHeader" xml:space="preserve">
+    <value>Full error log has been written to:</value>
+  </data>
+  <data name="Gui_FatalRootCause" xml:space="preserve">
+    <value>Root cause: {0}: {1}</value>
+  </data>
+  <data name="Gui_FatalRuntimeLine" xml:space="preserve">
+    <value>An unhandled error occurred while running the application.</value>
+  </data>
+  <data name="Gui_FatalScreenshotHint" xml:space="preserve">
+    <value>Please send a screenshot of this dialog to the developer to help diagnose the issue.</value>
+  </data>
+  <data name="Gui_FatalSendLogHint" xml:space="preserve">
+    <value>Please send this log file to the developer to help diagnose the issue.</value>
+  </data>
+  <data name="Gui_FatalStartupLine" xml:space="preserve">
+    <value>The application failed to start.</value>
+  </data>
+  <data name="Gui_FatalTitleRuntime" xml:space="preserve">
+    <value>Application Error</value>
+  </data>
+  <data name="Gui_FatalTitleStartup" xml:space="preserve">
+    <value>Application Startup Failed</value>
+  </data>
+  <data name="Gui_FatalUnknownError" xml:space="preserve">
+    <value>Error message: An unknown unhandled error occurred.</value>
+  </data>
+  <data name="Gui_FolderDialogDataRoot" xml:space="preserve">
+    <value>Choose a writable data root directory (used for logs, settings, and default exports)</value>
+  </data>
+  <data name="Gui_FontDefaultName" xml:space="preserve">
+    <value>default font</value>
+  </data>
+  <data name="Gui_FontFallbackToFamily" xml:space="preserve">
+    <value>Preferred {0} '{1}' is unavailable; fell back to '{2}'.</value>
+  </data>
+  <data name="Gui_FontFallbackToMessageBox" xml:space="preserve">
+    <value>Failed to create {0}; fell back to SystemFonts.MessageBoxFont ({1}){2}.</value>
+  </data>
+  <data name="Gui_FontFallbackToUltimate" xml:space="preserve">
+    <value>Failed to create {0}; fell back to default font '{1}'{2}.</value>
+  </data>
+  <data name="Gui_FontMessageBoxUnavailable" xml:space="preserve">
+    <value>SystemFonts.MessageBoxFont: unavailable</value>
+  </data>
+  <data name="Gui_FontNotInstalled" xml:space="preserve">
+    <value>{0}: font not installed or requested style unsupported</value>
+  </data>
+  <data name="Gui_FontReasonClause" xml:space="preserve">
+    <value> (reason: {0})</value>
+  </data>
+  <data name="Gui_FontRoleLog" xml:space="preserve">
+    <value>monospace log font</value>
+  </data>
+  <data name="Gui_FontRolePrimaryButton" xml:space="preserve">
+    <value>primary button font</value>
+  </data>
+  <data name="Gui_FontRoleUi" xml:space="preserve">
+    <value>UI font</value>
+  </data>
+  <data name="Gui_FontRoleVerdict" xml:space="preserve">
+    <value>verdict heading font</value>
+  </data>
+  <data name="Gui_GamesGroupTitle" xml:space="preserve">
+    <value>1. Games (auto-scanned from Steam libraries, all selected by default)</value>
+  </data>
+  <data name="Gui_InvalidOutputMessage" xml:space="preserve">
+    <value>Output location check failed: {0}</value>
+  </data>
+  <data name="Gui_InvalidOutputTitle" xml:space="preserve">
+    <value>Invalid Output Directory</value>
+  </data>
+  <data name="Gui_LoadSettingsFailed" xml:space="preserve">
+    <value>Failed to read settings ({0}): {1}; using defaults.</value>
+  </data>
+  <data name="Gui_LogConstructingMainForm" xml:space="preserve">
+    <value>Constructing MainForm...</value>
+  </data>
+  <data name="Gui_LogContext" xml:space="preserve">
+    <value>Context: {0}</value>
+  </data>
+  <data name="Gui_LogEnteringMessageLoop" xml:space="preserve">
+    <value>MainForm constructed; entering Application.Run message loop...</value>
+  </data>
+  <data name="Gui_LogExiting" xml:space="preserve">
+    <value>GUI exiting (exit code: {0}).</value>
+  </data>
+  <data name="Gui_LogMainFormShown" xml:space="preserve">
+    <value>Main window shown.</value>
+  </data>
+  <data name="Gui_LogNullException" xml:space="preserve">
+    <value>Exception object is null.</value>
+  </data>
+  <data name="Gui_LogSkipNoRoot" xml:space="preserve">
+    <value>No writable data root found; skipping log file creation</value>
+  </data>
+  <data name="Gui_LogSkipNoRootWithReason" xml:space="preserve">
+    <value>No writable data root found; skipping log file creation: {0}</value>
+  </data>
+  <data name="Gui_LogUnhandledNonException" xml:space="preserve">
+    <value>Context: {0}
+Unhandled non-Exception object ({1}): {2}</value>
+  </data>
+  <data name="Gui_LogWriteFailed" xml:space="preserve">
+    <value>Failed to write startup log file ({0}): {1}</value>
+  </data>
+  <data name="Gui_ManualGameDialogDesc" xml:space="preserve">
+    <value>Select a FINAL FANTASY I–VI Pixel Remaster installation root folder (containing *_Data)</value>
+  </data>
+  <data name="Gui_ManualGameDialogInvalidHint" xml:space="preserve">
+    <value>{0}
+
+Please select the root installation directory of a FINAL FANTASY I–VI Pixel Remaster game (containing its *_Data folder).</value>
+  </data>
+  <data name="Gui_ManualGameDialogInvalidTitle" xml:space="preserve">
+    <value>Unsupported Game Directory</value>
+  </data>
+  <data name="Gui_ManualGamePathEmpty" xml:space="preserve">
+    <value>Please select a game directory</value>
+  </data>
+  <data name="Gui_ManualGamePathInvalid" xml:space="preserve">
+    <value>Invalid game directory path format: {0} ({1})</value>
+  </data>
+  <data name="Gui_MissingCliDialogTitle" xml:space="preserve">
+    <value>Missing CLI Executable</value>
+  </data>
+  <data name="Gui_MissingCliMessage" xml:space="preserve">
+    <value>CLI exporter not found: {0}.
+
+Expected location: {1}
+
+Please extract the entire zip archive and keep {0} in the same folder as ffpr-export-gui.exe.</value>
+  </data>
+  <data name="Gui_NoGameSelectedMessage" xml:space="preserve">
+    <value>Please select at least one game to export.</value>
+  </data>
+  <data name="Gui_NoGameSelectedTitle" xml:space="preserve">
+    <value>No Game Selected</value>
+  </data>
+  <data name="Gui_NoGamesFoundHint" xml:space="preserve">
+    <value>No FF1–FF6 installations found automatically. Click 'Add game folder...' to add one.</value>
+  </data>
+  <data name="Gui_NoStackTrace" xml:space="preserve">
+    <value>  (no stack trace)</value>
+  </data>
+  <data name="Gui_NoWritePermission" xml:space="preserve">
+    <value>No write permission</value>
+  </data>
+  <data name="Gui_OpenFolderFailedMessage" xml:space="preserve">
+    <value>Failed to open output folder ({0}): {1}</value>
+  </data>
+  <data name="Gui_OpenFolderFailedTitle" xml:space="preserve">
+    <value>Open Failed</value>
+  </data>
+  <data name="Gui_OpenFolderNotCreatedMessage" xml:space="preserve">
+    <value>The output folder has not been created yet. Run an export first or check that the output root exists.</value>
+  </data>
+  <data name="Gui_OpenFolderNotCreatedTitle" xml:space="preserve">
+    <value>Cannot Open Folder</value>
+  </data>
+  <data name="Gui_OpenOutputFolder" xml:space="preserve">
+    <value>Open Output Folder</value>
+  </data>
+  <data name="Gui_OutputDirFilesystemRoot" xml:space="preserve">
+    <value>Output directory cannot point directly to a drive or filesystem root: {0}</value>
+  </data>
+  <data name="Gui_OutputDirOverlapGame" xml:space="preserve">
+    <value>Output directory cannot overlap with or be inside/above a game directory: {0}</value>
+  </data>
+  <data name="Gui_OutputGroupTitle" xml:space="preserve">
+    <value>2. Output Location</value>
+  </data>
+  <data name="Gui_OutputPreviewInvalidRoot" xml:space="preserve">
+    <value>Subdirectory preview: invalid output root path format</value>
+  </data>
+  <data name="Gui_OutputPreviewMany" xml:space="preserve">
+    <value>Subdirectory preview: will export to {0}, {1} and more ({2} subdirectories total)</value>
+  </data>
+  <data name="Gui_OutputPreviewNeedGame" xml:space="preserve">
+    <value>Subdirectory preview: please select at least one game</value>
+  </data>
+  <data name="Gui_OutputPreviewNeedRoot" xml:space="preserve">
+    <value>Subdirectory preview: please specify an output root directory</value>
+  </data>
+  <data name="Gui_OutputPreviewPrefix" xml:space="preserve">
+    <value>Subdirectory preview:</value>
+  </data>
+  <data name="Gui_OutputPreviewSingle" xml:space="preserve">
+    <value>Subdirectory preview: {0}{1}</value>
+  </data>
+  <data name="Gui_OutputPreviewTwo" xml:space="preserve">
+    <value>Subdirectory preview: will export to {0}, {1} (2 subdirectories)</value>
+  </data>
+  <data name="Gui_OutputPreviewWithHint" xml:space="preserve">
+    <value>{0} (Note: {1})</value>
+  </data>
+  <data name="Gui_OutputRootEmpty" xml:space="preserve">
+    <value>Output root directory cannot be empty</value>
+  </data>
+  <data name="Gui_OutputRootLabel" xml:space="preserve">
+    <value>Output root:</value>
+  </data>
+  <data name="Gui_OutputRootNotDetermined" xml:space="preserve">
+    <value>Could not determine a writable data root directory</value>
+  </data>
+  <data name="Gui_PlanDuplicateTarget" xml:space="preserve">
+    <value>Multiple selected games map to the same output directory: {0} (uncheck duplicates or export in separate runs)</value>
+  </data>
+  <data name="Gui_PlanNoGameSelected" xml:space="preserve">
+    <value>Please select at least one game to export</value>
+  </data>
+  <data name="Gui_PlanOutputRootEmpty" xml:space="preserve">
+    <value>Please enter or browse for a valid output root directory first</value>
+  </data>
+  <data name="Gui_PlanOutputRootInvalid" xml:space="preserve">
+    <value>Invalid output root path format: {0} ({1})</value>
+  </data>
+  <data name="Gui_ProcessStartFailed" xml:space="preserve">
+    <value>Unable to start child process: {0}</value>
+  </data>
+  <data name="Gui_ProgressGamePrefix" xml:space="preserve">
+    <value>Game {0} / {1}: {2}</value>
+  </data>
+  <data name="Gui_ProgressGameWithStep" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Gui_ProgressStepOnly" xml:space="preserve">
+    <value>Step {0}/{1}</value>
+  </data>
+  <data name="Gui_ProgressStepWithDesc" xml:space="preserve">
+    <value>Step {0}/{1}: {2}</value>
+  </data>
+  <data name="Gui_Ready" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="Gui_ReportJsonParseFailed" xml:space="preserve">
+    <value>Failed to parse build report JSON ({0}): {1}</value>
+  </data>
+  <data name="Gui_ReportMissingInDir" xml:space="preserve">
+    <value>No *.build.json build report found in output directory: {0}</value>
+  </data>
+  <data name="Gui_ReportNotFound" xml:space="preserve">
+    <value>Build report file not found: {0}</value>
+  </data>
+  <data name="Gui_ReportReadFailed" xml:space="preserve">
+    <value>Failed to read build report ({0}): {1}</value>
+  </data>
+  <data name="Gui_ReportRootNotObject" xml:space="preserve">
+    <value>Build report root must be a JSON object: {0}</value>
+  </data>
+  <data name="Gui_Rescan" xml:space="preserve">
+    <value>Rescan</value>
+  </data>
+  <data name="Gui_ScanSteamFailed" xml:space="preserve">
+    <value>Failed to scan Steam libraries: {0}. Click 'Add game folder...' to add games manually.</value>
+  </data>
+  <data name="Gui_ScanSteamSecurity" xml:space="preserve">
+    <value>Restricted by security policy while scanning Steam libraries: {0}. Click 'Add game folder...' to add games manually.</value>
+  </data>
+  <data name="Gui_ScanSteamUnauthorized" xml:space="preserve">
+    <value>Access denied while scanning Steam libraries or registry: {0}. Click 'Add game folder...' to add games manually.</value>
+  </data>
+  <data name="Gui_ScanningSteam" xml:space="preserve">
+    <value>Scanning Steam libraries...</value>
+  </data>
+  <data name="Gui_SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="Gui_SelectedDirStillUnwritable" xml:space="preserve">
+    <value>The selected directory is still not writable ({0}): {1}.
+
+Please choose another writable folder to retry, or click Cancel to exit.</value>
+  </data>
+  <data name="Gui_SelectionSummary" xml:space="preserve">
+    <value>Selected {0} / {1} game(s)</value>
+  </data>
+  <data name="Gui_SelfTestAgpFailed" xml:space="preserve">
+    <value>Error: GUI self-test failed: {0}</value>
+  </data>
+  <data name="Gui_SelfTestCliFound" xml:space="preserve">
+    <value>found {0}</value>
+  </data>
+  <data name="Gui_SelfTestCliNotFound" xml:space="preserve">
+    <value>sibling ffpr-export.exe not detected (unpackaged directory)</value>
+  </data>
+  <data name="Gui_SelfTestConstructedLog" xml:space="preserve">
+    <value>[self-test] MainForm construction, CreateControl(), and initialization completed (MinimumSize={0}).</value>
+  </data>
+  <data name="Gui_SelfTestConstructingLog" xml:space="preserve">
+    <value>[self-test] Constructing MainForm and running CreateControl() and initialization...</value>
+  </data>
+  <data name="Gui_SelfTestCoreFailed" xml:space="preserve">
+    <value>GUI core self-test failed: arguments, default output root, or settings path initialized empty</value>
+  </data>
+  <data name="Gui_SelfTestFailureHeader" xml:space="preserve">
+    <value>Error: GUI self-test failed.</value>
+  </data>
+  <data name="Gui_SelfTestHandleFailed" xml:space="preserve">
+    <value>MainForm native handle was not created (IsHandleCreated=false)</value>
+  </data>
+  <data name="Gui_SelfTestLogCreateFailed" xml:space="preserve">
+    <value>could not create log</value>
+  </data>
+  <data name="Gui_SelfTestLogFileLine" xml:space="preserve">
+    <value>Log file: {0}</value>
+  </data>
+  <data name="Gui_SelfTestLogPath" xml:space="preserve">
+    <value>log: {0}</value>
+  </data>
+  <data name="Gui_SelfTestLogUnavailable" xml:space="preserve">
+    <value>log unavailable ({0})</value>
+  </data>
+  <data name="Gui_SelfTestLogUnavailableLine" xml:space="preserve">
+    <value>Log file: unavailable ({0})</value>
+  </data>
+  <data name="Gui_SelfTestMinWidthFailed" xml:space="preserve">
+    <value>MainForm MinimumSize.Width is below required minimum: {0}</value>
+  </data>
+  <data name="Gui_SelfTestMissingCliFallback" xml:space="preserve">
+    <value>Missing sibling {0}: {1}</value>
+  </data>
+  <data name="Gui_SelfTestPassedLog" xml:space="preserve">
+    <value>[self-test] Passed ({0}; integrity: {1}; data root: {2}).</value>
+  </data>
+  <data name="Gui_SelfTestPassedStdout" xml:space="preserve">
+    <value>Self-test passed: WinForms MainForm construction, CreateControl(), and core dependencies loaded cleanly ({0}; integrity: {1}; data dir: {2}; {3}).</value>
+  </data>
+  <data name="Gui_SelfTestUnhandledNonException" xml:space="preserve">
+    <value>Error: GUI self-test encountered an unhandled non-Exception error.</value>
+  </data>
+  <data name="Gui_SettingsCorruptJson" xml:space="preserve">
+    <value>Failed to read settings: settings file is corrupted (JSON parse error in {0}): {1}; using defaults.</value>
+  </data>
+  <data name="Gui_SettingsEmptyOrInvalid" xml:space="preserve">
+    <value>Failed to read settings: settings file is empty or invalid ({0}); using defaults.</value>
+  </data>
+  <data name="Gui_SettingsMigrateReadFailed" xml:space="preserve">
+    <value>Found legacy settings file but failed to read it for migration ({0}): {1}</value>
+  </data>
+  <data name="Gui_SettingsMigrateRenameFailed" xml:space="preserve">
+    <value>Wrote legacy settings to the new path ({0}), but failed to rename the old file to {1}: {2}.</value>
+  </data>
+  <data name="Gui_SettingsMigrateWriteFailed" xml:space="preserve">
+    <value>Read legacy settings ({0}), but failed to write to the new path ({1}): {2}; legacy file was kept.</value>
+  </data>
+  <data name="Gui_SettingsMigratedInfo" xml:space="preserve">
+    <value>Migrated legacy settings from {0} to {1} (old file renamed to {2}).</value>
+  </data>
+  <data name="Gui_SettingsPathInvalid" xml:space="preserve">
+    <value>Failed to read settings: invalid settings path ({0}): {1}; using defaults.</value>
+  </data>
+  <data name="Gui_SettingsPathIsDir" xml:space="preserve">
+    <value>Failed to read settings: settings path points to a directory instead of a file ({0}); using defaults.</value>
+  </data>
+  <data name="Gui_SettingsUnauthorized" xml:space="preserve">
+    <value>Failed to read settings: permission denied ({0}): {1}; using defaults.</value>
+  </data>
+  <data name="Gui_StartExport" xml:space="preserve">
+    <value>Start Export</value>
+  </data>
+  <data name="Gui_StartupLoadException" xml:space="preserve">
+    <value>An error occurred while initializing the main window: {0}. You can still add a game folder manually.</value>
+  </data>
+  <data name="Gui_StatusDataDir" xml:space="preserve">
+    <value>Data folder: {0}</value>
+  </data>
+  <data name="Gui_StatusDataDirNotReady" xml:space="preserve">
+    <value>Data folder: (not ready)</value>
+  </data>
+  <data name="Gui_StatusIntegrity" xml:space="preserve">
+    <value>Integrity: {0}</value>
+  </data>
+  <data name="Gui_TempRedirectFailedLog" xml:space="preserve">
+    <value>Failed to configure data root tmp subdirectory: {0}</value>
+  </data>
+  <data name="Gui_TempRedirectedLog" xml:space="preserve">
+    <value>Process temp directory redirected to data root subdirectory: {0}</value>
+  </data>
+  <data name="Gui_VerdictCliFailed" xml:space="preserve">
+    <value>CLI export failed (exit code {0}); see log above</value>
+  </data>
+  <data name="Gui_VerdictCliFailedWithReason" xml:space="preserve">
+    <value>CLI export failed (exit code {0}): {1}</value>
+  </data>
+  <data name="Gui_VerdictDetailCancelled" xml:space="preserve">
+    <value>✗ Cancelled: export task was interrupted by the user</value>
+  </data>
+  <data name="Gui_VerdictDetailFailed" xml:space="preserve">
+    <value>✗ Export failed: {0}</value>
+  </data>
+  <data name="Gui_VerdictDetailUnknown" xml:space="preserve">
+    <value>✗ Unknown verdict (status={0}){1}</value>
+  </data>
+  <data name="Gui_VerdictDetailWithNotes" xml:space="preserve">
+    <value>{0} {1}{2} ({3})</value>
+  </data>
+  <data name="Gui_VerdictErrorUserCancelled" xml:space="preserve">
+    <value>Export cancelled by user</value>
+  </data>
+  <data name="Gui_VerdictFileHashOnlyNote" xml:space="preserve">
+    <value>file hash only; content hash matches</value>
+  </data>
+  <data name="Gui_VerdictMissingReport" xml:space="preserve">
+    <value>Could not read *.build.json from output directory: {0}</value>
+  </data>
+  <data name="Gui_VerdictPartialSuffix" xml:space="preserve">
+    <value> (with partial asset warnings)</value>
+  </data>
+  <data name="Gui_VerdictPlaceholderIdle" xml:space="preserve">
+    <value>(Comparison verdict will appear here after export)</value>
+  </data>
+  <data name="Gui_VerdictPlaceholderWaiting" xml:space="preserve">
+    <value>(Waiting for export results...)</value>
+  </data>
+  <data name="Gui_VerdictReferenceDatePart" xml:space="preserve">
+    <value>compared with: {0}</value>
+  </data>
+  <data name="Gui_VerdictRegisteredDatePart" xml:space="preserve">
+    <value>registered: {0}</value>
+  </data>
+  <data name="Gui_VerdictShortCancelled" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="Gui_VerdictShortFailed" xml:space="preserve">
+    <value>Export failed</value>
+  </data>
+  <data name="Gui_VerdictShortHashMismatch" xml:space="preserve">
+    <value>Hash mismatch</value>
+  </data>
+  <data name="Gui_VerdictShortMatched" xml:space="preserve">
+    <value>Matches registered build</value>
+  </data>
+  <data name="Gui_VerdictShortNewVersion" xml:space="preserve">
+    <value>New version, unregistered</value>
+  </data>
+  <data name="Gui_VerdictShortUnknown" xml:space="preserve">
+    <value>Unknown verdict</value>
+  </data>
+  <data name="Gui_VerdictSourcePart" xml:space="preserve">
+    <value>source: {0}</value>
+  </data>
+  <data name="Gui_VerdictStatusNotCompleted" xml:space="preserve">
+    <value>Build report status is not 'completed' (got '{0}'): {1}</value>
+  </data>
+  <data name="Gui_VerdictTableDiffCountNote" xml:space="preserve">
+    <value>{0} differing table(s)</value>
+  </data>
+  <data name="Gui_WindowTitle" xml:space="preserve">
+    <value>FFPR Export v{0} — FINAL FANTASY I–VI Pixel Remaster</value>
+  </data>
+  <data name="Integrity_BadBufferLen" xml:space="preserve">
+    <value>Unexpected TokenIntegrityLevel buffer length ({0})</value>
+  </data>
+  <data name="Integrity_High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Integrity_Low" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="Integrity_Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Integrity_NonWindows" xml:space="preserve">
+    <value>Non-Windows platform</value>
+  </data>
+  <data name="Integrity_NullSid" xml:space="preserve">
+    <value>TokenIntegrityLevel SID is null</value>
+  </data>
+  <data name="Integrity_NullSubAuth" xml:space="preserve">
+    <value>GetSidSubAuthority returned a null pointer</value>
+  </data>
+  <data name="Integrity_NullSubAuthCount" xml:space="preserve">
+    <value>GetSidSubAuthorityCount returned a null pointer</value>
+  </data>
+  <data name="Integrity_OpenTokenFailed" xml:space="preserve">
+    <value>OpenProcessToken failed (Win32={0})</value>
+  </data>
+  <data name="Integrity_QueryLenFailed" xml:space="preserve">
+    <value>GetTokenInformation length query failed (Win32={0})</value>
+  </data>
+  <data name="Integrity_ReadTokenFailed" xml:space="preserve">
+    <value>GetTokenInformation read failed (Win32={0})</value>
+  </data>
+  <data name="Integrity_System" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Integrity_Unknown" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="Integrity_Untrusted" xml:space="preserve">
+    <value>Untrusted</value>
+  </data>
+  <data name="Integrity_ZeroSubAuth" xml:space="preserve">
+    <value>Integrity SID has no SubAuthority</value>
+  </data>
+  <data name="Inventory_BundleFailed" xml:space="preserve">
+    <value>Failed to inspect bundle {0}: {1}</value>
+  </data>
+  <data name="Inventory_Completed" xml:space="preserve">
+    <value>[{0}] Inventory complete: Unity {1}, Steam buildid {2}, {3} bundles, {4} *_Data files, {5} total assets, {6} failures, {7:F2}s -&gt; {8}</value>
+  </data>
+  <data name="Inventory_DataFileFailed" xml:space="preserve">
+    <value>Failed to inspect data file {0}: {1}</value>
+  </data>
+  <data name="Inventory_MissingBundle" xml:space="preserve">
+    <value>Bundle file referenced by catalog.json does not exist on disk: {0}</value>
+  </data>
+  <data name="Inventory_UnknownArg" xml:space="preserve">
+    <value>Unknown argument for inventory: {0}</value>
+  </data>
+  <data name="KnownBuilds_ComparisonHeader" xml:space="preserve">
+    <value>Known-build check (source: {0}): {1}</value>
+  </data>
+  <data name="KnownBuilds_DiffAdded" xml:space="preserve">
+    <value>  + {0} ({1} rows now; not present in registered build)</value>
+  </data>
+  <data name="KnownBuilds_DiffChangedDiffRows" xml:space="preserve">
+    <value>  ~ {0} (rows: registered {1} -&gt; actual {2}; table sha256 differs)</value>
+  </data>
+  <data name="KnownBuilds_DiffChangedSameRows" xml:space="preserve">
+    <value>  ~ {0} (same row count: {1}; table sha256 differs)</value>
+  </data>
+  <data name="KnownBuilds_DiffRemoved" xml:space="preserve">
+    <value>  - {0} ({1} rows in registered build; missing now)</value>
+  </data>
+  <data name="KnownBuilds_DiffTableCount" xml:space="preserve">
+    <value>  {0} differing table(s):</value>
+  </data>
+  <data name="KnownBuilds_FileShaMismatchOnly" xml:space="preserve">
+    <value>  All table contents match (identical content_sha256); only the SQLite file_sha256 differs.</value>
+  </data>
+  <data name="KnownBuilds_HashMismatch" xml:space="preserve">
+    <value>Game version is registered, but database hash differs</value>
+  </data>
+  <data name="KnownBuilds_InvalidFormatGameArray" xml:space="preserve">
+    <value>Value for game '{0}' in known-builds registry must be a JSON array: {1}</value>
+  </data>
+  <data name="KnownBuilds_InvalidFormatRoot" xml:space="preserve">
+    <value>Invalid known-builds registry format (expected a JSON object grouped by game): {0}</value>
+  </data>
+  <data name="KnownBuilds_Matched" xml:space="preserve">
+    <value>Matches registered build</value>
+  </data>
+  <data name="KnownBuilds_MatchedRegisteredAt" xml:space="preserve">
+    <value>  Matched registered date: {0}</value>
+  </data>
+  <data name="KnownBuilds_MissingEmbeddedResource" xml:space="preserve">
+    <value>Embedded resource is missing from the executable: {0}</value>
+  </data>
+  <data name="KnownBuilds_NewGameVersion" xml:space="preserve">
+    <value>New game version, not yet registered</value>
+  </data>
+  <data name="KnownBuilds_NoTableHashes" xml:space="preserve">
+    <value>  Per-table hashes were not provided; table-level diffs cannot be listed.</value>
+  </data>
+  <data name="KnownBuilds_NullGameEntries" xml:space="preserve">
+    <value>Failed to deserialize entries for game '{0}' in known-builds registry (null result): {1}</value>
+  </data>
+  <data name="KnownBuilds_ParseFailed" xml:space="preserve">
+    <value>Failed to parse known-builds registry ({0}): {1}</value>
+  </data>
+  <data name="KnownBuilds_ReferenceRegisteredAt" xml:space="preserve">
+    <value>  Compared against registered date: {0}</value>
+  </data>
+  <data name="Lang_InvalidValue" xml:space="preserve">
+    <value>Unsupported language '{0}'. Supported values: en, zh-Hans, ja</value>
+  </data>
+  <data name="Lang_Label" xml:space="preserve">
+    <value>Language:</value>
+  </data>
+  <data name="OutputGuard_ClearedDir" xml:space="preserve">
+    <value>Cleared output directory: {0} ({1} files deleted)</value>
+  </data>
+  <data name="OutputGuard_ClearingDir" xml:space="preserve">
+    <value>Clearing output directory: {0} ({1} files)</value>
+  </data>
+  <data name="OutputGuard_DepsRoot" xml:space="preserve">
+    <value>--out cannot point directly to the dependency root {0}: {1}</value>
+  </data>
+  <data name="OutputGuard_DirNotEmpty" xml:space="preserve">
+    <value>Output directory is not empty: {0}. Pass --force to clear and regenerate.</value>
+  </data>
+  <data name="OutputGuard_NotOwnDir" xml:space="preserve">
+    <value>{0} is not an output directory created by {1}; refusing to clear or reuse. Choose an empty directory or clean it manually.</value>
+  </data>
+  <data name="OutputGuard_OutEmpty" xml:space="preserve">
+    <value>--out cannot be empty</value>
+  </data>
+  <data name="OutputGuard_OverlapGame" xml:space="preserve">
+    <value>--out must not overlap with or be inside/above the game directory: {0}</value>
+  </data>
+  <data name="OutputGuard_PathTraversal" xml:space="preserve">
+    <value>Target path escapes output directory: {0}</value>
+  </data>
+  <data name="OutputGuard_PreserveOtherCommand" xml:space="preserve">
+    <value>Preserving output subdirectory of another subcommand: {0}/</value>
+  </data>
+  <data name="OutputGuard_ProtectedDepsFfpr" xml:space="preserve">
+    <value>--out cannot point directly to protected directory {0}/ffpr itself: {1}</value>
+  </data>
+  <data name="OutputGuard_ProtectedDepsSubdir" xml:space="preserve">
+    <value>--out cannot point to or inside protected directory {0}: {1}</value>
+  </data>
+  <data name="OutputGuard_ResumeMode" xml:space="preserve">
+    <value>Resume mode: reusing existing output directory {0} (already exported files will be skipped)</value>
+  </data>
+  <data name="OutputGuard_WrongCommand" xml:space="preserve">
+    <value>{0} is an output directory of '{1} {2}' and cannot be cleared or reused by {3}.</value>
+  </data>
+  <data name="OutputGuard_WrongGame" xml:space="preserve">
+    <value>{0} is an output directory for {1} and cannot be used for {2} (choose another directory).</value>
+  </data>
+  <data name="PeVersion_DataRvaUnmapped" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): could not map version data RVA 0x{1:X} to a file offset</value>
+  </data>
+  <data name="PeVersion_FileTooSmall" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): file is too small to be a valid PE image</value>
+  </data>
+  <data name="PeVersion_InvalidOptionalHeaderSize" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): invalid Optional Header size</value>
+  </data>
+  <data name="PeVersion_InvalidVersionLength" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): invalid version resource length ({1} bytes)</value>
+  </data>
+  <data name="PeVersion_MissingMz" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): missing MZ header</value>
+  </data>
+  <data name="PeVersion_MissingPeSignature" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): missing PE signature</value>
+  </data>
+  <data name="PeVersion_PeOffsetOutOfRange" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): PE header offset out of range</value>
+  </data>
+  <data name="PeVersion_ReadOutOfRange" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): read at offset 0x{1:X} (length {2}) is out of range</value>
+  </data>
+  <data name="PeVersion_ResourceRvaUnmapped" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): could not map resource directory RVA 0x{1:X} to a file offset</value>
+  </data>
+  <data name="PeVersion_SectionTableOutOfRange" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): section table out of range</value>
+  </data>
+  <data name="PeVersion_UnexpectedEof" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): unexpected end of file</value>
+  </data>
+  <data name="PeVersion_UnseekableStream" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): input stream is not seekable</value>
+  </data>
+  <data name="PeVersion_UnsupportedMagic" xml:space="preserve">
+    <value>Failed to parse PE version resource ({0}): unsupported PE Optional Header magic 0x{1:X4}</value>
+  </data>
+  <data name="Unity_MissingMonoBehaviourBaseTemplate" xml:space="preserve">
+    <value>Missing MonoBehaviour base template (PathId={0})</value>
+  </data>
+  <data name="Unity_MissingTypeTreeAndCpp2Il" xml:space="preserve">
+    <value>MonoBehaviour lacks a TypeTree and the remaining {0} bytes could not be deserialized via IL2CPP (PathId={1}, Script={2})</value>
+  </data>
+  <data name="Wizard_AdviceDiskSpace" xml:space="preserve">
+    <value>Make sure the target drive has enough free space and that existing database files are not locked by another application.</value>
+  </data>
+  <data name="Wizard_AdviceGeneric" xml:space="preserve">
+    <value>Check the game and output directories and try again. For detailed logs, run: ffpr-export build-db --game "&lt;game dir&gt;" --keep-json</value>
+  </data>
+  <data name="Wizard_AdviceInvalidData" xml:space="preserve">
+    <value>Confirm that the selected directory is an undamaged FINAL FANTASY I–VI Pixel Remaster installation root (containing *_Data), or verify game file integrity in Steam.</value>
+  </data>
+  <data name="Wizard_AdviceMissingFiles" xml:space="preserve">
+    <value>Verify that the game directory is complete and fully downloaded via Steam. You can run 'Verify integrity of game files' in Steam and try again.</value>
+  </data>
+  <data name="Wizard_AdviceOutputOccupied" xml:space="preserve">
+    <value>Re-run the wizard and choose an empty or new output directory, or clean the target directory manually and try again.</value>
+  </data>
+  <data name="Wizard_AdvicePermission" xml:space="preserve">
+    <value>Check write permissions on the output directory, or choose a writable folder such as Desktop or Documents and try again.</value>
+  </data>
+  <data name="Wizard_AllOption" xml:space="preserve">
+    <value>  [{0}] All (build all {1} games above sequentially)</value>
+  </data>
+  <data name="Wizard_BatchForeignSubdir" xml:space="preserve">
+    <value>Error: Subdirectory is not empty and was not created by {0}: {1}</value>
+  </data>
+  <data name="Wizard_BatchGameOutputInvalid" xml:space="preserve">
+    <value>Error: Invalid output directory for {0}: {1}. Please choose another output root.</value>
+  </data>
+  <data name="Wizard_BatchItemHeader" xml:space="preserve">
+    <value>[{0}/{1}] Starting build: {2} ({3})</value>
+  </data>
+  <data name="Wizard_BatchOutputPrompt" xml:space="preserve">
+    <value>Press Enter to use the default root, or paste another output root path (quotes supported): </value>
+  </data>
+  <data name="Wizard_BatchOverwriteHint" xml:space="preserve">
+    <value>Info: Some game subdirectories already contain previous builds and will be overwritten after confirmation.</value>
+  </data>
+  <data name="Wizard_BatchSubdirItem" xml:space="preserve">
+    <value>  - {0} ({1}) -&gt; {2}</value>
+  </data>
+  <data name="Wizard_BatchSubdirsList" xml:space="preserve">
+    <value>Each game will be written to its own subdirectory:</value>
+  </data>
+  <data name="Wizard_BuildDbExitCode" xml:space="preserve">
+    <value>build-db exited with error code {0}</value>
+  </data>
+  <data name="Wizard_BuildFailedLog" xml:space="preserve">
+    <value>Error: [{0}] Build failed: {1}</value>
+  </data>
+  <data name="Wizard_Cancelled" xml:space="preserve">
+    <value>Operation cancelled.</value>
+  </data>
+  <data name="Wizard_ChooseEmptyDir" xml:space="preserve">
+    <value>Please choose an empty directory or a new directory path.</value>
+  </data>
+  <data name="Wizard_ChooseEmptyRoot" xml:space="preserve">
+    <value>Please choose an empty directory or a new output root.</value>
+  </data>
+  <data name="Wizard_CliHint" xml:space="preserve">
+    <value>Tip: Follow the prompts to build SQLite databases; run 'ffpr-export --help' for CLI usage.</value>
+  </data>
+  <data name="Wizard_ComparisonMatchedDetail" xml:space="preserve">
+    <value>{0} (registered: {1}{2})</value>
+  </data>
+  <data name="Wizard_ComparisonMismatchDetail" xml:space="preserve">
+    <value>{0} ({1} differing table(s){2})</value>
+  </data>
+  <data name="Wizard_ComparisonNotRead" xml:space="preserve">
+    <value>(comparison result not found in build report)</value>
+  </data>
+  <data name="Wizard_ComparisonWithSource" xml:space="preserve">
+    <value>{0} (source: {1})</value>
+  </data>
+  <data name="Wizard_ConfirmBatchGameDir" xml:space="preserve">
+    <value>     Game directory: {0}</value>
+  </data>
+  <data name="Wizard_ConfirmBatchHeader" xml:space="preserve">
+    <value>  Scheduled to build {0} games sequentially:</value>
+  </data>
+  <data name="Wizard_ConfirmBatchItem" xml:space="preserve">
+    <value>  {0}. {1} ({2}, Build ID: {3})</value>
+  </data>
+  <data name="Wizard_ConfirmBatchOutputDir" xml:space="preserve">
+    <value>     Output directory: {0}{1}</value>
+  </data>
+  <data name="Wizard_ConfirmPrompt" xml:space="preserve">
+    <value>Press Enter to start building (enter 'n' to cancel): </value>
+  </data>
+  <data name="Wizard_ConfirmValidInstallDir" xml:space="preserve">
+    <value>Please make sure the directory is the root installation folder of a FINAL FANTASY I–VI Pixel Remaster game (containing *_Data), then try again.</value>
+  </data>
+  <data name="Wizard_DefaultOutputDir" xml:space="preserve">
+    <value>Default output directory: {0}</value>
+  </data>
+  <data name="Wizard_DefaultOutputRoot" xml:space="preserve">
+    <value>Default output root: {0}</value>
+  </data>
+  <data name="Wizard_DirNotFound" xml:space="preserve">
+    <value>Error: Directory does not exist: {0}. Please check the path and try again.</value>
+  </data>
+  <data name="Wizard_FinalSummaryBatch" xml:space="preserve">
+    <value>Batch build summary ({0} total: {1} succeeded, {2} with warnings, {3} failed):</value>
+  </data>
+  <data name="Wizard_FinalSummarySingle" xml:space="preserve">
+    <value>Build summary:</value>
+  </data>
+  <data name="Wizard_ForeignOutputDir" xml:space="preserve">
+    <value>Error: Output directory is not empty and was not created by {0}: {1}</value>
+  </data>
+  <data name="Wizard_FoundGames" xml:space="preserve">
+    <value>Found {0} supported game(s):</value>
+  </data>
+  <data name="Wizard_GameIdentified" xml:space="preserve">
+    <value>Identified game: {0} ({1}, Steam Build ID: {2})</value>
+  </data>
+  <data name="Wizard_GameListDir" xml:space="preserve">
+    <value>      Directory: {0}</value>
+  </data>
+  <data name="Wizard_GameListItem" xml:space="preserve">
+    <value>  [{0}] {1} ({2}) | Steam Build ID: {3}</value>
+  </data>
+  <data name="Wizard_InvalidConfirmInput" xml:space="preserve">
+    <value>Invalid input: press Enter to start, or enter 'n' to cancel.</value>
+  </data>
+  <data name="Wizard_InvalidGameChoice" xml:space="preserve">
+    <value>Invalid input. Please enter a number from 0 to {0} (or 'q' to quit).</value>
+  </data>
+  <data name="Wizard_InvalidOutputDir" xml:space="preserve">
+    <value>Error: Invalid output directory: {0}. Please try again.</value>
+  </data>
+  <data name="Wizard_InvalidOutputRoot" xml:space="preserve">
+    <value>Error: Invalid output root path: {0}. Please try again.</value>
+  </data>
+  <data name="Wizard_InvalidPathFormat" xml:space="preserve">
+    <value>Error: Invalid path format ({0}). Please try again.</value>
+  </data>
+  <data name="Wizard_ManualOption" xml:space="preserve">
+    <value>  [0] Enter another game directory manually</value>
+  </data>
+  <data name="Wizard_ManualPathPrompt" xml:space="preserve">
+    <value>Paste the Steam game directory path (spaces and surrounding quotes are supported; press Enter to quit):</value>
+  </data>
+  <data name="Wizard_NextStep" xml:space="preserve">
+    <value>Next step: {0}</value>
+  </data>
+  <data name="Wizard_NoGamesFound" xml:space="preserve">
+    <value>No FINAL FANTASY I–VI Pixel Remaster installations were found automatically in local Steam libraries.</value>
+  </data>
+  <data name="Wizard_OverwriteNoteBatch" xml:space="preserve">
+    <value> (overwrite previous build)</value>
+  </data>
+  <data name="Wizard_OverwriteNoteSingle" xml:space="preserve">
+    <value> (will overwrite previous build)</value>
+  </data>
+  <data name="Wizard_OwnDirWillOverwrite" xml:space="preserve">
+    <value>Info: This directory already contains a previous build and will be cleared and rebuilt after confirmation.</value>
+  </data>
+  <data name="Wizard_PartialWarningAdvice" xml:space="preserve">
+    <value>Some assets reported warnings or failures during export. Inspect *.sqlite.build.json in the output directory, or re-run with --keep-json from the CLI for details.</value>
+  </data>
+  <data name="Wizard_PressEnterToExit" xml:space="preserve">
+    <value>Press Enter to exit...</value>
+  </data>
+  <data name="Wizard_RangeChoiceHint" xml:space="preserve">
+    <value>1–{0} for a single game</value>
+  </data>
+  <data name="Wizard_ReportNotRead" xml:space="preserve">
+    <value>(build report not found)</value>
+  </data>
+  <data name="Wizard_ResultContentHash" xml:space="preserve">
+    <value>  Content hash (content_sha256): {0}</value>
+  </data>
+  <data name="Wizard_ResultDbPath" xml:space="preserve">
+    <value>  Database path: {0}</value>
+  </data>
+  <data name="Wizard_ResultError" xml:space="preserve">
+    <value>  Error: {0}</value>
+  </data>
+  <data name="Wizard_ResultFileHash" xml:space="preserve">
+    <value>  File hash (file_sha256): {0}</value>
+  </data>
+  <data name="Wizard_ResultHint" xml:space="preserve">
+    <value>  Hint: {0}</value>
+  </data>
+  <data name="Wizard_ResultKnownBuilds" xml:space="preserve">
+    <value>  known-builds.json check: {0}</value>
+  </data>
+  <data name="Wizard_ResultNextStep" xml:space="preserve">
+    <value>  Next step: {0}</value>
+  </data>
+  <data name="Wizard_ResultStageTimings" xml:space="preserve">
+    <value>  Stage timings: {0}</value>
+  </data>
+  <data name="Wizard_ResultStatus" xml:space="preserve">
+    <value>  Status: {0} (total {1:F2}s)</value>
+  </data>
+  <data name="Wizard_ScanError" xml:space="preserve">
+    <value>Info: Automatic Steam scan encountered a problem ({0}); switching to manual directory entry.</value>
+  </data>
+  <data name="Wizard_SelectGamePrompt" xml:space="preserve">
+    <value>Enter a number to select ({0}, {1} for all, 0 for manual entry, q to quit): </value>
+  </data>
+  <data name="Wizard_SingleChoiceHint" xml:space="preserve">
+    <value>1 for this game</value>
+  </data>
+  <data name="Wizard_SingleOutputPrompt" xml:space="preserve">
+    <value>Press Enter to use the default directory, or paste another output path (quotes supported): </value>
+  </data>
+  <data name="Wizard_SourcePart" xml:space="preserve">
+    <value>, source: {0}</value>
+  </data>
+  <data name="Wizard_StatusFailed" xml:space="preserve">
+    <value>  Status: Failed ({0:F2}s)</value>
+  </data>
+  <data name="Wizard_StatusPartial" xml:space="preserve">
+    <value>Completed (with partial asset warnings)</value>
+  </data>
+  <data name="Wizard_StatusSuccess" xml:space="preserve">
+    <value>Succeeded</value>
+  </data>
+  <data name="Wizard_Step1Header" xml:space="preserve">
+    <value>[Step 1/4] Locating Steam and installed FF1–FF6 games...</value>
+  </data>
+  <data name="Wizard_Step2BatchHeader" xml:space="preserve">
+    <value>[Step 2/4] Choose batch output root directory</value>
+  </data>
+  <data name="Wizard_Step2SingleHeader" xml:space="preserve">
+    <value>[Step 2/4] Choose output directory</value>
+  </data>
+  <data name="Wizard_Step3Header" xml:space="preserve">
+    <value>[Step 3/4] Confirm build settings</value>
+  </data>
+  <data name="Wizard_Step4Header" xml:space="preserve">
+    <value>[Step 4/4] Exporting and building databases...</value>
+  </data>
+  <data name="Wizard_SummaryBuildId" xml:space="preserve">
+    <value>  Steam Build ID: {0}</value>
+  </data>
+  <data name="Wizard_SummaryGame" xml:space="preserve">
+    <value>  Game: {0} ({1})</value>
+  </data>
+  <data name="Wizard_SummaryGameDir" xml:space="preserve">
+    <value>  Game directory: {0}</value>
+  </data>
+  <data name="Wizard_SummaryOutputDir" xml:space="preserve">
+    <value>  Output directory: {0}{1}</value>
+  </data>
+  <data name="Wizard_TimingDbBuild" xml:space="preserve">
+    <value>db build</value>
+  </data>
+  <data name="Wizard_TimingDbHash" xml:space="preserve">
+    <value>db hash</value>
+  </data>
+  <data name="Wizard_TimingExport" xml:space="preserve">
+    <value>export</value>
+  </data>
+  <data name="Wizard_TimingGameVersion" xml:space="preserve">
+    <value>version</value>
+  </data>
+  <data name="Wizard_TimingInventory" xml:space="preserve">
+    <value>inventory</value>
+  </data>
+  <data name="Wizard_Title" xml:space="preserve">
+    <value>{0} {1} — FINAL FANTASY I–VI Pixel Remaster Export &amp; Build Wizard</value>
+  </data>
+  <data name="Wizard_UnexpectedError" xml:space="preserve">
+    <value>Error: Unexpected exception in interactive wizard: {0}</value>
+  </data>
+</root>
