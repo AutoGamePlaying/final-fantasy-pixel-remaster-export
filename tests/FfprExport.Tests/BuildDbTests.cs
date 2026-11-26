@@ -104,11 +104,18 @@ public sealed class BuildDbTests
             Assert.Equal("2.4.0.1", parsed.ProductVersion);
         }
 
-        // 3. Invalid non-PE bytes throw InvalidDataException with clear Chinese message.
+        // 3. Invalid non-PE bytes throw InvalidDataException with clear localized message.
         using (var ms = new MemoryStream(Encoding.UTF8.GetBytes("not a pe executable binary padding................................................")))
         {
-            var ex = Assert.Throws<InvalidDataException>(() => PeVersionReader.ReadFromStream(ms, "bad.exe"));
-            Assert.Contains("解析 PE 版本资源失败", ex.Message, StringComparison.Ordinal);
+            var enEx = Assert.Throws<InvalidDataException>(() => PeVersionReader.ReadFromStream(ms, "bad.exe"));
+            Assert.Contains("Failed to parse PE version resource", enEx.Message, StringComparison.Ordinal);
+        }
+
+        using (AppLocalization.PushLanguage(AppLanguage.ZhHans))
+        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes("not a pe executable binary padding................................................")))
+        {
+            var zhEx = Assert.Throws<InvalidDataException>(() => PeVersionReader.ReadFromStream(ms, "bad.exe"));
+            Assert.Contains("解析 PE 版本资源失败", zhEx.Message, StringComparison.Ordinal);
         }
     }
 
@@ -327,6 +334,7 @@ public sealed class BuildDbTests
     [Fact]
     public async Task BuildDb_EndToEndWithFakeDb_CoversVersionHashesKnownBuildsGuardrailsAndSteamSources()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr build db e2e");
         var spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
         var steamRoot = Path.Combine(ws.Root, "Steam Library");

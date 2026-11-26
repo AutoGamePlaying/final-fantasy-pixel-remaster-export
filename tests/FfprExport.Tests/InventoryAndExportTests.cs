@@ -41,7 +41,7 @@ public sealed class InventoryAndExportTests
 
         // Inventory refuses non-empty directory without --force.
         var invNonEmpty = await TestHarness.RunCliAsync(
-            ["inventory", "--game", gameDir, "--out", invOut],
+            ["--lang", "zh-Hans", "inventory", "--game", gameDir, "--out", invOut],
             ffprDeps: ws.DepsDir);
         Assert.Equal(2, invNonEmpty.ExitCode);
         Assert.Contains("输出目录非空", invNonEmpty.Stderr, StringComparison.Ordinal);
@@ -108,7 +108,7 @@ public sealed class InventoryAndExportTests
         var itemCsvPath = Path.Combine(expOut, "Data", "Master", "item.csv");
         File.Delete(itemCsvPath);
         var resumeResult = await TestHarness.RunCliAsync(
-            ["export", "--game", gameDir, "--out", expOut, "--jobs", "2"],
+            ["--lang", "zh-Hans", "export", "--game", gameDir, "--out", expOut, "--jobs", "2"],
             ffprDeps: ws.DepsDir);
         Assert.Equal(0, resumeResult.ExitCode);
         Assert.Contains("续跑模式", resumeResult.Stdout, StringComparison.Ordinal);
@@ -126,7 +126,7 @@ public sealed class InventoryAndExportTests
         Directory.CreateDirectory(foreignDir);
         await File.WriteAllTextAsync(Path.Combine(foreignDir, "keep.txt"), "do-not-delete");
         var foreignForce = await TestHarness.RunCliAsync(
-            ["export", "--game", gameDir, "--out", foreignDir, "--force"],
+            ["--lang", "zh-Hans", "export", "--game", gameDir, "--out", foreignDir, "--force"],
             ffprDeps: ws.DepsDir);
         Assert.Equal(2, foreignForce.ExitCode);
         Assert.Contains("不是 ffpr-export 的输出目录", foreignForce.Stderr, StringComparison.Ordinal);
@@ -134,21 +134,21 @@ public sealed class InventoryAndExportTests
 
         // 4b. Running `export --force` against an `inventory` directory is refused.
         var wrongCommand = await TestHarness.RunCliAsync(
-            ["export", "--game", gameDir, "--out", invOut, "--force"],
+            ["--lang", "zh-Hans", "export", "--game", gameDir, "--out", invOut, "--force"],
             ffprDeps: ws.DepsDir);
         Assert.Equal(2, wrongCommand.ExitCode);
         Assert.Contains("不能由 export 清空或复用", wrongCommand.Stderr, StringComparison.Ordinal);
 
         // 4c. --out overlapping --game is refused.
         var overlapGame = await TestHarness.RunCliAsync(
-            ["export", "--game", gameDir, "--out", Path.Combine(gameDir, "sub")],
+            ["--lang", "zh-Hans", "export", "--game", gameDir, "--out", Path.Combine(gameDir, "sub")],
             ffprDeps: ws.DepsDir);
         Assert.Equal(2, overlapGame.ExitCode);
         Assert.Contains("不能与游戏目录重叠", overlapGame.Stderr, StringComparison.Ordinal);
 
         // 4d. --out pointing to protected .deps/steamapps is refused.
         var protectedDeps = await TestHarness.RunCliAsync(
-            ["export", "--game", gameDir, "--out", Path.Combine(ws.DepsDir, "steamapps", "out")],
+            ["--lang", "zh-Hans", "export", "--game", gameDir, "--out", Path.Combine(ws.DepsDir, "steamapps", "out")],
             ffprDeps: ws.DepsDir);
         Assert.Equal(2, protectedDeps.ExitCode);
         Assert.Contains("受保护目录", protectedDeps.Stderr, StringComparison.Ordinal);
@@ -160,7 +160,7 @@ public sealed class InventoryAndExportTests
             ffprDeps: ws.DepsDir);
         Assert.Equal(0, nestedInvRes.ExitCode);
         var forceOwn = await TestHarness.RunCliAsync(
-            ["export", "--game", gameDir, "--out", expOut, "--force"],
+            ["--lang", "zh-Hans", "export", "--game", gameDir, "--out", expOut, "--force"],
             ffprDeps: ws.DepsDir);
         Assert.Equal(0, forceOwn.ExitCode);
         Assert.Contains("已清空输出目录", forceOwn.Stdout, StringComparison.Ordinal);

@@ -230,6 +230,7 @@ public sealed class SteamLocatorAndWizardTests
     [Fact]
     public async Task InteractiveWizard_SingleSelectionDefaultOutput_InvokesBuildDbEntryPointAndPrintsSummary()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-wizard-single");
         var baseDir = Path.Combine(ws.Root, "app dir with spaces");
         Directory.CreateDirectory(baseDir);
@@ -302,6 +303,7 @@ public sealed class SteamLocatorAndWizardTests
     [Fact]
     public async Task InteractiveWizard_SelectAllOption_BuildsEveryDiscoveredGameAndSummarizesSuccessAndFailure()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-wizard-all");
         var baseDir = Path.Combine(ws.Root, "app");
         Directory.CreateDirectory(baseDir);
@@ -372,6 +374,7 @@ public sealed class SteamLocatorAndWizardTests
     [Fact]
     public async Task InteractiveWizard_NoGamesFound_AcceptsQuotedManualPathAndRealBuildDbCommand()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-wizard-manual-real-builddb");
         var spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
         var steamRoot = Path.Combine(ws.Root, "My Steam Root");
@@ -439,6 +442,7 @@ public sealed class SteamLocatorAndWizardTests
     [Fact]
     public async Task InteractiveWizard_RejectsForeignOutputDirectoryAndAutoForcesOwnBuildDbDirectory()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-wizard-output-guards");
         var baseDir = Path.Combine(ws.Root, "app");
         Directory.CreateDirectory(baseDir);
@@ -547,6 +551,7 @@ public sealed class SteamLocatorAndWizardTests
             };
         }
 
+        // Zero-arg invocation launches the interactive wizard in default English.
         var result = await TestHarness.RunCliAsync(
             [],
             ffprDeps: ws.DepsDir,
@@ -557,16 +562,16 @@ public sealed class SteamLocatorAndWizardTests
         Assert.True(result.ExitCode == 0, $"stdout:\n{result.Stdout}\nstderr:\n{result.Stderr}");
         Assert.True(File.Exists(Path.Combine(outDir, "ff5.sqlite")));
         Assert.True(File.Exists(Path.Combine(outDir, "ff5.sqlite.build.json")));
-        Assert.Contains("导出与建库向导", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Export & Build Wizard", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("FINAL FANTASY V", result.Stdout, StringComparison.Ordinal);
-        Assert.Contains("按回车退出", result.Stdout, StringComparison.Ordinal);
+        Assert.Contains("Press Enter to exit", result.Stdout, StringComparison.Ordinal);
 
-        // Verify pressing Enter for default output writes into <AGP_HOME>/ffpr-export/output/<gameId>-<buildId>/.
+        // Passing --lang zh-Hans launches the Simplified Chinese wizard and pressing Enter writes to AGP_HOME default output.
         var defaultPipedInput = OperatingSystem.IsWindows()
             ? (SteamLocator.DiscoverGames().Count > 0 ? $"0\n\"{gameDir}\"\n\n\n\n" : $"\"{gameDir}\"\n\n\n\n")
             : "1\n\n\n\n";
         var defaultResult = await TestHarness.RunCliAsync(
-            [],
+            ["--lang", "zh-Hans"],
             ffprDeps: ws.DepsDir,
             standardInput: defaultPipedInput,
             extraEnv: extraEnv,
@@ -574,6 +579,8 @@ public sealed class SteamLocatorAndWizardTests
 
         var expectedDefaultDir = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output", "ff5-20265087");
         Assert.True(defaultResult.ExitCode == 0, $"stdout:\n{defaultResult.Stdout}\nstderr:\n{defaultResult.Stderr}");
+        Assert.Contains("导出与建库向导", defaultResult.Stdout, StringComparison.Ordinal);
+        Assert.Contains("按回车退出", defaultResult.Stdout, StringComparison.Ordinal);
         Assert.True(File.Exists(Path.Combine(expectedDefaultDir, "ff5.sqlite")));
         Assert.True(File.Exists(Path.Combine(expectedDefaultDir, "ff5.sqlite.build.json")));
     }

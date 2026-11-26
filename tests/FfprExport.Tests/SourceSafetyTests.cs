@@ -20,15 +20,18 @@ public sealed class SourceSafetyTests
                 continue;
             }
 
-            if (Path.GetExtension(path) is ".cs" or ".csproj" or ".manifest")
+            if (Path.GetExtension(path) is ".cs" or ".csproj" or ".manifest" or ".resx")
             {
                 targets.Add(path);
             }
         }
 
-        foreach (var path in Directory.EnumerateFiles(Path.Combine(root, "scripts"), "*.sh", SearchOption.TopDirectoryOnly))
+        foreach (var path in Directory.EnumerateFiles(Path.Combine(root, "scripts"), "*", SearchOption.TopDirectoryOnly))
         {
-            targets.Add(path);
+            if (Path.GetExtension(path) is ".sh" or ".ps1")
+            {
+                targets.Add(path);
+            }
         }
 
         var docsDir = Path.Combine(root, "docs");
@@ -37,10 +40,9 @@ public sealed class SourceSafetyTests
             targets.AddRange(Directory.EnumerateFiles(docsDir, "*.md", SearchOption.AllDirectories));
         }
 
-        var readme = Path.Combine(root, "README.md");
-        if (File.Exists(readme))
+        foreach (var path in Directory.EnumerateFiles(root, "README*.md", SearchOption.TopDirectoryOnly))
         {
-            targets.Add(readme);
+            targets.Add(path);
         }
 
         Assert.True(targets.Count >= 10, "应扫描到全部源码、脚本与文档文件");

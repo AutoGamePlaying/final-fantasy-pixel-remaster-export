@@ -39,7 +39,11 @@ public sealed class GuiCoreTests
         var guiCsproj = File.ReadAllText(Path.Combine(repoRoot, "src", "FfprExport.Gui", "FfprExport.Gui.csproj"), Encoding.UTF8);
 
         Assert.Contains(@"<Compile Include=""..\FfprExport\AgpPaths.cs""", guiCsproj, StringComparison.Ordinal);
+        Assert.Contains(@"<Compile Include=""..\FfprExport\AppLocalization.cs""", guiCsproj, StringComparison.Ordinal);
         Assert.Contains(@"<Compile Include=""..\FfprExport\SteamLocator.cs""", guiCsproj, StringComparison.Ordinal);
+        Assert.Contains(@"<EmbeddedResource Include=""..\FfprExport\Resources\Strings.resx""", guiCsproj, StringComparison.Ordinal);
+        Assert.Contains(@"<EmbeddedResource Include=""..\FfprExport\Resources\Strings.zh-Hans.resx""", guiCsproj, StringComparison.Ordinal);
+        Assert.Contains(@"<EmbeddedResource Include=""..\FfprExport\Resources\Strings.ja.resx""", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<OutputType>WinExe</OutputType>", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<TargetFramework>net10.0-windows</TargetFramework>", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<UseWindowsForms>true</UseWindowsForms>", guiCsproj, StringComparison.Ordinal);
@@ -47,12 +51,14 @@ public sealed class GuiCoreTests
         Assert.Contains("<AssemblyName>ffpr-export-gui</AssemblyName>", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<TreatWarningsAsErrors>true</TreatWarningsAsErrors>", guiCsproj, StringComparison.Ordinal);
         Assert.False(File.Exists(Path.Combine(repoRoot, "src", "FfprExport.Gui", "AgpPaths.cs")));
+        Assert.False(File.Exists(Path.Combine(repoRoot, "src", "FfprExport.Gui", "AppLocalization.cs")));
         Assert.False(File.Exists(Path.Combine(repoRoot, "src", "FfprExport.Gui", "SteamLocator.cs")));
     }
 
     [Fact]
     public void AgpPaths_ResolvesUnifiedRootPriorityAcrossPlatformsAndFallbacks()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         // Test process itself must already be isolated with AGP_HOME pointing into a temporary directory.
         var activeAgpHome = Environment.GetEnvironmentVariable(AgpPaths.AgpHomeEnvVar);
         Assert.False(string.IsNullOrWhiteSpace(activeAgpHome), "测试进程必须通过 AGP_HOME 隔离");
@@ -170,6 +176,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void AgpPaths_CandidateOrderExplicitAgpHomeFailureAllFailedAndSavedLocation()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         Func<string, string?> winEnv = key => key switch
         {
             AgpPaths.LocalAppDataEnvVar => @"C:\Users\Alice\AppData\Local",
@@ -322,6 +329,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void ProcessIntegrity_ClassifiesRidsInjectsLowLevelSelectsLocalLowAndFormatsUiNotices()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         // 1. RID classification and injectable detector.
         Assert.Equal(ProcessIntegrityKind.Untrusted, ProcessIntegrity.ClassifyRid(0x0000));
         Assert.Equal(ProcessIntegrityKind.Low, ProcessIntegrity.ClassifyRid(0x1000));
@@ -414,6 +422,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void GuiGameScanner_DiscoversSteamGamesAndValidatesManualDirectory()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-gui-scanner");
         var steamRoot = Path.Combine(ws.Root, "Steam");
         var ff1Dir = Path.Combine(steamRoot, "steamapps", "common", "FINAL FANTASY PR");
@@ -463,6 +472,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void GuiOutputPlanner_ComputesDefaultPathsDetectsDirectoryStatesAndPlansSafely()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-gui-output-plan");
 
         var defaultFromAgpEnv = GuiOutputPlanner.GetDefaultOutputRoot(
@@ -564,6 +574,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void BuildReportReader_ParsesBuildJsonAndEvaluatesAllVerdicts()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-gui-report");
         var ff5Spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
         var ff5Game = new GuiGameEntry(ff5Spec, "FINAL FANTASY V", Path.Combine(ws.Root, "ff5-game"), "20265087", null, false);
@@ -722,9 +733,26 @@ public sealed class GuiCoreTests
             force: true,
             steamBuildId: "123",
             keepJson: true,
-            jobs: 4);
+            jobs: 4,
+            language: "ja",
+            progressJson: true);
         Assert.Equal(
-            ["build-db", "--game", "/games/ff1", "--out", "/out/ff1-123", "--steam-buildid", "123", "--keep-json", "--jobs", "4", "--force"],
+            [
+                "build-db",
+                "--game",
+                "/games/ff1",
+                "--out",
+                "/out/ff1-123",
+                "--steam-buildid",
+                "123",
+                "--keep-json",
+                "--jobs",
+                "4",
+                "--force",
+                "--lang",
+                "ja",
+                "--progress-json",
+            ],
             argsWithForce);
 
         // ProcessStartInfo enforces UTF-8 stdout/stderr, hidden window, and AGP_HOME / TEMP propagation.
@@ -744,27 +772,47 @@ public sealed class GuiCoreTests
         Assert.Equal(@"C:\Users\Alice\AppData\LocalLow\agp\tmp", startInfo.Environment["TEMP"]);
         Assert.Equal(@"C:\Users\Alice\AppData\LocalLow\agp\tmp", startInfo.Environment["TMP"]);
 
-        // Progress parsing supports both `==> [ffN] 步骤 n/m：...` and `==> 步骤 n/m`.
-        Assert.True(CliCommandHelper.TryParseProgressStep("==> [ff5] 步骤 2/6：进程内执行 inventory 与 export", out var step2));
+        // Progress parsing ONLY recognizes language-independent `@@progress {"step":n,"total":m}` lines.
+        Assert.True(CliCommandHelper.IsProgressProtocolLine("""@@progress {"step":2,"total":6}"""));
+        Assert.False(CliCommandHelper.IsProgressProtocolLine("==> [ff5] Step 2/6: Running in-process inventory and export"));
+
+        Assert.True(CliCommandHelper.TryParseProgressStep("""@@progress {"step":2,"total":6}""", out var step2));
         Assert.Equal(2, step2.CurrentStep);
         Assert.Equal(6, step2.TotalSteps);
-        Assert.Equal("进程内执行 inventory 与 export", step2.Description);
+        Assert.Null(step2.Description);
 
-        Assert.True(CliCommandHelper.TryParseProgressStep("==> 步骤 5/6", out var step5));
+        Assert.True(CliCommandHelper.TryParseProgressStep("""  @@progress {"step":5,"total":6,"message":"Compare known builds"}  """, out var step5));
         Assert.Equal(5, step5.CurrentStep);
         Assert.Equal(6, step5.TotalSteps);
-        Assert.Null(step5.Description);
+        Assert.Equal("Compare known builds", step5.Description);
 
-        Assert.False(CliCommandHelper.TryParseProgressStep("普通日志：步骤 1/6", out _));
-        Assert.False(CliCommandHelper.TryParseProgressStep("==> [ff5] 步骤 7/6：越界", out _));
+        // Human-readable localized lines must never be parsed as progress protocol lines.
+        Assert.False(CliCommandHelper.TryParseProgressStep("==> [ff5] 步骤 2/6：进程内执行 inventory 与 export", out _));
+        Assert.False(CliCommandHelper.TryParseProgressStep("==> [ff5] Step 2/6: Running in-process inventory and export", out _));
+        Assert.False(CliCommandHelper.TryParseProgressStep("==> [ff5] ステップ 2/6：プロセス内で inventory と export を実行中", out _));
+        Assert.False(CliCommandHelper.TryParseProgressStep("==> 步骤 5/6", out _));
+        Assert.False(CliCommandHelper.TryParseProgressStep("""@@progress {"step":7,"total":6}""", out _));
+        Assert.False(CliCommandHelper.TryParseProgressStep("""@@progress {"step":0,"total":6}""", out _));
+        Assert.False(CliCommandHelper.TryParseProgressStep("@@progress {invalid}", out _));
 
-        // Game header & overall permille progress calculation.
+        // Game header & overall permille progress calculation across languages.
         var ff5Spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
         var ff5Game = new GuiGameEntry(ff5Spec, "FINAL FANTASY V", "/games/ff5", "20265087", null, false);
-        Assert.Equal("第 2 / 3 个：FF5", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game));
-        Assert.Equal(
-            "第 2 / 3 个：FF5（步骤 2/6：进程内执行 inventory 与 export）",
-            CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game, step2));
+        Assert.Equal("Game 2 / 3: FF5", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game));
+        Assert.Equal("Game 2 / 3: FF5 (Step 2/6)", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game, step2));
+        Assert.Equal("Game 2 / 3: FF5 (Step 5/6: Compare known builds)", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game, step5));
+
+        using (AppLocalization.PushLanguage(AppLanguage.ZhHans))
+        {
+            Assert.Equal("第 2 / 3 个：FF5", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game));
+            Assert.Equal("第 2 / 3 个：FF5（步骤 2/6）", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game, step2));
+        }
+
+        using (AppLocalization.PushLanguage(AppLanguage.Ja))
+        {
+            Assert.Equal("2 / 3 本目：FF5", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game));
+            Assert.Equal("2 / 3 本目：FF5（ステップ 2/6）", CliCommandHelper.FormatGameProgressHeader(2, 3, ff5Game, step2));
+        }
 
         var p0 = CliCommandHelper.CalculateProgressPermille(0, 2, null);
         var p1 = CliCommandHelper.CalculateProgressPermille(0, 2, new ProgressStepUpdate(1, 6, null));
@@ -913,7 +961,8 @@ public sealed class GuiCoreTests
         var stderrLines = new List<string>();
         var startInfo = CliCommandHelper.CreateStartInfo(
             TestHarness.ResolveDotnetExecutable(),
-            ["exec", cliDll, "--help"]);
+            ["exec", cliDll, "--lang", "zh-Hans", "--help"]);
+        startInfo.Environment.Remove(AppLocalization.EnvVarName);
 
         var exitCode = await CliProcessRunner.RunAsync(
             startInfo,
@@ -934,7 +983,7 @@ public sealed class GuiCoreTests
             CancellationToken.None);
 
         Assert.Equal(0, exitCode);
-        Assert.Contains(stdoutLines, line => line.Contains("资源盘点与导出工具", StringComparison.Ordinal));
+        Assert.Contains(stdoutLines, line => line.Contains("资源盘点、导出与 SQLite 建库工具", StringComparison.Ordinal));
         Assert.Empty(stderrLines);
 
         // Verify cancellation kills a long-running child process promptly.
@@ -958,17 +1007,17 @@ public sealed class GuiCoreTests
 
         var strictUtf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-        // 1. Redirected stdout (--help) must emit valid UTF-8 Chinese without BOM.
-        var (helpExit, helpOutBytes, helpErrBytes) = await RunCliRawBytesAsync(cliDll, ["--help"]);
+        // 1. Redirected stdout (--lang zh-Hans --help) must emit valid UTF-8 Chinese without BOM.
+        var (helpExit, helpOutBytes, helpErrBytes) = await RunCliRawBytesAsync(cliDll, ["--lang", "zh-Hans", "--help"]);
         Assert.Equal(0, helpExit);
         Assert.False(HasUtf8Bom(helpOutBytes), "重定向标准输出不应包含 UTF-8 BOM");
         Assert.Empty(helpErrBytes);
         var helpText = strictUtf8.GetString(helpOutBytes);
-        Assert.Contains("资源盘点与导出工具", helpText, StringComparison.Ordinal);
+        Assert.Contains("资源盘点、导出与 SQLite 建库工具", helpText, StringComparison.Ordinal);
         Assert.Contains("打印本帮助信息", helpText, StringComparison.Ordinal);
 
         // 2. Redirected stderr (invalid subcommand) must emit valid UTF-8 Chinese without BOM.
-        var (errExit, errOutBytes, errErrBytes) = await RunCliRawBytesAsync(cliDll, ["__invalid_subcommand__"]);
+        var (errExit, errOutBytes, errErrBytes) = await RunCliRawBytesAsync(cliDll, ["--lang", "zh-Hans", "__invalid_subcommand__"]);
         Assert.Equal(2, errExit);
         Assert.Empty(errOutBytes);
         Assert.False(HasUtf8Bom(errErrBytes), "重定向标准错误不应包含 UTF-8 BOM");
@@ -1162,6 +1211,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void GuiStartupLogger_FormatsCompleteExceptionsFatalDialogAndSelfTestStderr()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-gui-ex-format");
 
         Exception captured;
@@ -1234,6 +1284,7 @@ public sealed class GuiCoreTests
     [Fact]
     public void GuiStartupFallbacks_HandleSettingsFontOutputRootSteamAndCliFailuresWithoutThrowing()
     {
+        using var langScope = AppLocalization.PushLanguage(AppLanguage.ZhHans);
         using var ws = new TempWorkspace("ffpr-gui-fallbacks");
 
         // 1. Settings path & load diagnostics: provider exception, corrupt JSON, null JSON, unreadable directory path.
@@ -1410,6 +1461,7 @@ public sealed class GuiCoreTests
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
+        startInfo.Environment.Remove(AppLocalization.EnvVarName);
         startInfo.ArgumentList.Add("exec");
         startInfo.ArgumentList.Add(cliDll);
         foreach (var arg in args)

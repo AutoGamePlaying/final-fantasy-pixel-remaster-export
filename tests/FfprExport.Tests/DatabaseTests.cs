@@ -428,7 +428,7 @@ public sealed class DatabaseTests
 
         foreach (var badSql in forbiddenQueries)
         {
-            var res = await TestHarness.RunCliAsync(["db", "sql", dbPath, badSql]);
+            var res = await TestHarness.RunCliAsync(["--lang", "zh-Hans", "db", "sql", dbPath, badSql]);
             Assert.NotEqual(0, res.ExitCode);
             Assert.Contains("错误：", res.Stderr, StringComparison.Ordinal);
         }
@@ -515,6 +515,7 @@ public sealed class DatabaseTests
             startInfo.ArgumentList.Add(arg);
         }
 
+        startInfo.Environment.Remove(AppLocalization.EnvVarName);
         foreach (var (k, v) in envOverrides)
         {
             startInfo.Environment[k] = v;

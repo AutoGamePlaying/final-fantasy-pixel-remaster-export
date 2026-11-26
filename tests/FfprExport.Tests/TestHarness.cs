@@ -192,6 +192,7 @@ internal static class TestHarness
         startInfo.Environment[AgpPaths.AgpHomeEnvVar] = string.IsNullOrWhiteSpace(agpHome)
             ? TestAgpIsolation.EnsureIsolatedAgpHome()
             : agpHome.Trim();
+        startInfo.Environment.Remove(AppLocalization.EnvVarName);
 
         if (extraEnv is not null)
         {

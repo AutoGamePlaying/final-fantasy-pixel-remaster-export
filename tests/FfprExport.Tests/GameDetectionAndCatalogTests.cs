@@ -45,8 +45,14 @@ public sealed class GameDetectionAndCatalogTests
         // Unknown directory must fail cleanly.
         var unknownDir = Path.Combine(ws.Root, "not-a-game");
         Directory.CreateDirectory(unknownDir);
-        var ex = Assert.Throws<InvalidDataException>(() => GameDetector.Detect(unknownDir));
-        Assert.Contains("无法从目录识别", ex.Message, StringComparison.Ordinal);
+        var defaultEx = Assert.Throws<InvalidDataException>(() => GameDetector.Detect(unknownDir));
+        Assert.Contains("Could not identify", defaultEx.Message, StringComparison.Ordinal);
+
+        using (AppLocalization.PushLanguage(AppLanguage.ZhHans))
+        {
+            var zhEx = Assert.Throws<InvalidDataException>(() => GameDetector.Detect(unknownDir));
+            Assert.Contains("无法从目录识别", zhEx.Message, StringComparison.Ordinal);
+        }
     }
 
     [Fact]
