@@ -1,188 +1,192 @@
+**English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+
 # final-fantasy-pixel-remaster-export
 
-《FINAL FANTASY I–VI Pixel Remaster》（Steam Windows 版，Unity / IL2CPP）的资源盘点、导出与 SQLite 建库工具 `ffpr-export`（C# / .NET 10 / AssetsTools.NET）。
+Asset inventory, extraction, and reproducible SQLite database builder `ffpr-export` (C# / .NET 10 / AssetsTools.NET) for *FINAL FANTASY I–VI Pixel Remaster* (Steam Windows edition, Unity / IL2CPP).
 
-工具以只读方式扫描 Steam 游戏目录，自动识别 FF1–FF6、Unity 版本与 Steam 构建号，解析 Addressables `catalog.json` 与 `*_Data` 资源文件，跳过图像、音频、视频、字体、着色器，将其余结构化文本、CSV、Tiled 地图、事件/战斗脚本以及 `MonoBehaviour` / `ScriptableObject`（优先 TypeTree，缺失时用 IL2CPP 元数据生成类型）导出并构建为可复现的 SQLite 数据库。
+The tool scans Steam game directories in **read-only** mode, automatically detects FF1–FF6, Unity version, and Steam Build ID, parses Addressables `catalog.json` and `*_Data` files, skips images, audio, video, fonts, and shaders, and exports the remaining structured text, CSV master tables, Tiled maps, event/battle scripts, and `MonoBehaviour` / `ScriptableObject` assets (TypeTree first, falling back to IL2CPP metadata) into a reproducible SQLite database.
 
-> 本仓库为公开仓库，不保存任何游戏文件、导出数据、反编译产物或游戏正文文本；所有本地依赖与导出产物默认留在 `.deps/`（或 `$FFPR_DEPS`）下。
+> This is a public repository and stores **no game files, exported data, decompiled artifacts, or game text**. All local dependencies and intermediate outputs stay under `.deps/` (or `$FFPR_DEPS`).
 
-## 快速开始（Windows）
+## Quick Start (Windows)
 
-无需安装 .NET 运行时，也无需敲命令，点几下即可完成导出：
+No .NET runtime installation or command-line typing required:
 
-1. **下载压缩包**（二选一）：
-   - **Releases 页面**：下载最新正式版的 `ffpr-export-<版本>-win-x64.zip`；
-   - **Actions 页面**：打开最近一次 `main` 分支通过的 `CI` 工作流，在页面底部 **Artifacts** 下载 `ffpr-export-<版本>-<提交短号>-win-x64`（每次推送到 `main` 自动生成，保留 30 天）。
-2. **完整解压**：将压缩包解压到任意文件夹（保持 `ffpr-export-gui.exe`、`ffpr-export.exe` 与 `known-builds.json` 在同一目录）。
-3. **双击 `ffpr-export-gui.exe`**：
-   - 启动时自动扫描本机全部 Steam 库，列出已安装的 FF1–FF6 像素复刻版、Steam 构建号与目录，并**默认全选**（如未自动找到，也可点“手动选择游戏目录…”添加）；
-   - 输出根目录默认为 `%LOCALAPPDATA%\agp\ffpr-export\output\`（每个游戏生成 `<ffN>-<Steam 构建号>\` 子目录），点“浏览…”可改选其他位置；若目标目录已存在且不是本工具创建的目录，会先弹框确认，不静默覆盖；
-   - 点击 **“开始导出”**，程序会依次调用同目录的 `ffpr-export.exe build-db` 逐个构建（不并行），实时显示“第 k / n 个：FFk”进度与日志，随时可点“取消”终止子进程树；
-   - 完成后在底部“完成结果”区查看每个游戏的比对结论（`✓ 与登记的版本一致` / `✓ 新版本，未登记` / `✗ 哈希不同`）、数据库路径、文件哈希与内容哈希，并可一键 **“打开输出文件夹”**（打开实际导出的那个目录）或 **“复制哈希”**；
-   - 上次的输出根目录与勾选状态会自动保存在 `%LOCALAPPDATA%\agp\ffpr-export\settings.json`（不写注册表），启动日志保存在 `%LOCALAPPDATA%\agp\ffpr-export\logs\`（只保留最近 10 个）。
+1. **Download the zip archive** (either source):
+   - **Releases page**: download `ffpr-export-<version>-win-x64.zip` from the latest release.
+   - **Actions page**: open the latest passing `CI` run on `main` and download `ffpr-export-<version>-<short-sha>-win-x64` from **Artifacts** (built on every push to `main`, retained for 30 days).
+2. **Extract the entire archive** to a regular folder (keep `ffpr-export-gui.exe`, `ffpr-export.exe`, sibling native DLLs such as `e_sqlite3.dll`, and `known-builds.json` in the same directory).
+3. **Double-click `ffpr-export-gui.exe`**:
+   - Automatically scans all local Steam libraries, lists installed FF1–FF6 Pixel Remaster games with their Steam Build IDs and directories, and **selects all by default** (use **Add game folder...** if a game is not auto-detected).
+   - Use the **Language** dropdown in the top-right corner (`English` / `简体中文` / `日本語`) to switch the interface language at any time; the UI refreshes immediately and saves your choice to `settings.json`.
+   - Output root defaults to `%LOCALAPPDATA%\agp\ffpr-export\output\` (each game writes to `<ffN>-<buildid>\`). Click **Browse...** to choose another location; if a target folder already exists and was not created by `ffpr-export`, the app asks for confirmation before overwriting.
+   - Click **Start Export** to run the sibling `ffpr-export.exe build-db` sequentially with `--lang` and `--progress-json`, streaming localized logs and language-independent step progress. Click **Cancel** at any time to terminate the child process tree.
+   - When finished, inspect each game's verification verdict (`✓ Matches registered build` / `✓ New version, unregistered` / `✗ Hash mismatch`), database path, file hash, and content hash, then click **Open Output Folder** or **Copy Hashes**.
+   - Settings are stored in `%LOCALAPPDATA%\agp\ffpr-export\settings.json` (no Windows Registry writes); startup logs are saved under `%LOCALAPPDATA%\agp\ffpr-export\logs\` (keeping the latest 10 files).
 
 ```text
 +-----------------------------------------------------------------------------+
-| FFPR 导出工具 v0.1.0 — FINAL FANTASY I–VI Pixel Remaster                    |
+| FFPR Export v0.1.0 — FINAL FANTASY I–VI Pixel Remaster                      |
 +-----------------------------------------------------------------------------+
-| 1. 游戏（自动扫描 Steam 库，默认全选）                                       |
-| [x] 全选  已选 3 / 3 个游戏               [ 重新扫描 ] [ 手动选择游戏目录… ] |
+|                                                Language: [ English       v] |
+| 1. Games (auto-scanned from Steam libraries, all selected by default)       |
+| [x] Select all   Selected 3 / 3 game(s)      [ Rescan ] [ Add game folder…] |
 | +------------------------+----------+-------------------------------------+ |
-| | 游戏                   | 构建号   | 目录                                | |
+| | Game                   | Build ID | Directory                           | |
 | | [x] FINAL FANTASY (FF1)| 20249397 | C:\...\common\FINAL FANTASY PR      | |
 | | [x] FINAL FANTASY V... | 20265087 | D:\...\common\FINAL FANTASY V PR    | |
 | +------------------------+----------+-------------------------------------+ |
 |                                                                             |
-| 2. 输出位置                                                                 |
-| 输出根目录：[ %LOCALAPPDATA%\agp\ffpr-export\output              ] [ 浏览… ] |
-| 子目录预览：将分别输出到 ff1-20249397、ff5-20265087 等 3 个子目录            |
+| 2. Output Location                                                          |
+| Output root: [ %LOCALAPPDATA%\agp\ffpr-export\output         ] [ Browse… ] |
+| Subdirectory preview: will export to ff1-20249397, ff5-20265087 (3 total)   |
 |                                                                             |
-| [                  开 始 导 出                  ]         [   取  消   ]    |
-| 第 2 / 3 个：FF5（步骤 3/6：进程内执行 db build 构建 ff5.sqlite）            |
+| [                 Start Export                  ]        [   Cancel   ]     |
+| Game 2 / 3: FF5 (Step 3/6)                                                  |
 | [===========================-----------------------]                        |
-| | ==> [ff5] 步骤 1/6：识别游戏版本与资源指纹                              ^ | |
-| | ==> [ff5] 步骤 2/6：进程内执行 inventory 与 export                      | | |
-| | ==> [ff5] 步骤 3/6：进程内执行 db build 构建 ff5.sqlite                 v | |
+| | ==> [ff5] Step 1/6: Identifying game version and resource fingerprint   ^ | |
+| | ==> [ff5] Step 2/6: Running in-process inventory and export             | | |
+| | ==> [ff5] Step 3/6: Running in-process db build to create ff5.sqlite    v | |
 |                                                                             |
-| 3. 完成结果                                                                 |
-| +--------------------+----------+--------------------+--------------------+ |
-| | 游戏               | 构建号   | 结论               | 库文件路径         | |
-| | FINAL FANTASY (FF1)| 20249397 | ✓ 与登记的版本一致 | ...\ff1.sqlite     | |
-| +--------------------+----------+--------------------+--------------------+ |
-| 数据库路径：%LOCALAPPDATA%\agp\ffpr-export\output\ff1-20249397\ff1.sqlite   |
-| 文件哈希：  abb52056...                                                     |
-| 内容哈希：  45fb76f7...                                                     |
-| 比对结论：  ✓ 与登记的版本一致（登记日期：2026-11-25，来源：file）          |
-| [ 打开输出文件夹 ]  [ 复制哈希 ]                                            |
+| 3. Results                                                                  |
+| +--------------------+----------+--------------------------+--------------+ |
+| | Game               | Build ID | Verdict                  | Database Path| |
+| | FINAL FANTASY (FF1)| 20249397 | ✓ Matches registered ... | ...\ff1.sq...| |
+| +--------------------+----------+--------------------------+--------------+ |
+| Database path: %LOCALAPPDATA%\agp\ffpr-export\output\ff1-20249397\ff1.sqlite|
+| File hash:     abb52056...                                                  |
+| Content hash:  45fb76f7...                                                  |
+| Verdict:       ✓ Matches registered build (registered: 2026-11-25, ...)     |
+| [ Open Output Folder ]  [ Copy Hashes ]                                     |
 +-----------------------------------------------------------------------------+
 ```
 
-## 数据目录与 `AGP_HOME`
+## Language Selection
 
-窗口程序、控制台向导与命令行 `build-db` 共用同一套数据根目录布局，避免导出产物、日志与配置文件散落各处：
+Both the GUI and CLI support **English (`en`, default)**, **Simplified Chinese (`zh-Hans`)**, and **Japanese (`ja`)**. The tool does **not** auto-switch based on OS/system locale.
+
+Precedence order (highest to lowest):
+
+1. CLI option: `--lang en|zh-Hans|ja` (e.g., `ffpr-export --lang ja --help`)
+2. Environment variable: `AGP_LANG` (`en`, `zh-Hans`, or `ja`)
+3. GUI saved setting: `language` in `settings.json` (updated immediately by the top-right dropdown)
+4. Default: `en`
+
+When the GUI launches `ffpr-export.exe`, it passes `--lang <current>` and `--progress-json`. With `--progress-json`, the CLI emits language-independent `@@progress {"step":n,"total":m}` lines for the GUI progress bar alongside the localized human-readable log lines.
+
+## Data Directory & `AGP_HOME`
+
+The GUI, console wizard, and CLI `build-db` share a single data root layout:
 
 ```text
 %LOCALAPPDATA%\agp\ffpr-export\
-  output\<游戏代号>-<Steam 构建号>\   默认导出位置：数据库、构建报告、--keep-json 时的 json\
-  logs\                              窗口程序和命令行的日志（只保留最近 10 个）
-  settings.json                      窗口程序的设置
+  output\<game>-<buildid>\   Default export location: SQLite DB, build report, and json\ (with --keep-json)
+  logs\                      GUI diagnostic logs (retains latest 10 files)
+  settings.json              GUI preferences (output root, language, checked games)
 ```
 
-### 根目录优先顺序
+### Root Resolution Precedence
 
-程序通过统一函数按以下顺序确定 `agp` 根目录：
+1. **Environment variable `AGP_HOME`** (used directly as the `agp` layer; tool folder is `$AGP_HOME/ffpr-export/`).
+2. **Windows**: `%LOCALAPPDATA%\agp` (with automatic fallbacks to `LocalLow`, `<exeDir>\agp-data`, `%USERPROFILE%\agp`, or `agp-location.txt` when `%LOCALAPPDATA%` is not writable).
+3. **Linux / macOS**: `$XDG_DATA_HOME/agp`, or `~/.local/share/agp` if `XDG_DATA_HOME` is unset.
 
-1. **环境变量 `AGP_HOME`**（直接作为 `agp` 这一层，工具目录为 `$AGP_HOME/ffpr-export/`）；
-2. **Windows**：`%LOCALAPPDATA%\agp`；
-3. **Linux / macOS**：`$XDG_DATA_HOME/agp`；未设置 `XDG_DATA_HOME` 时使用 `~/.local/share/agp`。
+An explicit `--out <dir>` on the CLI or a browsed folder in the GUI always overrides the default output root.
 
-用户显式传入的 `--out <目录>`，或在窗口程序中通过“浏览…”选择的输出根目录，仍然优先于上述默认值；窗口程序的“打开输出文件夹”按钮会直接打开实际导出的那个目录。
+### `AGP_HOME` Examples
 
-### `AGP_HOME` 用法示例
-
-Windows（PowerShell）：
+Windows (PowerShell):
 
 ```powershell
 $env:AGP_HOME = "D:\agp-data"
 .\ffpr-export.exe build-db --game "C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY V PR"
-# 输出至 D:\agp-data\ffpr-export\output\ff5-<Steam 构建号>\
+# Writes to D:\agp-data\ffpr-export\output\ff5-<buildid>\
 ```
 
-Linux / macOS（bash）：
+Linux / macOS (bash):
 
 ```bash
 AGP_HOME=/tmp/agp-data scripts/run.sh build-db --game "/path/to/FINAL FANTASY V PR"
-# 输出至 /tmp/agp-data/ffpr-export/output/ff5-<Steam 构建号>/
+# Writes to /tmp/agp-data/ffpr-export/output/ff5-<buildid>/
 ```
 
-### 旧版本位置与自动迁移
+### Legacy Locations & Migration
 
-- **窗口程序设置自动迁移**：首次启动新版本时，若新位置 `%LOCALAPPDATA%\agp\ffpr-export\settings.json` 尚不存在、且旧位置 `%APPDATA%\ffpr-export\settings.json`（Linux 为 `~/.config/ffpr-export/settings.json`）存在，程序会自动读取旧设置写入新位置，并将旧文件改名为 `settings.json.migrated`（不删除）。当设置了 `AGP_HOME` 时不会读取或改动宿主机的旧 `%APPDATA%` 设置。
-- **旧导出结果与旧日志不自动迁移**（如需保留或清理可手动移动/删除）：
-  - 窗口程序旧默认输出：`%USERPROFILE%\Documents\FF-Export\<游戏代号>-<Steam 构建号>\`；
-  - 窗口程序旧日志：`%LOCALAPPDATA%\ffpr-export\logs\`；
-  - 控制台向导旧默认输出：可执行文件同目录下的 `output\<游戏代号>-<Steam 构建号>\`；
-  - `build-db` 未传 `--out` 时的旧默认输出：当前目录下的 `ffpr-<ffN>-build\`。
+- **Automatic GUI settings migration**: on first launch, if the new `settings.json` does not exist yet while the legacy `%APPDATA%\ffpr-export\settings.json` (Linux: `~/.config/ffpr-export/settings.json`) exists, the GUI migrates it to the new path and renames the legacy file to `settings.json.migrated` (without deleting it). When `AGP_HOME` is set, host `%APPDATA%` is never read or modified.
+- **Legacy exports and logs are not migrated automatically**:
+  - Old GUI default output: `%USERPROFILE%\Documents\FF-Export\<game>-<buildid>\`
+  - Old GUI logs: `%LOCALAPPDATA%\ffpr-export\logs\`
+  - Old console wizard default output: `<exeDir>\output\<game>-<buildid>\`
+  - Old `build-db` default output without `--out`: `.\ffpr-<ffN>-build\`
 
-## 命令行用法与控制台向导
+## CLI Usage & Console Wizard
 
-### 控制台向导（无参数启动 `ffpr-export.exe`）
+### Interactive Console Wizard (no arguments)
 
-若在没有图形界面或需要终端交互的场景下使用，可直接双击或无参数运行 `ffpr-export.exe` 启动中文控制台向导：自动扫描 Steam 游戏库，按编号选择单个游戏或“全部”，默认输出到 `%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<Steam 构建号>\`（可自定义路径或通过 `AGP_HOME` 覆盖根目录），确认后依次执行 `build-db` 并汇总数据库路径、哈希与比对结论。
+Running `ffpr-export.exe` with no arguments (or only `--lang <code>`) launches the interactive console wizard: it scans local Steam libraries, lets you select one game or all games, confirms the output directory, executes `build-db` sequentially, and summarizes database paths, hashes, and `known-builds.json` verdicts.
 
-### 命令行子命令
+### CLI Subcommands
 
-传入参数时走完整命令行模式。Linux 下通过 `scripts/run.sh` 调用，Windows 下直接运行 `ffpr-export.exe`：
+Use `scripts/run.sh` on Linux/macOS or `ffpr-export.exe` directly on Windows.
 
-### 1. `build-db` — 一步建库与版本核对
+#### 1. `build-db` — One-Step Database Build & Verification
 
 ```bash
-scripts/run.sh build-db --game "<Steam 游戏目录>" [--out <目录>] [--steam-buildid <编号>] [--keep-json] [--jobs N] [--force]
+scripts/run.sh build-db --game "<Steam game dir>" [--out <dir>] [--steam-buildid <id>] [--keep-json] [--jobs N] [--force] [--progress-json] [--lang en|zh-Hans|ja]
 ```
 
-不传 `--out` 时默认输出至 `<AGP 根目录>/ffpr-export/output/<游戏代号>-<Steam 构建号>/`（如 Windows 下为 `%LOCALAPPDATA%\agp\ffpr-export\output\ff5-20265087\`）；显式指定 `--out` 时优先使用指定目录。
+Omitting `--out` defaults to `<AGP root>/ffpr-export/output/<game>-<buildid>/`.
 
-Windows 下直接运行单文件可执行程序（支持带空格路径与超长路径）：
+Windows example (paths with spaces and >260-char long paths supported):
 
 ```powershell
 .\ffpr-export.exe build-db --game "C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY V PR" --out "D:\FFPR Exports\ff5"
 ```
 
-一步流程：
+Pipeline overview:
 
-1. 自动识别游戏（FF1–FF6）与游戏版本信息：
-   - 向上两级读取 `steamapps/appmanifest_<appid>.acf` 的 `buildid`；读不到时可用 `--steam-buildid` 手动指定（来源记为 `manual`）；两者均缺失时记为 `null` 并打印警告；
-   - 计算 `GameAssembly.dll` 与 `global-metadata.dat` 的 SHA-256；
-   - 跨平台纯 C# 解析游戏 `.exe` 的 PE 版本资源（`FileVersion` / `ProductVersion`）；
-   - 读取资源文件头中的 Unity 版本；
-   - 计算资源指纹：`StreamingAssets/aa/catalog.json` 的 SHA-256 与全部 `.bundle` 按相对路径排序后的“路径、大小、SHA-256”合成哈希，并记录耗时。
-2. 在同一进程内依次执行 `inventory`、`export`（输出至 `<out>/json/inventory/` 与 `<out>/json/export/`）、`db build`（生成 `<out>/<ffN>.sqlite`）与 `db hash --json`。
-3. 写出 `<out>/<ffN>.sqlite.build.json`（含游戏版本、工具版本与 git 提交、数据库 `file_sha256` / `content_sha256`、逐表行数与哈希、各阶段耗时）。
-4. 按“可执行文件同目录 → 程序内嵌副本”的优先级加载 `known-builds.json`（按 `ff1`–`ff6` 分组）并比对，打印三种结论之一：与登记的版本一致 / 新的游戏版本，未登记 / 游戏版本已登记，但数据库哈希不同（并列出差异表）。
-5. 默认清理中间目录 `<out>/json/`；传入 `--keep-json` 可保留用于核对。输出目录遵循 `OutputGuard` 护栏（拒绝与 `--game` 重叠、拒绝 `.deps/` 受保护子目录、非空目录需 `--force` 且仅允许清空 `build-db` 自有目录）。
+1. Identifies the game (FF1–FF6) and collects version metadata:
+   - Reads `buildid` from `../../steamapps/appmanifest_<appid>.acf` (or `--steam-buildid`, recorded as `manual`; records `null` with a warning if neither is available).
+   - Computes SHA-256 of `GameAssembly.dll` and `global-metadata.dat`.
+   - Parses PE version resources (`FileVersion` / `ProductVersion`) from the game `.exe` in cross-platform pure C#.
+   - Reads the Unity version from asset headers.
+   - Computes the resource fingerprint from `StreamingAssets/aa/catalog.json` and all sorted `.bundle` files.
+2. Runs `inventory`, `export` (into `<out>/json/inventory/` and `<out>/json/export/`), `db build` (producing `<out>/<ffN>.sqlite`), and `db hash --json` in-process.
+3. Writes `<out>/<ffN>.sqlite.build.json` with game version, tool version/commit, `file_sha256`, `content_sha256`, per-table row counts/hashes, and stage timings.
+4. Loads `known-builds.json` (sibling file next to the executable first, then embedded resource) and reports one of three outcomes: matches registered build / new game version / hash mismatch (listing differing tables).
+5. Removes temporary `<out>/json/` unless `--keep-json` is passed. Protected by `OutputGuard` (blocks overlaps with `--game`, blocks protected `.deps/` subdirectories, and only clears directories carrying a matching `build-db` `manifest.json` under `--force`).
 
-### 2. `inventory` — 资源盘点
-
-```bash
-scripts/run.sh inventory --game "<Steam 游戏目录>" [--out "<输出目录>"] [--jobs N] [--force]
-```
-
-- 自动识别游戏（FF1–FF6，检查 `*_Data` 目录或 `.exe` 名）、读取资源文件头中的 Unity 版本，并向上两级读取 `steamapps/appmanifest_<appid>.acf` 中的 `buildid`。
-- 解析 `StreamingAssets/aa/catalog.json` 关联的全部 `.bundle`，同时盘点 `*_Data` 下的 `resources.assets`、`sharedassets*.assets`、`level*`。
-- 输出到 `--out`（默认 `.deps/ffpr/<ffN>/inventory`）：
-  - `inventory.jsonl`：逐资产明细（来源、容器路径、Unity 类型、脚本类名、字节大小、TypeTree 状态与导出决策）。
-  - `summary.json`：按类型、按目录、按决策、按 bundle 汇总统计及分类理由。
-  - `manifest.json`：盘点清单（供 `--force` 护栏校验）。
-
-### 3. `export` — 原始资源导出
+#### 2. `inventory` — Asset Inventory
 
 ```bash
-scripts/run.sh export --game "<Steam 游戏目录>" [--out "<输出目录>"] [--jobs N] [--force]
+scripts/run.sh inventory --game "<Steam game dir>" [--out "<output dir>"] [--jobs N] [--force] [--lang en|zh-Hans|ja]
 ```
 
-- 默认输出到 `.deps/ffpr/<ffN>/export`（可通过环境变量 `FFPR_DEPS` 覆盖 `.deps` 基准目录，或通过 `--out` 指定任意合法路径）。
-- 导出内容：
-  - **非音频 `TextAsset`**：按容器路径原样写出原始字节（`Assets/GameAssets/Serial/` 剥离为 `Res/…`、`Data/…`，与旧版 UnityPy 导出布局逐字节一致；`Assets/GameAssets/` 其余路径输出为 `AssetsPath.json`、`Common/…`；`*_Data` 文本输出至 `_data/<文件名>/`）。
-  - **`MonoBehaviour` / `ScriptableObject`**：资源包携带 TypeTree 时直接按 TypeTree 导出；`*_Data` 剥离 TypeTree 时通过 `AssetsTools.NET.Cpp2IL` 读取 `GameAssembly.dll` 与 `il2cpp_data/Metadata/global-metadata.dat` 反序列化为 JSON。独立容器资产写出 `<容器路径>.json`，组件资产按来源归组写出至 `_monobehaviour/bundles/*.json` 与 `_monobehaviour/data/*.json`。
-  - **跳过**：图像/网格/渲染组件、音频（含 `Res/Audio/*.mab.bytes` / `*.sab.bytes`）、视频、字体（含加密的 `StreamingAssets/font_*.bundle`）、着色器/材质、纯视觉动画及 Unity 场景骨架对象。
-- 护栏与容错：
-  - **只读游戏目录**：工具绝不修改 `--game` 下的任何文件，且禁止 `--out` 与 `--game` 重叠或指向 `.deps/` 受保护子目录。
-  - **断点续跑**：再次对已有 `export` 输出目录运行（不加 `--force`）自动跳过已导出文件，所有文件均采用临时文件原子替换写出。
-  - **`--force` 护栏**：仅允许清空包含本工具同名子命令 `manifest.json`（`tool == "ffpr-export"` 且 `command` 匹配）的目录，拒绝误删外部目录或其他子命令目录。
-  - **单资产容错**：单个资源或 bundle 失败记录进 `manifest.json` 的 `failures` 列表，不中断其余导出（有失败时退出码为 `1`，全部成功为 `0`，参数或护栏错误为 `2`）。
+- Auto-detects FF1–FF6, Unity version, and Steam `buildid`.
+- Inspects all Addressables bundles referenced by `StreamingAssets/aa/catalog.json` plus `resources.assets`, `sharedassets*.assets`, and `level*` in `*_Data`.
+- Writes `inventory.jsonl`, `summary.json`, and `manifest.json` to `--out` (default `.deps/ffpr/<ffN>/inventory`).
 
-Windows 带空格路径示例：
+#### 3. `export` — Raw Asset Extraction
 
-```powershell
-.\ffpr-export.exe inventory --game "C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY V PR" --out "D:\FFPR Exports\ff5\inventory"
-.\ffpr-export.exe export --game "C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY V PR" --out "D:\FFPR Exports\ff5\export" --jobs 8
+```bash
+scripts/run.sh export --game "<Steam game dir>" [--out "<output dir>"] [--jobs N] [--force] [--lang en|zh-Hans|ja]
 ```
 
-## 环境准备
+- Defaults to `.deps/ffpr/<ffN>/export` (base `.deps` overridable via `FFPR_DEPS`).
+- Extracts:
+  - **Non-audio `TextAsset`**: writes raw bytes verbatim at container paths (`Assets/GameAssets/Serial/` stripped to `Res/...` and `Data/...`; other `Assets/GameAssets/` paths to `AssetsPath.json`, `Common/...`; `*_Data` text to `_data/<file>/`).
+  - **`MonoBehaviour` / `ScriptableObject`**: uses TypeTree when present, falling back to `AssetsTools.NET.Cpp2IL` with `GameAssembly.dll` and `global-metadata.dat`. Standalone container assets write `<container>.json`; component assets group into `_monobehaviour/bundles/*.json` and `_monobehaviour/data/*.json`.
+  - **Skips**: images/sprites/meshes, audio (`*.mab.bytes` / `*.sab.bytes`), video, fonts (including encrypted `font_*.bundle`), shaders/materials, animations, and Unity scene scaffolding.
+- Safety & fault tolerance:
+  - **Read-only game directory**: never modifies `--game`.
+  - **Resumable**: re-running without `--force` skips already-exported files; all writes use atomic temp-file replacement.
+  - **Per-asset fault tolerance**: individual asset/bundle errors are recorded in `manifest.json` `failures` without aborting (exit `0` = all succeeded, `1` = completed with partial failures, `2` = argument/guardrail error).
 
-### Linux 开发环境
+## Development Setup
 
-默认使用仓库根目录的 `.deps/dotnet`（.NET 10 SDK）与 `.deps/nuget`（NuGet 缓存），不修改 `~/.dotnet`；也可通过 `DOTNET_ROOT` 指定已安装的 .NET 10 SDK：
+### Linux Environment
+
+Uses `.deps/dotnet` (.NET 10 SDK) and `.deps/nuget` by default without touching `~/.dotnet` (or set `DOTNET_ROOT` to an existing .NET 10 SDK):
 
 ```bash
 mkdir -p .deps
@@ -190,65 +194,67 @@ curl -fsSL https://dot.net/v1/dotnet-install.sh -o .deps/dotnet-install.sh
 bash .deps/dotnet-install.sh --channel 10.0 --install-dir .deps/dotnet --no-path
 ```
 
-### Windows 单文件发布与打包
+### Windows Single-File Packaging
 
-无需在目标机安装 .NET 运行时，可执行打包脚本同时构建自包含单文件 `ffpr-export-gui.exe`（WinForms 图形界面，支持高 DPI 与 `longPathAware`）与 `ffpr-export.exe`（命令行 / 控制台向导），并产出带校验和的发布压缩包：
+Builds self-contained single-file `ffpr-export-gui.exe` (WinForms, PerMonitorV2 DPI, `longPathAware`) and `ffpr-export.exe` (CLI / wizard) with sibling `e_sqlite3.dll` (no extraction to `%TEMP%`), all three UI languages bundled inside each executable, and `SHA256SUMS`:
 
 ```bash
 scripts/package-windows.sh
 ```
 
-脚本优先读取当前 HEAD 的 git tag 作为版本号（无 tag 时读取根目录 `VERSION`），在 `dist/` 下生成 `ffpr-export-<版本>-win-x64.zip`，内含 `ffpr-export-gui.exe`、`ffpr-export.exe`、`使用说明.txt`、`known-builds.json`、`README.md`、`LICENSE` 与 `SHA256SUMS`。
+Or natively on Windows:
 
-## 跨代数据结构调查
+```powershell
+.\scripts\package-windows.ps1
+```
 
-全六作的详细结构对比（主数据 CSV 表与列差异、12 语言消息、Tiled 地图、事件/战斗/AI 脚本及 `MonoBehaviour` 分布）见 [docs/data-survey.md](docs/data-survey.md)。
+Outputs `dist/ffpr-export-<version>-win-x64.zip` containing `ffpr-export-gui.exe`, `ffpr-export.exe`, `e_sqlite3.dll`, `README-Windows.txt`, `known-builds.json`, `README.md`, `LICENSE`, and `SHA256SUMS`.
 
-## 构建与测试
+## Cross-Game Data Survey
+
+Detailed structural comparison across all six games (master CSVs, 12-language text, Tiled maps, scripts, and `MonoBehaviour` distribution) is documented in [docs/data-survey.md](docs/data-survey.md) (in Chinese).
+
+## Build & Test
 
 ```bash
 scripts/check.sh
 ```
 
-脚本依次执行：
+Runs sequentially:
 
-1. `dotnet format FfprExport.sln --verify-no-changes`
-2. `dotnet build FfprExport.sln -c Release`（启用 `Nullable` 与警告当错误）
-3. `dotnet test FfprExport.sln -c Release --no-build`（xUnit，全部使用合成 Unity 资源包测试，不依赖真实游戏文件）
+1. `dotnet format FfprExport.sln --verify-no-changes` (on Linux)
+2. `dotnet build FfprExport.sln -c Release` (`Nullable` enabled, warnings treated as errors)
+3. `dotnet test FfprExport.sln -c Release --no-build` (xUnit tests using synthetic Unity bundles; no real game files required)
 
-脚本会自动设置 `MSBUILDDISABLENODEREUSE=1`、`DOTNET_CLI_USE_MSBUILD_SERVER=0`、`UseSharedCompilation=false`，避免 MSBuild / 编译器常驻节点滞留并占住文件锁。
+The script sets `MSBUILDDISABLENODEREUSE=1`, `DOTNET_CLI_USE_MSBUILD_SERVER=0`, and `UseSharedCompilation=false` so MSBuild/compiler servers never linger or hold lock files.
 
-## CI 和发布
+## CI & Releases
 
-仓库通过 GitHub Actions 在 `ubuntu-latest` 与 `windows-latest` 上使用各自原生 .NET 10 工具链执行持续集成与自动发版。
+GitHub Actions runs native .NET 10 checks on both `ubuntu-latest` and `windows-latest`:
 
-### 持续集成（`.github/workflows/ci.yml`）
+### Continuous Integration (`.github/workflows/ci.yml`)
 
-每次向任意分支 `push` 或提交 `pull_request` 时触发（最小权限 `contents: read`），包含四个 job：
+Triggered on every push and pull request (`permissions: contents: read`), with four jobs:
 
-1. **`check`**（`ubuntu-latest` + `windows-latest`）：安装 .NET 10 SDK 并缓存 NuGet 后执行 `scripts/check.sh`（Linux 上额外跑 `dotnet format --verify-no-changes`，两个平台均编译包含 `FfprExport.Gui` 在内的 `FfprExport.sln` 并执行 `dotnet test`；Windows 上另以 `--self-test` 对 `ffpr-export-gui.exe` 做无窗口依赖自检；CI 上不含 `.deps/`）。
-2. **`fixture-hash`**（`ubuntu-latest` + `windows-latest`）：执行 `scripts/fixture-db.sh`，生成确定的合成导出目录并运行完整 `ffpr-export db build`，随后执行 `ffpr-export db hash --json` 并将结果上传为 artifact。
-3. **`compare-hash`**（依赖两个 `fixture-hash`）：下载 Linux 与 Windows 两份哈希 JSON，比对 `file_sha256`、`content_sha256`、`schema_version` 以及每张普通表的行数与哈希；任意一项不一致即失败并列出存在差异的表。
-4. **`package-windows`**（仅在 `push` 到 `main` 时运行，依赖 `check`，`windows-latest`）：调用 `scripts/package-windows.ps1` 构建包含 `ffpr-export-gui.exe`、`ffpr-export.exe` 与 `使用说明.txt` 的 Windows x64 单文件压缩包，解压校验并执行 `ffpr-export-gui.exe --self-test --require-cli`，最后以 `ffpr-export-<版本>-<提交短号>-win-x64` 为名上传为 GitHub Actions Artifact，保留 30 天。
+1. **`check`** (`ubuntu-latest` + `windows-latest`): runs `scripts/check.sh`, plus `ffpr-export-gui.exe --self-test` on Windows.
+2. **`fixture-hash`** (`ubuntu-latest` + `windows-latest`): runs `scripts/fixture-db.sh` and `scripts/fixture-export.sh` to generate synthetic database and export file hash reports.
+3. **`compare-hash`**: compares Linux and Windows `file_sha256`, `content_sha256`, every ordinary SQLite table hash, and every synthetic export file hash to enforce byte-for-byte cross-platform reproducibility.
+4. **`package-windows`** (push to `main` only, `windows-latest`): runs `scripts/package-windows.ps1`, extracts and verifies `README-Windows.txt`, `e_sqlite3.dll`, all three languages (`en`, `zh-Hans`, `ja`), blocked-`TEMP` execution, and uploads the zip artifact (retained 30 days).
 
-### 跨平台哈希核对的意义
+### Release Workflow (`.github/workflows/release.yml`)
 
-真实游戏文件与导出数据不会上传到公开仓库或 CI。通过同一份确定的合成导出数据在 Linux 与 Windows 上各自原生构建 SQLite 数据库，强制要求 `file_sha256`（整个数据库文件字节级一致）、`content_sha256` 以及全部普通表哈希完全相同，可以在每次改动时持续验证建库流程没有引入与操作系统、路径分隔符、线程调度或换行符相关的非确定性差异。
+Triggered by pushing a `v*` tag matching `VERSION`:
 
-### 发版流程（`.github/workflows/release.yml`）
-
-发版由 `v*` tag 自动触发，流程如下：
-
-1. 更新仓库根目录的 `VERSION` 文件（例如 `0.1.0`）并提交到目标分支；
-2. 创建与 `VERSION` 一致的 tag 并推送：
+1. Update `VERSION` (e.g. `0.1.0`) and commit.
+2. Tag and push:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-推送 tag 后，`release.yml` 会在 `windows-latest` 上校验 tag 去掉 `v` 后与 `VERSION` 一致，先完整运行 `scripts/check.sh`，再运行 `scripts/package-windows.ps1` 原生发布 `win-x64` 自包含单文件并生成压缩包与 `SHA256SUMS`，最后使用 `GITHUB_TOKEN` 创建标题为 tag 名的 GitHub Release，上传 `ffpr-export-<版本>-win-x64.zip`、`SHA256SUMS` 与 `known-builds.json`（本地 Linux 交叉编译打包脚本 `scripts/package-windows.sh` 保留供本机使用）。
+`release.yml` verifies tag vs `VERSION`, runs `scripts/check.sh`, packages the native `win-x64` release via `scripts/package-windows.ps1`, verifies the archive, and publishes a GitHub Release with `ffpr-export-<version>-win-x64.zip`, `SHA256SUMS`, and `known-builds.json`.
 
-## 许可
+## License
 
 [MIT License](LICENSE)
