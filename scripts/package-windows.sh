@@ -53,13 +53,13 @@ trap 'rm -rf "$STAGE_DIR"' EXIT
 mkdir -p "$DOTNET_CLI_OUT" "$DOTNET_GUI_OUT" "$PACKAGE_DIR" "$ROOT/dist"
 
 echo "==> 打包版本：$VERSION（git: $GIT_COMMIT）"
-echo "==> 发布 ffpr-export.exe（win-x64 self-contained single-file）"
+echo "==> 发布 ffpr-export.exe（win-x64 self-contained single-file，原生库随目录分发不解压到 TEMP）"
 "$DOTNET_BIN" publish "$ROOT/src/FfprExport/FfprExport.csproj" \
   -c Release \
   -r win-x64 \
   --self-contained true \
   -p:PublishSingleFile=true \
-  -p:IncludeNativeLibrariesForSelfExtract=true \
+  -p:IncludeNativeLibrariesForSelfExtract=false \
   -p:EnableCompressionInSingleFile=true \
   -p:DebugType=None \
   -p:DebugSymbols=false \
@@ -73,13 +73,13 @@ if [[ ! -f "$DOTNET_CLI_OUT/ffpr-export.exe" ]]; then
   exit 2
 fi
 
-echo "==> 发布 ffpr-export-gui.exe（win-x64 WinForms self-contained single-file）"
+echo "==> 发布 ffpr-export-gui.exe（win-x64 WinForms self-contained single-file，原生库随目录分发不解压到 TEMP）"
 "$DOTNET_BIN" publish "$ROOT/src/FfprExport.Gui/FfprExport.Gui.csproj" \
   -c Release \
   -r win-x64 \
   --self-contained true \
   -p:PublishSingleFile=true \
-  -p:IncludeNativeLibrariesForSelfExtract=true \
+  -p:IncludeNativeLibrariesForSelfExtract=false \
   -p:EnableCompressionInSingleFile=true \
   -p:DebugType=None \
   -p:DebugSymbols=false \
@@ -102,6 +102,30 @@ done
 
 cp "$DOTNET_CLI_OUT/ffpr-export.exe" "$PACKAGE_DIR/ffpr-export.exe"
 cp "$DOTNET_GUI_OUT/ffpr-export-gui.exe" "$PACKAGE_DIR/ffpr-export-gui.exe"
+
+# Copy all sibling native DLLs (such as e_sqlite3.dll) from both publish outputs.
+shopt -s nullglob
+for pub_dir in "$DOTNET_CLI_OUT" "$DOTNET_GUI_OUT"; do
+  for dll_path in "$pub_dir"/*.dll; do
+    dll_name="$(basename "$dll_path")"
+    dest_path="$PACKAGE_DIR/$dll_name"
+    if [[ -f "$dest_path" ]]; then
+      if ! cmp -s "$dll_path" "$dest_path"; then
+        echo "错误：CLI 与 GUI 发布目录中的原生库 $dll_name 内容不一致，拒绝覆盖" >&2
+        exit 2
+      fi
+      continue
+    fi
+    cp "$dll_path" "$dest_path"
+  done
+done
+shopt -u nullglob
+
+if [[ ! -f "$PACKAGE_DIR/e_sqlite3.dll" ]]; then
+  echo "错误：打包目录缺少原生库 e_sqlite3.dll（请确认 IncludeNativeLibrariesForSelfExtract=false 生效）" >&2
+  exit 2
+fi
+
 cp "$ROOT/known-builds.json" "$PACKAGE_DIR/known-builds.json"
 cp "$ROOT/README.md" "$PACKAGE_DIR/README.md"
 cp "$ROOT/LICENSE" "$PACKAGE_DIR/LICENSE"
@@ -118,6 +142,23 @@ case "$(uname -s)" in
       fi
       ./ffpr-export-gui.exe --self-test --require-cli
     )
+
+    echo "==> 执行模拟 TEMP 不可写自检（TEMP/TMP 指向阻塞文件）"
+    printf 'blocked-temp\n' > "$STAGE_DIR/blocked-temp-file"
+    (
+      cd "$PACKAGE_DIR"
+      if command -v cygpath >/dev/null 2>&1; then
+        BLOCKED_TEMP_NATIVE="$(cygpath -w "$STAGE_DIR/blocked-temp-file")"
+        export AGP_HOME="$(cygpath -w "$STAGE_DIR/agp-home-notemp")"
+      else
+        BLOCKED_TEMP_NATIVE="$STAGE_DIR/blocked-temp-file"
+        export AGP_HOME="$STAGE_DIR/agp-home-notemp"
+      fi
+      export TEMP="$BLOCKED_TEMP_NATIVE"
+      export TMP="$BLOCKED_TEMP_NATIVE"
+      ./ffpr-export-gui.exe --self-test --require-cli
+      ./ffpr-export.exe --help >/dev/null
+    )
     ;;
   *)
     echo "==> 跳过打包后窗口程序自检（当前为非 Windows 交叉打包环境，Windows 上将由 package-windows.ps1 与 CI 执行）"
@@ -129,7 +170,7 @@ printf '%s\r\n' \
   'FFPR 导出工具（FINAL FANTASY I–VI Pixel Remaster）使用说明' \
   '' \
   '1. 将整个压缩包完整解压到任意文件夹（不要在压缩包内直接双击运行）。' \
-  '2. 保持 ffpr-export-gui.exe、ffpr-export.exe 与 known-builds.json 在同一目录。' \
+  '2. 保持 ffpr-export-gui.exe、ffpr-export.exe、同目录原生库（如 e_sqlite3.dll）与 known-builds.json 在同一目录。' \
   '3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。' \
   '4. 确认已勾选的游戏后，点击「开始导出」即可依次生成 SQLite 数据库。' \
   '5. 导出结果默认保存在「%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\」目录中。' \
@@ -138,7 +179,8 @@ printf '%s\r\n' \
 
 (
   cd "$PACKAGE_DIR"
-  sha256sum LICENSE README.md ffpr-export-gui.exe ffpr-export.exe known-builds.json 使用说明.txt > SHA256SUMS
+  mapfile -t INNER_FILES < <(find . -maxdepth 1 -type f ! -name 'SHA256SUMS' -printf '%P\n' | LC_ALL=C sort)
+  sha256sum "${INNER_FILES[@]}" > SHA256SUMS
 )
 
 ZIP_PATH="$ROOT/dist/ffpr-export-${VERSION}-win-x64.zip"
@@ -153,24 +195,33 @@ import sys
 import zipfile
 
 pkg_dir, zip_path = sys.argv[1], sys.argv[2]
-files = [
-    "LICENSE",
-    "README.md",
-    "SHA256SUMS",
-    "ffpr-export-gui.exe",
-    "ffpr-export.exe",
-    "known-builds.json",
-    "使用说明.txt",
-]
+files = sorted(
+    name for name in os.listdir(pkg_dir)
+    if os.path.isfile(os.path.join(pkg_dir, name))
+)
 with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
     for name in files:
         zf.write(os.path.join(pkg_dir, name), arcname=name)
+
+print("==> 列出压缩包内容：")
+with zipfile.ZipFile(zip_path, "r") as zf:
+    names = [info.filename for info in zf.infolist()]
+    for info in zf.infolist():
+        print(f"  {info.filename:32s}  {info.file_size:12d} bytes (compressed {info.compress_size:10d})")
+    if "e_sqlite3.dll" not in names:
+        print("错误：生成的压缩包中缺少原生库 e_sqlite3.dll", file=sys.stderr)
+        sys.exit(2)
 PY
 elif command -v zip >/dev/null 2>&1; then
   (
     cd "$PACKAGE_DIR"
-    zip -q -9 "$ZIP_PATH" LICENSE README.md SHA256SUMS ffpr-export-gui.exe ffpr-export.exe known-builds.json 使用说明.txt
+    mapfile -t ZIP_FILES < <(find . -maxdepth 1 -type f -printf '%P\n' | LC_ALL=C sort)
+    zip -q -9 "$ZIP_PATH" "${ZIP_FILES[@]}"
   )
+  if command -v unzip >/dev/null 2>&1; then
+    echo "==> 列出压缩包内容："
+    unzip -l "$ZIP_PATH"
+  fi
 else
   echo "错误：缺少 python3 或 zip，无法生成 .zip 压缩包" >&2
   exit 2
