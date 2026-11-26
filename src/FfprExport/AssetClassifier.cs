@@ -235,7 +235,7 @@ internal static class AssetClassifier
         var normalized = relativePath.Replace('\\', '/').TrimStart('/');
         if (string.IsNullOrWhiteSpace(normalized))
         {
-            throw new InvalidDataException($"容器路径映射后为空：{originalForError}");
+            throw new InvalidDataException(L.Format("Asset_ContainerPathEmpty", originalForError));
         }
 
         var segments = normalized.Split('/', StringSplitOptions.RemoveEmptyEntries);
@@ -243,7 +243,7 @@ internal static class AssetClassifier
         {
             if (seg is "." or "..")
             {
-                throw new InvalidDataException($"容器路径包含非法越界片段：{originalForError}");
+                throw new InvalidDataException(L.Format("Asset_ContainerPathTraversal", originalForError));
             }
         }
 

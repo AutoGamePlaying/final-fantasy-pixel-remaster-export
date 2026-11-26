@@ -99,7 +99,7 @@ internal static class AgpPaths
         var envAgpHome = TryInvokeProvider(() => getEnv(AgpHomeEnvVar), out var agpEnvError);
         if (!string.IsNullOrWhiteSpace(agpEnvError))
         {
-            var reason = $"读取环境变量 {AgpHomeEnvVar} 失败：{agpEnvError}";
+            var reason = L.Format("Agp_ReadEnvFailed", AgpHomeEnvVar, agpEnvError);
             attempts.Add(new AgpCandidateAttempt(AgpRootSource.AgpHomeEnv, null, false, reason));
             return new AgpRootResolution(
                 AgpHome: string.Empty,
@@ -118,7 +118,7 @@ internal static class AgpPaths
         {
             if (!TryNormalizePath(envAgpHome, isWindows, out var normalizedAgpHome, out var normalizeError))
             {
-                var reason = $"环境变量 {AgpHomeEnvVar} 指定的路径无效（{envAgpHome}）：{normalizeError}。请修正或清除环境变量 {AgpHomeEnvVar} 后重试。";
+                var reason = L.Format("Agp_EnvPathInvalid", AgpHomeEnvVar, envAgpHome, normalizeError);
                 attempts.Add(new AgpCandidateAttempt(AgpRootSource.AgpHomeEnv, envAgpHome, false, normalizeError));
                 return new AgpRootResolution(
                     AgpHome: string.Empty,
@@ -150,10 +150,8 @@ internal static class AgpPaths
                     Integrity: integrity);
             }
 
-            var detail = string.IsNullOrWhiteSpace(writeError) ? "目录不可写" : writeError;
-            var explicitFailMessage =
-                $"环境变量 {AgpHomeEnvVar} 指定的目录不可写（{normalizedAgpHome}）：{detail}。"
-                + $"请检查该目录的写入权限，或修改/清除环境变量 {AgpHomeEnvVar} 后重试。";
+            var detail = string.IsNullOrWhiteSpace(writeError) ? L.Get("Agp_DirNotWritable") : writeError;
+            var explicitFailMessage = L.Format("Agp_EnvDirNotWritable", AgpHomeEnvVar, normalizedAgpHome, detail);
             return new AgpRootResolution(
                 AgpHome: string.Empty,
                 Source: AgpRootSource.None,
@@ -183,7 +181,7 @@ internal static class AgpPaths
                         ? specialFolderError
                         : !string.IsNullOrWhiteSpace(envLocalError)
                             ? envLocalError
-                            : "系统未返回 LocalApplicationData 且未设置 LOCALAPPDATA";
+                            : L.Get("Agp_NoLocalAppData");
                     attempts.Add(new AgpCandidateAttempt(AgpRootSource.WindowsLocalAppData, null, false, detail));
                 }
             }
@@ -214,7 +212,7 @@ internal static class AgpPaths
                         AgpRootSource.WindowsLocalAppData,
                         localAppData,
                         false,
-                        $"拼接 %LOCALAPPDATA%\\{AgpFolderName} 失败：{combineError}"));
+                        L.Format("Agp_CombineLocalAppDataFailed", AgpFolderName, combineError)));
                 }
             }
         }
@@ -246,7 +244,7 @@ internal static class AgpPaths
                         AgpRootSource.XdgDataHome,
                         xdgDataHome,
                         false,
-                        $"拼接 ${XdgDataHomeEnvVar}/{AgpFolderName} 失败：{combineError}"));
+                        L.Format("Agp_CombineXdgFailed", XdgDataHomeEnvVar, AgpFolderName, combineError)));
                 }
             }
             else
@@ -257,7 +255,7 @@ internal static class AgpPaths
                         AgpRootSource.XdgDataHome,
                         null,
                         false,
-                        $"读取环境变量 {XdgDataHomeEnvVar} 失败：{xdgError}"));
+                        L.Format("Agp_ReadEnvFailed", XdgDataHomeEnvVar, xdgError)));
                 }
 
                 var homeDir = ResolveUnixHome(getEnv, getFolder, out var homeError);
@@ -286,7 +284,7 @@ internal static class AgpPaths
                             AgpRootSource.UnixDefaultLocalShare,
                             homeDir,
                             false,
-                            $"拼接 ~/.local/share/{AgpFolderName} 失败：{combineError}"));
+                            L.Format("Agp_CombineLocalShareFailed", AgpFolderName, combineError)));
                     }
                 }
                 else
@@ -295,7 +293,7 @@ internal static class AgpPaths
                         AgpRootSource.UnixDefaultLocalShare,
                         null,
                         false,
-                        homeError ?? "未设置 HOME 且系统未返回用户主目录"));
+                        homeError ?? L.Get("Agp_NoHomeDir")));
                 }
             }
         }
@@ -330,7 +328,7 @@ internal static class AgpPaths
                         AgpRootSource.WindowsLocalLowAppData,
                         localLowBase,
                         false,
-                        $"拼接 LocalLow\\{AgpFolderName} 失败：{combineError}"));
+                        L.Format("Agp_CombineLocalLowFailed", AgpFolderName, combineError)));
                 }
             }
             else if (!string.IsNullOrWhiteSpace(localLowError))
@@ -361,7 +359,7 @@ internal static class AgpPaths
                     AgpRootSource.PortableBaseDirectory,
                     baseDir,
                     false,
-                    $"拼接程序目录 {PortableAgpFolderName} 失败：{combineError}"));
+                    L.Format("Agp_CombinePortableFailed", PortableAgpFolderName, combineError)));
             }
         }
         else
@@ -370,7 +368,7 @@ internal static class AgpPaths
                 AgpRootSource.PortableBaseDirectory,
                 null,
                 false,
-                baseDirError ?? "无法确定程序所在目录"));
+                baseDirError ?? L.Get("Agp_NoBaseDir")));
         }
 
         // 5. User profile root: %USERPROFILE%\agp (Windows) or ~/agp (Linux/macOS).
@@ -397,7 +395,7 @@ internal static class AgpPaths
                     AgpRootSource.UserProfileAgp,
                     userProfileDir,
                     false,
-                    $"拼接用户目录 {AgpFolderName} 失败：{combineError}"));
+                    L.Format("Agp_CombineUserProfileFailed", AgpFolderName, combineError)));
             }
         }
         else if (!string.IsNullOrWhiteSpace(profileError))
@@ -430,7 +428,7 @@ internal static class AgpPaths
                         AgpRootSource.SavedLocationFile,
                         savedRaw,
                         false,
-                        $"{LocationFileName} 中的路径无效：{savedNormalizeError}"));
+                        L.Format("Agp_LocationFilePathInvalid", LocationFileName, savedNormalizeError)));
                 }
             }
         }
@@ -444,7 +442,7 @@ internal static class AgpPaths
             IsWindowsLayout: isWindows,
             Succeeded: false,
             ExplicitAgpHomeFailed: false,
-            FallbackReasonSummary: isWindows ? "%LOCALAPPDATA% 等全部默认候选目录均不可写" : "全部默认候选目录均不可写",
+            FallbackReasonSummary: isWindows ? L.Get("Agp_AllWinCandidatesFailed") : L.Get("Agp_AllUnixCandidatesFailed"),
             Attempts: attempts,
             Integrity: integrity);
         return allFailed with { WarningMessage = FormatCliAllFailedError(allFailed) };
@@ -500,7 +498,7 @@ internal static class AgpPaths
         error = null;
         if (string.IsNullOrWhiteSpace(candidateRoot))
         {
-            error = "目录路径为空";
+            error = L.Get("Agp_EmptyDirPath");
             return false;
         }
 
@@ -573,7 +571,7 @@ internal static class AgpPaths
         error = null;
         if (string.IsNullOrWhiteSpace(baseDirectory) || string.IsNullOrWhiteSpace(chosenAgpHome))
         {
-            error = "程序目录或目标路径为空";
+            error = L.Get("Agp_EmptyBaseOrTarget");
             return false;
         }
 
@@ -604,7 +602,7 @@ internal static class AgpPaths
         error = null;
         if (!resolution.Succeeded || string.IsNullOrWhiteSpace(resolution.AgpHome))
         {
-            error = "数据根目录未就绪";
+            error = L.Get("Agp_RootNotReady");
             return false;
         }
 
@@ -629,7 +627,7 @@ internal static class AgpPaths
     }
 
     /// <summary>
-    /// Builds the prominent Chinese UI banner message when running at Low integrity level
+    /// Builds the prominent localized UI banner message when running at Low integrity level
     /// or when a fallback data directory (LocalLow, portable agp-data, %USERPROFILE%\agp, etc.) is active.
     /// Returns null when running normally at the primary default directory without Low IL.
     /// </summary>
@@ -647,22 +645,18 @@ internal static class AgpPaths
         {
             if (resolution.Source == AgpRootSource.WindowsLocalLowAppData)
             {
-                return $"数据目录：{resolution.AgpHome}（原因：程序是以低完整性级别运行的，%LOCALAPPDATA% 不可写，本次已改用 LocalLow 下的目录，可正常使用）。"
-                    + "常见原因是文件带了低完整性标记；建议做法：右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。";
+                return L.Format("Agp_BannerLowIlLocalLow", resolution.AgpHome);
             }
 
-            return $"数据目录：{resolution.AgpHome}（提示：程序是以低完整性级别运行的，常见原因是文件带了低完整性标记；"
-                + "建议做法：右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。当前目录可正常使用。）";
+            return L.Format("Agp_BannerLowIlOther", resolution.AgpHome);
         }
 
         if (resolution.UsedFallback)
         {
-            var reason = !string.IsNullOrWhiteSpace(resolution.FallbackReasonSummary)
-                ? resolution.FallbackReasonSummary
-                : resolution.IsWindowsLayout
-                    ? "%LOCALAPPDATA% 不可写"
-                    : "默认数据目录不可写";
-            return $"数据目录：{resolution.AgpHome}（原因：{reason}）";
+            var reason = resolution.IsWindowsLayout
+                ? L.Get("Agp_ReasonLocalAppDataUnwritable")
+                : L.Get("Agp_ReasonDefaultUnwritable");
+            return L.Format("Agp_BannerFallback", resolution.AgpHome, reason);
         }
 
         return null;
@@ -681,21 +675,23 @@ internal static class AgpPaths
         }
 
         var sb = new StringBuilder();
-        sb.Append("无法找到可写的数据根目录，已尝试的全部候选目录均失败");
+        var intro = L.Get("Agp_CliAllFailedIntro");
         var details = FormatAttemptSummaries(resolution.Attempts);
         if (!string.IsNullOrWhiteSpace(details))
         {
-            sb.Append($"（{details}）");
+            sb.Append(L.Format("Agp_CliAllFailedWithDetails", intro, details));
+        }
+        else
+        {
+            sb.Append(L.Format("Agp_CliAllFailedNoDetails", intro));
         }
 
-        sb.Append('。');
         if (resolution.Integrity?.IsLowOrUntrusted == true)
         {
-            sb.Append("当前进程以低完整性级别运行，建议右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。");
+            sb.Append(L.Get("Agp_CliAllFailedLowIl"));
         }
 
-        sb.Append($"请通过环境变量 {AgpHomeEnvVar} 指定一个可写文件夹后重试；如被安全软件或受控文件夹访问拦截，请将本工具加入信任/白名单。");
-        sb.Append("若以上方法仍全部失败，最后手段可尝试检查目录权限或以管理员身份运行。");
+        sb.Append(L.Format("Agp_CliAllFailedGuidance", AgpHomeEnvVar));
         return sb.ToString();
     }
 
@@ -705,30 +701,30 @@ internal static class AgpPaths
     {
         var integrity = integrityOverride ?? resolution.Integrity ?? ProcessIntegrityInfo.Unknown;
         var sb = new StringBuilder();
-        sb.AppendLine("未能找到可写的数据根目录（日志、设置与默认导出路径均需要写入权限）。");
+        sb.AppendLine(L.Get("Agp_GuiAllFailedIntro"));
         sb.AppendLine();
 
         var details = FormatAttemptSummaries(resolution.Attempts);
         if (!string.IsNullOrWhiteSpace(details))
         {
-            sb.AppendLine($"已尝试的目录：{details}");
+            sb.AppendLine(L.Format("Agp_GuiAllFailedAttempted", details));
             sb.AppendLine();
         }
 
         if (integrity.IsLowOrUntrusted)
         {
-            sb.AppendLine("检测到程序当前是以低完整性级别运行的，常见原因是文件带了低完整性标记。");
-            sb.AppendLine("建议做法：右键 zip → 属性 → 解除锁定，然后用资源管理器重新解压。");
+            sb.AppendLine(L.Get("Agp_GuiAllFailedLowIl1"));
+            sb.AppendLine(L.Get("Agp_GuiAllFailedLowIl2"));
             sb.AppendLine();
         }
         else
         {
-            sb.AppendLine("可能被安全软件拦截或受 Windows 受控文件夹访问限制，建议将本工具加入信任或白名单，或者换一个有写入权限的文件夹。");
+            sb.AppendLine(L.Get("Agp_GuiAllFailedSecurity"));
             sb.AppendLine();
         }
 
-        sb.AppendLine("点击「确定」后将打开「选择文件夹…」，请手动指定一个可写目录用于保存数据（选择后将尽量记录在程序同目录的 agp-location.txt 中）。");
-        sb.Append("若更换文件夹后仍全部失败，最后手段可尝试检查目录权限或以管理员身份运行。");
+        sb.AppendLine(L.Get("Agp_GuiAllFailedFolderPrompt"));
+        sb.Append(L.Get("Agp_GuiAllFailedLastResort"));
         return sb.ToString();
     }
 
@@ -865,8 +861,8 @@ internal static class AgpPaths
         ProcessIntegrityInfo integrity)
     {
         var reasonSummary = isWindows
-            ? "%LOCALAPPDATA% 不可写"
-            : "默认数据目录不可写";
+            ? L.Get("Agp_ReasonLocalAppDataUnwritable")
+            : L.Get("Agp_ReasonDefaultUnwritable");
         var draft = new AgpRootResolution(
             AgpHome: agpHome,
             Source: source,
@@ -885,7 +881,7 @@ internal static class AgpPaths
     {
         if (isWindows != OperatingSystem.IsWindows())
         {
-            return _ => (false, "跨平台路径模拟未注入可写探测函数");
+            return _ => (false, L.Get("Agp_CrossPlatformNoProbe"));
         }
 
         return path =>
@@ -980,7 +976,7 @@ internal static class AgpPaths
             }
         }
 
-        error ??= profileError ?? "无法确定 Windows LocalLow 目录";
+        error ??= profileError ?? L.Get("Agp_NoLocalLowDir");
         return null;
     }
 
@@ -1006,7 +1002,7 @@ internal static class AgpPaths
             ? folderError
             : !string.IsNullOrWhiteSpace(envError)
                 ? envError
-                : "系统未返回 UserProfile 且未设置 USERPROFILE";
+                : L.Get("Agp_NoUserProfile");
         return null;
     }
 
@@ -1032,7 +1028,7 @@ internal static class AgpPaths
             ? profileError
             : !string.IsNullOrWhiteSpace(homeEnvError)
                 ? homeEnvError
-                : "未设置 HOME 且系统未返回用户主目录";
+                : L.Get("Agp_NoHomeDir");
         return null;
     }
 
@@ -1105,12 +1101,12 @@ internal static class AgpPaths
                 ? attempt.Source.ToString()
                 : attempt.Path;
             var reason = string.IsNullOrWhiteSpace(attempt.FailureReason)
-                ? "不可写"
+                ? L.Get("Agp_UnwritableShort")
                 : attempt.FailureReason;
             parts.Add($"{label}: {reason}");
         }
 
-        return string.Join("；", parts);
+        return string.Join(L.Get("Agp_ListSeparator"), parts);
     }
 
     private static bool TryDirectoryExists(string ioPath)
@@ -1183,7 +1179,7 @@ internal static class AgpPaths
             var trimmed = rawPath.Trim();
             if (string.IsNullOrEmpty(trimmed) || trimmed.IndexOf('\0') >= 0)
             {
-                error = "路径包含空字符或为空";
+                error = L.Get("Agp_PathNullOrEmpty");
                 return false;
             }
 
@@ -1218,7 +1214,7 @@ internal static class AgpPaths
         {
             if (string.IsNullOrWhiteSpace(basePath) || basePath.IndexOf('\0') >= 0)
             {
-                error = "基准路径为空或包含空字符";
+                error = L.Get("Agp_BasePathNullOrEmpty");
                 return false;
             }
 

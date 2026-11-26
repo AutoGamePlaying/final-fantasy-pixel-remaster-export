@@ -50,7 +50,7 @@ internal sealed class DbReader : IDisposable
     {
         if (string.IsNullOrWhiteSpace(databasePath) || !File.Exists(databasePath))
         {
-            throw new FileNotFoundException($"数据库文件不存在：{databasePath}", databasePath);
+            throw new FileNotFoundException(L.Format("Db_FileNotFound", databasePath), databasePath);
         }
 
         var fullPath = Path.GetFullPath(databasePath);
@@ -81,7 +81,7 @@ internal sealed class DbReader : IDisposable
                 if (actualVersion != DbSchema.SchemaVersion)
                 {
                     throw new InvalidDataException(
-                        $"数据库表结构版本不匹配（文件：{databasePath}，期望 v{DbSchema.SchemaVersion}，实际 v{actualVersion}），请重新构建数据库");
+                        L.Format("Db_SchemaVersionMismatch", databasePath, DbSchema.SchemaVersion, actualVersion));
                 }
             }
 
@@ -168,13 +168,13 @@ internal sealed class DbReader : IDisposable
     {
         if (string.IsNullOrWhiteSpace(sql))
         {
-            throw new ArgumentException("SQL 查询语句不能为空");
+            throw new ArgumentException(L.Get("Db_SqlEmpty"));
         }
 
         var tokens = TokenizeSqlWordsAndSemicolons(sql);
         if (tokens.Count == 0)
         {
-            throw new ArgumentException("SQL 查询语句不包含可执行内容");
+            throw new ArgumentException(L.Get("Db_SqlNoExecutable"));
         }
 
         string? firstWord = null;
@@ -189,21 +189,20 @@ internal sealed class DbReader : IDisposable
 
             if (seenSemicolon)
             {
-                throw new ArgumentException("只读查询仅允许单条 SQL 语句，拒绝多语句输入");
+                throw new ArgumentException(L.Get("Db_SqlMultiStatement"));
             }
 
             firstWord ??= token;
 
             if (ForbiddenKeywords.Contains(token))
             {
-                throw new ArgumentException($"拒绝非只读 SQL 语句：包含不允许的关键字 {token.ToUpperInvariant()}");
+                throw new ArgumentException(L.Format("Db_SqlForbiddenKeyword", token.ToUpperInvariant()));
             }
         }
 
         if (firstWord is null || !AllowedFirstKeywords.Contains(firstWord))
         {
-            throw new ArgumentException(
-                $"只读查询仅允许 SELECT / WITH / EXPLAIN / VALUES 语句，收到：{firstWord ?? "<空>"}");
+            throw new ArgumentException(L.Format("Db_SqlAllowedStartOnly", firstWord ?? $"<{L.Get("Common_Null")}>"));
         }
     }
 
@@ -399,7 +398,7 @@ internal sealed class DbReader : IDisposable
         var encoding = reader.GetString(6);
         if (!string.Equals(encoding, "i32le", StringComparison.Ordinal))
         {
-            throw new InvalidDataException($"不支持的地图格子编码：{encoding}");
+            throw new InvalidDataException(L.Format("Db_UnsupportedGridEncoding", encoding));
         }
 
         var blob = (byte[])reader.GetValue(7);

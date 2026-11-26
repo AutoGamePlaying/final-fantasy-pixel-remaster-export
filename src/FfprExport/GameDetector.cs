@@ -38,13 +38,13 @@ internal static class GameDetector
     {
         if (string.IsNullOrWhiteSpace(gameDirectoryArgument))
         {
-            throw new ArgumentException("缺少 --game <Steam 游戏目录> 参数");
+            throw new ArgumentException(L.Get("GameDetector_MissingGameArg"));
         }
 
         var fullGameDir = Path.GetFullPath(gameDirectoryArgument);
         if (!Directory.Exists(fullGameDir))
         {
-            throw new DirectoryNotFoundException($"游戏目录不存在：{gameDirectoryArgument}");
+            throw new DirectoryNotFoundException(L.Format("GameDetector_DirNotFound", gameDirectoryArgument));
         }
 
         var (spec, dataDir) = IdentifyGame(fullGameDir);
@@ -96,16 +96,14 @@ internal static class GameDetector
                 var expectedDataDir = Path.Combine(fullGameDir, spec.DataDirName);
                 if (!Directory.Exists(expectedDataDir))
                 {
-                    throw new DirectoryNotFoundException(
-                        $"识别到 {spec.Title}（{spec.ExeName}），但缺少数据目录：{expectedDataDir}");
+                    throw new DirectoryNotFoundException(L.Format("GameDetector_MissingDataDir", spec.Title, spec.ExeName, expectedDataDir));
                 }
 
                 return (spec, expectedDataDir);
             }
         }
 
-        throw new InvalidDataException(
-            $"无法从目录识别 FF1–FF6 Pixel Remaster 游戏（未找到已知 exe 或 *_Data 目录）：{fullGameDir}");
+        throw new InvalidDataException(L.Format("GameDetector_UnrecognizedDir", fullGameDir));
     }
 
     internal static string DetectUnityVersion(string dataDir, string aaDir)
@@ -164,7 +162,7 @@ internal static class GameDetector
             }
         }
 
-        throw new InvalidDataException($"无法从资源文件头读取 Unity 版本（数据目录：{dataDir}）");
+        throw new InvalidDataException(L.Format("GameDetector_UnityVersionNotFound", dataDir));
     }
 
     private static bool TryReadAssetsFileUnityVersion(string filePath, out string version)

@@ -65,7 +65,7 @@ internal static class ExportCommand
                     var rawJobs = Program.RequireValue(args, ref i, "--jobs");
                     if (!int.TryParse(rawJobs, NumberStyles.Integer, CultureInfo.InvariantCulture, out jobs) || jobs < 1)
                     {
-                        throw new ArgumentException($"--jobs 必须是正整数：{rawJobs}");
+                        throw new ArgumentException(L.Format("Cli_JobsMustBePositive", rawJobs));
                     }
 
                     break;
@@ -73,7 +73,7 @@ internal static class ExportCommand
                     force = true;
                     break;
                 default:
-                    throw new ArgumentException($"export 收到未知参数：{args[i]}");
+                    throw new ArgumentException(L.Format("Export_UnknownArg", args[i]));
             }
         }
 
@@ -131,9 +131,9 @@ internal static class ExportCommand
                 {
                     if (!bundle.ExistsOnDisk)
                     {
-                        var err = $"目录中声明的 bundle 文件不存在：{bundle.RelativePath}";
+                        var err = L.Format("Export_MissingBundle", bundle.RelativePath);
                         failures.Add(new ExportFailure(bundle.RelativePath, null, "AssetBundle", 0, err));
-                        Console.Error.WriteLine($"导出失败：{bundle.RelativePath}：{err}");
+                        Console.Error.WriteLine(L.Format("Export_BundleFailed", bundle.RelativePath, err));
                         return;
                     }
 
@@ -253,8 +253,7 @@ internal static class ExportCommand
                                             Interlocked.Increment(ref tracker.FailedCount);
                                             failures.Add(new ExportFailure(
                                                 bundle.RelativePath, containerPath, "MonoBehaviour", info.PathId, OutputGuard.TruncateError(ex.Message)));
-                                            Console.Error.WriteLine(
-                                                $"导出 MonoBehaviour 失败：{bundle.RelativePath} (PathId={info.PathId})：{ex.Message}");
+                                            Console.Error.WriteLine(L.Format("Export_MonoBehaviourFailed", bundle.RelativePath, info.PathId, ex.Message));
                                         }
                                     }
                                 }
@@ -289,7 +288,7 @@ internal static class ExportCommand
                     {
                         failures.Add(new ExportFailure(
                             bundle.RelativePath, null, "AssetBundle", 0, OutputGuard.TruncateError(ex.Message)));
-                        Console.Error.WriteLine($"打开或导出 bundle 失败：{bundle.RelativePath}：{ex.Message}");
+                        Console.Error.WriteLine(L.Format("Export_BundleOpenFailed", bundle.RelativePath, ex.Message));
                     }
                     finally
                     {
@@ -374,8 +373,7 @@ internal static class ExportCommand
                                     Interlocked.Increment(ref tracker.FailedCount);
                                     failures.Add(new ExportFailure(
                                         dataFile.FileName, null, "MonoBehaviour", info.PathId, OutputGuard.TruncateError(ex.Message)));
-                                    Console.Error.WriteLine(
-                                        $"导出 MonoBehaviour 失败：{dataFile.FileName} (PathId={info.PathId})：{ex.Message}");
+                                    Console.Error.WriteLine(L.Format("Export_MonoBehaviourFailed", dataFile.FileName, info.PathId, ex.Message));
                                 }
                             }
                         }
@@ -409,7 +407,7 @@ internal static class ExportCommand
                 {
                     failures.Add(new ExportFailure(
                         dataFile.FileName, null, "AssetsFile", 0, OutputGuard.TruncateError(ex.Message)));
-                    Console.Error.WriteLine($"打开或导出数据文件失败：{dataFile.FileName}：{ex.Message}");
+                    Console.Error.WriteLine(L.Format("Export_DataFileOpenFailed", dataFile.FileName, ex.Message));
                 }
                 finally
                 {
@@ -539,11 +537,22 @@ internal static class ExportCommand
             manifest,
             FieldJsonWriter.SerializerOptions);
 
-        Console.WriteLine(
-            $"[{game.Spec.Id}] 导出完成：资产成功 {totalExportedAssets}（新增 {totalNewlyExportedAssets}，续跑跳过 {totalResumedAssets}），" +
-            $"跳过 {totalSkippedAssets}，失败 {orderedFailures.Length}，写出文件 {filesWritten}（续跑 {filesResumed}），" +
-            $"输出 {totalOutputBytes} 字节，MonoBehaviour(TypeTree={mbTypeTreeCount}, Cpp2IL={mbCpp2IlCount}, BaseOnly={mbBaseOnlyCount})，" +
-            $"耗时 {stopwatch.Elapsed.TotalSeconds:F2}s -> {outputArgument}");
+        Console.WriteLine(L.Format(
+            "Export_Completed",
+            game.Spec.Id,
+            totalExportedAssets,
+            totalNewlyExportedAssets,
+            totalResumedAssets,
+            totalSkippedAssets,
+            orderedFailures.Length,
+            filesWritten,
+            filesResumed,
+            totalOutputBytes,
+            mbTypeTreeCount,
+            mbCpp2IlCount,
+            mbBaseOnlyCount,
+            stopwatch.Elapsed.TotalSeconds,
+            outputArgument));
 
         return Task.FromResult(orderedFailures.Length == 0 ? 0 : 1);
     }
@@ -600,7 +609,7 @@ internal static class ExportCommand
         {
             Interlocked.Increment(ref tracker.FailedCount);
             failures.Add(new ExportFailure(sourceFile, containerPath, "TextAsset", info.PathId, OutputGuard.TruncateError(ex.Message)));
-            Console.Error.WriteLine($"导出 TextAsset 失败：{sourceFile} ({containerPath ?? info.PathId.ToString()})：{ex.Message}");
+            Console.Error.WriteLine(L.Format("Export_TextAssetFailed", sourceFile, containerPath ?? info.PathId.ToString(CultureInfo.InvariantCulture), ex.Message));
         }
     }
 
@@ -651,7 +660,7 @@ internal static class ExportCommand
         {
             Interlocked.Increment(ref tracker.FailedCount);
             failures.Add(new ExportFailure(sourceFile, null, "TextAsset", info.PathId, OutputGuard.TruncateError(ex.Message)));
-            Console.Error.WriteLine($"导出数据 TextAsset 失败：{sourceFile} (PathId={info.PathId})：{ex.Message}");
+            Console.Error.WriteLine(L.Format("Export_DataTextAssetFailed", sourceFile, info.PathId, ex.Message));
         }
     }
 
@@ -726,7 +735,7 @@ internal static class ExportCommand
         {
             Interlocked.Increment(ref tracker.FailedCount);
             failures.Add(new ExportFailure(sourceFile, containerPath, "MonoBehaviour", info.PathId, OutputGuard.TruncateError(ex.Message)));
-            Console.Error.WriteLine($"导出 MonoBehaviour 失败：{sourceFile} ({containerPath})：{ex.Message}");
+            Console.Error.WriteLine(L.Format("Export_StandaloneMonoBehaviourFailed", sourceFile, containerPath, ex.Message));
         }
     }
 

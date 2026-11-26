@@ -277,13 +277,13 @@ internal static partial class DbParsers
         {
             throw new ArgumentOutOfRangeException(
                 nameof(x),
-                $"格子坐标越界：({x}, {y}) 不在尺寸 {width}x{height} 范围内");
+                L.Format("Db_GridCoordOutOfRange", x, y, width, height));
         }
 
         var offset = ((y * width) + x) * sizeof(int);
         if (offset + sizeof(int) > blob.Length)
         {
-            throw new InvalidDataException($"格子图层二进制长度不足：{blob.Length} 字节，期望至少 {offset + sizeof(int)} 字节");
+            throw new InvalidDataException(L.Format("Db_GridBlobTooShort", blob.Length, offset + sizeof(int)));
         }
 
         return BinaryPrimitives.ReadInt32LittleEndian(blob.AsSpan(offset, sizeof(int)));

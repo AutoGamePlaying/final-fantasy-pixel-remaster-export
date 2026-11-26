@@ -81,9 +81,9 @@ internal static class KnownBuildsRegistry
     internal const string FileName = "known-builds.json";
     internal const string EmbeddedResourceName = "FfprExport.known-builds.json";
 
-    internal const string MessageMatched = "与登记的版本一致";
-    internal const string MessageNewGameVersion = "新的游戏版本，未登记";
-    internal const string MessageHashMismatch = "游戏版本已登记，但数据库哈希不同";
+    internal static string MessageMatched => L.Get("KnownBuilds_Matched");
+    internal static string MessageNewGameVersion => L.Get("KnownBuilds_NewGameVersion");
+    internal static string MessageHashMismatch => L.Get("KnownBuilds_HashMismatch");
 
     private static readonly JsonSerializerOptions ParseOptions = new()
     {
@@ -105,7 +105,7 @@ internal static class KnownBuildsRegistry
         using var stream = assembly.GetManifestResourceStream(EmbeddedResourceName);
         if (stream is null)
         {
-            throw new InvalidOperationException($"程序内缺少嵌入资源：{EmbeddedResourceName}");
+            throw new InvalidOperationException(L.Format("KnownBuilds_MissingEmbeddedResource", EmbeddedResourceName));
         }
 
         using var reader = new StreamReader(stream, Encoding.UTF8);
@@ -120,7 +120,7 @@ internal static class KnownBuildsRegistry
             using var doc = JsonDocument.Parse(json);
             if (doc.RootElement.ValueKind != JsonValueKind.Object)
             {
-                throw new InvalidDataException($"已知版本登记表格式错误（应为按游戏分组的 JSON 对象）：{sourceName}");
+                throw new InvalidDataException(L.Format("KnownBuilds_InvalidFormatRoot", sourceName));
             }
 
             var targetObj = doc.RootElement;
@@ -134,13 +134,11 @@ internal static class KnownBuildsRegistry
             {
                 if (prop.Value.ValueKind != JsonValueKind.Array)
                 {
-                    throw new InvalidDataException(
-                        $"已知版本登记表中游戏 {prop.Name} 的值必须是 JSON 数组：{sourceName}");
+                    throw new InvalidDataException(L.Format("KnownBuilds_InvalidFormatGameArray", prop.Name, sourceName));
                 }
 
                 var entries = prop.Value.Deserialize<KnownBuildEntry[]>(ParseOptions)
-                    ?? throw new InvalidDataException(
-                        $"已知版本登记表中游戏 {prop.Name} 解析为空：{sourceName}");
+                    ?? throw new InvalidDataException(L.Format("KnownBuilds_NullGameEntries", prop.Name, sourceName));
                 result[prop.Name] = entries;
             }
 
@@ -148,7 +146,7 @@ internal static class KnownBuildsRegistry
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException($"解析已知版本登记表失败：{sourceName}：{exception.Message}", exception);
+            throw new InvalidDataException(L.Format("KnownBuilds_ParseFailed", sourceName, exception.Message), exception);
         }
     }
 
@@ -228,10 +226,10 @@ internal static class KnownBuildsRegistry
 
     internal static void PrintComparison(KnownBuildComparisonResult result, TextWriter output)
     {
-        output.WriteLine($"已知版本比对（来源：{result.Source}）：{result.Message}");
+        output.WriteLine(L.Format("KnownBuilds_ComparisonHeader", result.Source, result.Message));
         if (result.StatusKind == KnownBuildComparisonStatus.Matched && !string.IsNullOrEmpty(result.MatchedRegisteredAt))
         {
-            output.WriteLine($"  匹配登记日期：{result.MatchedRegisteredAt}");
+            output.WriteLine(L.Format("KnownBuilds_MatchedRegisteredAt", result.MatchedRegisteredAt));
             return;
         }
 
@@ -242,39 +240,31 @@ internal static class KnownBuildsRegistry
 
         if (!string.IsNullOrEmpty(result.MatchedRegisteredAt))
         {
-            output.WriteLine($"  对照登记日期：{result.MatchedRegisteredAt}");
+            output.WriteLine(L.Format("KnownBuilds_ReferenceRegisteredAt", result.MatchedRegisteredAt));
         }
 
         if (result.FileSha256MismatchOnly)
         {
-            output.WriteLine("  所有表内容一致（content_sha256 相同），仅数据库文件 file_sha256 不同");
+            output.WriteLine(L.Get("KnownBuilds_FileShaMismatchOnly"));
             return;
         }
 
         if (result.TableDiffs.Length == 0)
         {
-            output.WriteLine("  未提供逐表哈希，无法列出表级差异");
+            output.WriteLine(L.Get("KnownBuilds_NoTableHashes"));
             return;
         }
 
-        output.WriteLine($"  差异表共 {result.TableDiffs.Length} 张：");
+        output.WriteLine(L.Format("KnownBuilds_DiffTableCount", result.TableDiffs.Length));
         foreach (var diff in result.TableDiffs)
         {
             var line = diff.Kind switch
             {
-                "added" => string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"  + {diff.Name}（当前 {diff.ActualRows} 行，登记无此表）"),
-                "removed" => string.Create(
-                    CultureInfo.InvariantCulture,
-                    $"  - {diff.Name}（登记 {diff.ExpectedRows} 行，当前缺少此表）"),
+                "added" => L.Format("KnownBuilds_DiffAdded", diff.Name, diff.ActualRows),
+                "removed" => L.Format("KnownBuilds_DiffRemoved", diff.Name, diff.ExpectedRows),
                 _ => diff.ExpectedRows == diff.ActualRows
-                    ? string.Create(
-                        CultureInfo.InvariantCulture,
-                        $"  ~ {diff.Name}（行数同为 {diff.ActualRows}，表内容 sha256 不同）")
-                    : string.Create(
-                        CultureInfo.InvariantCulture,
-                        $"  ~ {diff.Name}（行数：登记 {diff.ExpectedRows} -> 当前 {diff.ActualRows}，表内容 sha256 不同）"),
+                    ? L.Format("KnownBuilds_DiffChangedSameRows", diff.Name, diff.ActualRows)
+                    : L.Format("KnownBuilds_DiffChangedDiffRows", diff.Name, diff.ExpectedRows, diff.ActualRows),
             };
             output.WriteLine(line);
         }

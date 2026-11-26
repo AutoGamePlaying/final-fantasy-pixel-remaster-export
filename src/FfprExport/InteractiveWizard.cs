@@ -16,7 +16,7 @@ internal sealed record WizardEnvironment(
     Func<string>? ResolveDefaultOutputRoot = null);
 
 /// <summary>
-/// Interactive Chinese-language wizard launched when ffpr-export is started with no arguments
+/// Interactive console wizard launched when ffpr-export is started with no arguments
 /// (for example by double-clicking ffpr-export.exe in Windows Explorer).
 /// Delegates database building to the exact same BuildDbCommand entry point used by CLI mode.
 /// </summary>
@@ -75,10 +75,10 @@ internal static class InteractiveWizard
         }
         catch (Exception ex)
         {
-            env.Error.WriteLine($"错误：向导运行发生意外异常：{ex.Message}");
+            env.Error.WriteLine(L.Format("Wizard_UnexpectedError", ex.Message));
             env.Output.WriteLine();
-            env.Output.WriteLine($"错误：{ex.Message}");
-            env.Output.WriteLine($"下一步建议：{SuggestNextStep(ex)}");
+            env.Output.WriteLine(L.Format("Common_ErrorPrefix", ex.Message));
+            env.Output.WriteLine(L.Format("Wizard_NextStep", SuggestNextStep(ex)));
             WaitForExitPrompt(env);
             return 2;
         }
@@ -124,13 +124,13 @@ internal static class InteractiveWizard
     {
         var output = env.Output;
         output.WriteLine("============================================================");
-        output.WriteLine($"{OutputGuard.ToolName} {Program.ToolVersion} — FINAL FANTASY I–VI Pixel Remaster 导出与建库向导");
+        output.WriteLine(L.Format("Wizard_Title", OutputGuard.ToolName, Program.ToolVersion));
         output.WriteLine("============================================================");
-        output.WriteLine("提示：按提示完成选择即可生成 SQLite 数据库；命令行用法请运行 ffpr-export --help。");
+        output.WriteLine(L.Get("Wizard_CliHint"));
         output.WriteLine();
 
         // Step 1: Discover Steam games or prompt user for a manual game directory.
-        output.WriteLine("[步骤 1/4] 正在自动定位 Steam 与已安装的 FF1–FF6 游戏……");
+        output.WriteLine(L.Get("Wizard_Step1Header"));
         IReadOnlyList<DiscoveredSteamGame> discovered;
         try
         {
@@ -138,14 +138,14 @@ internal static class InteractiveWizard
         }
         catch (Exception ex)
         {
-            output.WriteLine($"提示：自动扫描 Steam 目录时出现问题（{ex.Message}），将改为手动输入目录。");
+            output.WriteLine(L.Format("Wizard_ScanError", ex.Message));
             discovered = [];
         }
 
         var selectedGames = SelectGames(env, discovered);
         if (selectedGames is null || selectedGames.Count == 0)
         {
-            output.WriteLine("已取消操作。");
+            output.WriteLine(L.Get("Wizard_Cancelled"));
             WaitForExitPrompt(env);
             return 0;
         }
@@ -156,7 +156,7 @@ internal static class InteractiveWizard
         var plannedBuilds = SelectOutputDirectories(env, selectedGames);
         if (plannedBuilds is null || plannedBuilds.Count == 0)
         {
-            output.WriteLine("已取消操作。");
+            output.WriteLine(L.Get("Wizard_Cancelled"));
             WaitForExitPrompt(env);
             return 0;
         }
@@ -166,7 +166,7 @@ internal static class InteractiveWizard
         // Step 3: Confirm before starting.
         if (!ConfirmStart(env, plannedBuilds))
         {
-            output.WriteLine("已取消操作。");
+            output.WriteLine(L.Get("Wizard_Cancelled"));
             WaitForExitPrompt(env);
             return 0;
         }
@@ -174,7 +174,7 @@ internal static class InteractiveWizard
         output.WriteLine();
 
         // Step 4: Run build-db for each selected game using the shared BuildDbCommand entry point.
-        output.WriteLine("[步骤 4/4] 开始导出并构建数据库……");
+        output.WriteLine(L.Get("Wizard_Step4Header"));
         var outcomes = new List<GameRunOutcome>(plannedBuilds.Count);
         for (var i = 0; i < plannedBuilds.Count; i++)
         {
@@ -183,8 +183,7 @@ internal static class InteractiveWizard
             {
                 output.WriteLine();
                 output.WriteLine("------------------------------------------------------------");
-                output.WriteLine(
-                    $"[{i + 1}/{plannedBuilds.Count}] 开始构建：{plan.Game.DisplayName}（{plan.Game.Spec.Id}）");
+                output.WriteLine(L.Format("Wizard_BatchItemHeader", i + 1, plannedBuilds.Count, plan.Game.DisplayName, plan.Game.Spec.Id));
                 output.WriteLine("------------------------------------------------------------");
             }
 
@@ -210,32 +209,31 @@ internal static class InteractiveWizard
         var output = env.Output;
         if (discovered.Count == 0)
         {
-            output.WriteLine("未在本地 Steam 游戏库中自动找到 FINAL FANTASY I–VI Pixel Remaster。");
+            output.WriteLine(L.Get("Wizard_NoGamesFound"));
             var manualGame = PromptManualGameDirectory(env);
             return manualGame is null ? null : [manualGame];
         }
 
-        output.WriteLine($"找到 {discovered.Count} 个支持的游戏：");
+        output.WriteLine(L.Format("Wizard_FoundGames", discovered.Count));
         for (var i = 0; i < discovered.Count; i++)
         {
             var game = discovered[i];
-            var buildDisplay = string.IsNullOrWhiteSpace(game.SteamBuildId) ? "未知" : game.SteamBuildId;
-            output.WriteLine($"  [{i + 1}] {game.DisplayName}（{game.Spec.Id}） | Steam 构建号：{buildDisplay}");
-            output.WriteLine($"      目录：{game.GameDirectory}");
+            var buildDisplay = string.IsNullOrWhiteSpace(game.SteamBuildId) ? L.Get("Common_Unknown") : game.SteamBuildId;
+            output.WriteLine(L.Format("Wizard_GameListItem", i + 1, game.DisplayName, game.Spec.Id, buildDisplay));
+            output.WriteLine(L.Format("Wizard_GameListDir", game.GameDirectory));
         }
 
         var allOptionNumber = discovered.Count + 1;
-        output.WriteLine($"  [{allOptionNumber}] 全部（依次构建以上 {discovered.Count} 个游戏）");
-        output.WriteLine("  [0] 手动输入其他游戏目录");
+        output.WriteLine(L.Format("Wizard_AllOption", allOptionNumber, discovered.Count));
+        output.WriteLine(L.Get("Wizard_ManualOption"));
         output.WriteLine();
 
         while (true)
         {
             var singleChoiceHint = discovered.Count == 1
-                ? "1 选择该游戏"
-                : $"1–{discovered.Count} 单个游戏";
-            output.Write(
-                $"请输入编号选择游戏（{singleChoiceHint}，{allOptionNumber} 全部，0 手动输入，q 退出）：");
+                ? L.Get("Wizard_SingleChoiceHint")
+                : L.Format("Wizard_RangeChoiceHint", discovered.Count);
+            output.Write(L.Format("Wizard_SelectGamePrompt", singleChoiceHint, allOptionNumber));
             var line = env.Input.ReadLine();
             if (line is null)
             {
@@ -249,7 +247,8 @@ internal static class InteractiveWizard
             }
 
             if (string.Equals(trimmed, "all", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(trimmed, "全部", StringComparison.Ordinal))
+                || string.Equals(trimmed, "全部", StringComparison.Ordinal)
+                || string.Equals(trimmed, "すべて", StringComparison.Ordinal))
             {
                 return [.. discovered];
             }
@@ -273,7 +272,7 @@ internal static class InteractiveWizard
                 }
             }
 
-            output.WriteLine($"输入无效，请输入 0 到 {allOptionNumber} 之间的编号（或输入 q 退出）。");
+            output.WriteLine(L.Format("Wizard_InvalidGameChoice", allOptionNumber));
         }
     }
 
@@ -282,7 +281,7 @@ internal static class InteractiveWizard
         var output = env.Output;
         while (true)
         {
-            output.WriteLine("请粘贴 Steam 游戏目录路径（支持带空格或两端带引号，直接回车退出）：");
+            output.WriteLine(L.Get("Wizard_ManualPathPrompt"));
             output.Write("> ");
             var line = env.Input.ReadLine();
             if (line is null)
@@ -303,27 +302,27 @@ internal static class InteractiveWizard
             }
             catch (Exception ex)
             {
-                output.WriteLine($"错误：路径格式无效（{ex.Message}），请重新输入。");
+                output.WriteLine(L.Format("Wizard_InvalidPathFormat", ex.Message));
                 continue;
             }
 
             if (!Directory.Exists(PathSupport.ToIoPath(fullPath)))
             {
-                output.WriteLine($"错误：目录不存在：{fullPath}，请检查路径后重新输入。");
+                output.WriteLine(L.Format("Wizard_DirNotFound", fullPath));
                 continue;
             }
 
             try
             {
                 var inspected = env.InspectManualGameDirectory(fullPath);
-                var buildDisplay = string.IsNullOrWhiteSpace(inspected.SteamBuildId) ? "未知" : inspected.SteamBuildId;
-                output.WriteLine($"已识别游戏：{inspected.DisplayName}（{inspected.Spec.Id}，Steam 构建号：{buildDisplay}）");
+                var buildDisplay = string.IsNullOrWhiteSpace(inspected.SteamBuildId) ? L.Get("Common_Unknown") : inspected.SteamBuildId;
+                output.WriteLine(L.Format("Wizard_GameIdentified", inspected.DisplayName, inspected.Spec.Id, buildDisplay));
                 return inspected;
             }
             catch (Exception ex)
             {
-                output.WriteLine($"错误：{ex.Message}");
-                output.WriteLine("请确认目录是 FINAL FANTASY I–VI Pixel Remaster 的安装根目录（含 *_Data 文件夹），然后重新输入。");
+                output.WriteLine(L.Format("Common_ErrorPrefix", ex.Message));
+                output.WriteLine(L.Get("Wizard_ConfirmValidInstallDir"));
             }
         }
     }
@@ -359,12 +358,12 @@ internal static class InteractiveWizard
                 defaultOutputRoot,
                 BuildDefaultGameFolderName(game.Spec.Id, game.SteamBuildId));
 
-            output.WriteLine("[步骤 2/4] 设置输出目录");
-            output.WriteLine($"默认输出目录：{defaultDir}");
+            output.WriteLine(L.Get("Wizard_Step2SingleHeader"));
+            output.WriteLine(L.Format("Wizard_DefaultOutputDir", defaultDir));
 
             while (true)
             {
-                output.Write("直接回车使用默认目录，或粘贴其他输出目录路径（可带引号）：");
+                output.Write(L.Get("Wizard_SingleOutputPrompt"));
                 var line = env.Input.ReadLine();
                 if (line is null)
                 {
@@ -388,42 +387,42 @@ internal static class InteractiveWizard
                 }
                 catch (Exception ex)
                 {
-                    output.WriteLine($"错误：输出目录无效：{ex.Message}，请重新输入。");
+                    output.WriteLine(L.Format("Wizard_InvalidOutputDir", ex.Message));
                     continue;
                 }
 
                 var state = InspectOutputDirectoryState(chosenDir);
                 if (state == OutputDirectoryState.ForeignNonEmptyDirectory)
                 {
-                    output.WriteLine($"错误：输出目录非空且不是 {OutputGuard.ToolName} 的建库目录：{chosenDir}");
-                    output.WriteLine("请换一个空目录或新的目录路径。");
+                    output.WriteLine(L.Format("Wizard_ForeignOutputDir", OutputGuard.ToolName, chosenDir));
+                    output.WriteLine(L.Get("Wizard_ChooseEmptyDir"));
                     continue;
                 }
 
                 var force = state == OutputDirectoryState.OwnBuildDbDirectory;
                 if (force)
                 {
-                    output.WriteLine("提示：该目录已包含上次建库结果，确认后将自动清空并重新构建。");
+                    output.WriteLine(L.Get("Wizard_OwnDirWillOverwrite"));
                 }
 
                 return [new PlannedBuild(game, chosenDir, force)];
             }
         }
 
-        output.WriteLine("[步骤 2/4] 设置批量输出根目录");
-        output.WriteLine($"默认输出根目录：{defaultOutputRoot}");
-        output.WriteLine("各游戏将分别输出到对应的子目录：");
+        output.WriteLine(L.Get("Wizard_Step2BatchHeader"));
+        output.WriteLine(L.Format("Wizard_DefaultOutputRoot", defaultOutputRoot));
+        output.WriteLine(L.Get("Wizard_BatchSubdirsList"));
         foreach (var game in selectedGames)
         {
             var subDir = Path.Combine(
                 defaultOutputRoot,
                 BuildDefaultGameFolderName(game.Spec.Id, game.SteamBuildId));
-            output.WriteLine($"  - {game.DisplayName}（{game.Spec.Id}） -> {subDir}");
+            output.WriteLine(L.Format("Wizard_BatchSubdirItem", game.DisplayName, game.Spec.Id, subDir));
         }
 
         while (true)
         {
-            output.Write("直接回车使用默认根目录，或粘贴其他输出根目录路径（可带引号）：");
+            output.Write(L.Get("Wizard_BatchOutputPrompt"));
             var line = env.Input.ReadLine();
             if (line is null)
             {
@@ -446,7 +445,7 @@ internal static class InteractiveWizard
             }
             catch (Exception ex)
             {
-                output.WriteLine($"错误：输出根目录格式无效：{ex.Message}，请重新输入。");
+                output.WriteLine(L.Format("Wizard_InvalidOutputRoot", ex.Message));
                 continue;
             }
 
@@ -463,7 +462,7 @@ internal static class InteractiveWizard
                 }
                 catch (Exception ex)
                 {
-                    output.WriteLine($"错误：{game.Spec.Id} 输出目录无效：{ex.Message}，请重新选择输出根目录。");
+                    output.WriteLine(L.Format("Wizard_BatchGameOutputInvalid", game.Spec.Id, ex.Message));
                     valid = false;
                     break;
                 }
@@ -471,8 +470,8 @@ internal static class InteractiveWizard
                 var state = InspectOutputDirectoryState(targetDir);
                 if (state == OutputDirectoryState.ForeignNonEmptyDirectory)
                 {
-                    output.WriteLine($"错误：子目录非空且不是 {OutputGuard.ToolName} 的建库目录：{targetDir}");
-                    output.WriteLine("请换一个空目录或新的输出根目录。");
+                    output.WriteLine(L.Format("Wizard_BatchForeignSubdir", OutputGuard.ToolName, targetDir));
+                    output.WriteLine(L.Get("Wizard_ChooseEmptyRoot"));
                     valid = false;
                     break;
                 }
@@ -487,7 +486,7 @@ internal static class InteractiveWizard
 
             if (plans.Any(p => p.ForceOverwrite))
             {
-                output.WriteLine("提示：部分游戏输出子目录已存在上次建库结果，确认后将自动覆盖重建。");
+                output.WriteLine(L.Get("Wizard_BatchOverwriteHint"));
             }
 
             return plans;
@@ -497,35 +496,34 @@ internal static class InteractiveWizard
     private static bool ConfirmStart(WizardEnvironment env, IReadOnlyList<PlannedBuild> plannedBuilds)
     {
         var output = env.Output;
-        output.WriteLine("[步骤 3/4] 确认建库信息");
+        output.WriteLine(L.Get("Wizard_Step3Header"));
         if (plannedBuilds.Count == 1)
         {
             var plan = plannedBuilds[0];
-            var buildDisplay = string.IsNullOrWhiteSpace(plan.Game.SteamBuildId) ? "未知" : plan.Game.SteamBuildId;
-            var overwriteNote = plan.ForceOverwrite ? "（将覆盖上次建库结果）" : string.Empty;
-            output.WriteLine($"  游戏：{plan.Game.DisplayName}（{plan.Game.Spec.Id}）");
-            output.WriteLine($"  Steam 构建号：{buildDisplay}");
-            output.WriteLine($"  游戏目录：{plan.Game.GameDirectory}");
-            output.WriteLine($"  输出目录：{plan.OutputDirectory}{overwriteNote}");
+            var buildDisplay = string.IsNullOrWhiteSpace(plan.Game.SteamBuildId) ? L.Get("Common_Unknown") : plan.Game.SteamBuildId;
+            var overwriteNote = plan.ForceOverwrite ? L.Get("Wizard_OverwriteNoteSingle") : string.Empty;
+            output.WriteLine(L.Format("Wizard_SummaryGame", plan.Game.DisplayName, plan.Game.Spec.Id));
+            output.WriteLine(L.Format("Wizard_SummaryBuildId", buildDisplay));
+            output.WriteLine(L.Format("Wizard_SummaryGameDir", plan.Game.GameDirectory));
+            output.WriteLine(L.Format("Wizard_SummaryOutputDir", plan.OutputDirectory, overwriteNote));
         }
         else
         {
-            output.WriteLine($"  共计划依次构建 {plannedBuilds.Count} 个游戏：");
+            output.WriteLine(L.Format("Wizard_ConfirmBatchHeader", plannedBuilds.Count));
             for (var i = 0; i < plannedBuilds.Count; i++)
             {
                 var plan = plannedBuilds[i];
-                var buildDisplay = string.IsNullOrWhiteSpace(plan.Game.SteamBuildId) ? "未知" : plan.Game.SteamBuildId;
-                var overwriteNote = plan.ForceOverwrite ? "（覆盖旧构建）" : string.Empty;
-                output.WriteLine(
-                    $"  {i + 1}. {plan.Game.DisplayName}（{plan.Game.Spec.Id}，构建号：{buildDisplay}）");
-                output.WriteLine($"     游戏目录：{plan.Game.GameDirectory}");
-                output.WriteLine($"     输出目录：{plan.OutputDirectory}{overwriteNote}");
+                var buildDisplay = string.IsNullOrWhiteSpace(plan.Game.SteamBuildId) ? L.Get("Common_Unknown") : plan.Game.SteamBuildId;
+                var overwriteNote = plan.ForceOverwrite ? L.Get("Wizard_OverwriteNoteBatch") : string.Empty;
+                output.WriteLine(L.Format("Wizard_ConfirmBatchItem", i + 1, plan.Game.DisplayName, plan.Game.Spec.Id, buildDisplay));
+                output.WriteLine(L.Format("Wizard_ConfirmBatchGameDir", plan.Game.GameDirectory));
+                output.WriteLine(L.Format("Wizard_ConfirmBatchOutputDir", plan.OutputDirectory, overwriteNote));
             }
         }
 
         while (true)
         {
-            output.Write("按回车开始建库（输入 n 取消）：");
+            output.Write(L.Get("Wizard_ConfirmPrompt"));
             var line = env.Input.ReadLine();
             if (line is null)
             {
@@ -543,7 +541,7 @@ internal static class InteractiveWizard
                 return false;
             }
 
-            output.WriteLine("输入无效：直接按回车开始，或输入 n 取消。");
+            output.WriteLine(L.Get("Wizard_InvalidConfirmInput"));
         }
     }
 
@@ -567,12 +565,12 @@ internal static class InteractiveWizard
                     exitCode,
                     sw.Elapsed.TotalSeconds,
                     report,
-                    $"建库命令返回错误退出码 {exitCode}",
+                    L.Format("Wizard_BuildDbExitCode", exitCode),
                     SuggestGenericAdvice());
             }
 
             var partialAdvice = exitCode == 1
-                ? "部分资源导出存在告警或失败，可查看输出目录中的 *.sqlite.build.json，或在命令行附加 --keep-json 排查明细。"
+                ? L.Get("Wizard_PartialWarningAdvice")
                 : null;
 
             return new GameRunOutcome(
@@ -586,7 +584,7 @@ internal static class InteractiveWizard
         catch (Exception ex)
         {
             sw.Stop();
-            env.Error.WriteLine($"错误：[{plan.Game.Spec.Id}] 建库失败：{ex.Message}");
+            env.Error.WriteLine(L.Format("Wizard_BuildFailedLog", plan.Game.Spec.Id, ex.Message));
             return new GameRunOutcome(
                 plan,
                 2,
@@ -603,15 +601,14 @@ internal static class InteractiveWizard
         output.WriteLine("============================================================");
         if (outcomes.Count == 1)
         {
-            output.WriteLine("构建结果汇总：");
+            output.WriteLine(L.Get("Wizard_FinalSummarySingle"));
         }
         else
         {
             var succeeded = outcomes.Count(o => o.ErrorMessage is null && o.ExitCode == 0);
             var partial = outcomes.Count(o => o.ErrorMessage is null && o.ExitCode == 1);
             var failed = outcomes.Count - succeeded - partial;
-            output.WriteLine(
-                $"全部游戏构建汇总（共 {outcomes.Count} 个：成功 {succeeded}，部分告警 {partial}，失败 {failed}）：");
+            output.WriteLine(L.Format("Wizard_FinalSummaryBatch", outcomes.Count, succeeded, partial, failed));
         }
 
         for (var i = 0; i < outcomes.Count; i++)
@@ -619,41 +616,40 @@ internal static class InteractiveWizard
             var item = outcomes[i];
             if (outcomes.Count > 1)
             {
-                output.WriteLine($"------------------------------------------------------------");
-                output.WriteLine(
-                    $"[{i + 1}/{outcomes.Count}] {item.Plan.Game.DisplayName}（{item.Plan.Game.Spec.Id}）");
+                output.WriteLine("------------------------------------------------------------");
+                output.WriteLine($"[{i + 1}/{outcomes.Count}] {item.Plan.Game.DisplayName} ({item.Plan.Game.Spec.Id})");
             }
             else
             {
-                output.WriteLine($"  游戏：{item.Plan.Game.DisplayName}（{item.Plan.Game.Spec.Id}）");
+                output.WriteLine(L.Format("Wizard_SummaryGame", item.Plan.Game.DisplayName, item.Plan.Game.Spec.Id));
             }
 
             if (item.ErrorMessage is not null)
             {
-                output.WriteLine($"  状态：失败（耗时 {item.ElapsedSeconds:F2}s）");
-                output.WriteLine($"  错误：{item.ErrorMessage}");
-                output.WriteLine($"  下一步建议：{item.NextStepAdvice ?? SuggestGenericAdvice()}");
+                output.WriteLine(L.Format("Wizard_StatusFailed", item.ElapsedSeconds));
+                output.WriteLine(L.Format("Wizard_ResultError", item.ErrorMessage));
+                output.WriteLine(L.Format("Wizard_ResultNextStep", item.NextStepAdvice ?? SuggestGenericAdvice()));
                 continue;
             }
 
-            var statusLabel = item.ExitCode == 0 ? "成功" : "完成（存在部分资源告警）";
-            output.WriteLine($"  状态：{statusLabel}（总耗时 {item.ElapsedSeconds:F2}s）");
+            var statusLabel = item.ExitCode == 0 ? L.Get("Wizard_StatusSuccess") : L.Get("Wizard_StatusPartial");
+            output.WriteLine(L.Format("Wizard_ResultStatus", statusLabel, item.ElapsedSeconds));
 
             var sqlitePath = item.Report?.SqlitePath
                 ?? Path.Combine(item.Plan.OutputDirectory, $"{item.Plan.Game.Spec.Id}.sqlite");
-            output.WriteLine($"  数据库路径：{sqlitePath}");
-            output.WriteLine($"  文件哈希 (file_sha256)：{item.Report?.FileSha256 ?? "（未读取到构建报告）"}");
-            output.WriteLine($"  内容哈希 (content_sha256)：{item.Report?.ContentSha256 ?? "（未读取到构建报告）"}");
-            output.WriteLine($"  known-builds.json 比对：{FormatComparisonSummary(item.Report)}");
+            output.WriteLine(L.Format("Wizard_ResultDbPath", sqlitePath));
+            output.WriteLine(L.Format("Wizard_ResultFileHash", item.Report?.FileSha256 ?? L.Get("Wizard_ReportNotRead")));
+            output.WriteLine(L.Format("Wizard_ResultContentHash", item.Report?.ContentSha256 ?? L.Get("Wizard_ReportNotRead")));
+            output.WriteLine(L.Format("Wizard_ResultKnownBuilds", FormatComparisonSummary(item.Report)));
 
             if (!string.IsNullOrWhiteSpace(item.Report?.StageTimingsSummary))
             {
-                output.WriteLine($"  分步耗时：{item.Report.StageTimingsSummary}");
+                output.WriteLine(L.Format("Wizard_ResultStageTimings", item.Report.StageTimingsSummary));
             }
 
             if (!string.IsNullOrWhiteSpace(item.NextStepAdvice))
             {
-                output.WriteLine($"  提示：{item.NextStepAdvice}");
+                output.WriteLine(L.Format("Wizard_ResultHint", item.NextStepAdvice));
             }
         }
 
@@ -662,30 +658,38 @@ internal static class InteractiveWizard
 
     private static string FormatComparisonSummary(ParsedBuildReport? report)
     {
-        if (report is null || string.IsNullOrWhiteSpace(report.ComparisonMessage))
+        if (report is null || (string.IsNullOrWhiteSpace(report.ComparisonMessage) && string.IsNullOrWhiteSpace(report.ComparisonStatus)))
         {
-            return "（未读取到构建报告中的比对结果）";
+            return L.Get("Wizard_ComparisonNotRead");
         }
+
+        var message = (report.ComparisonStatus ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "matched" => KnownBuildsRegistry.MessageMatched,
+            "new_game_version" => KnownBuildsRegistry.MessageNewGameVersion,
+            "hash_mismatch" => KnownBuildsRegistry.MessageHashMismatch,
+            _ => report.ComparisonMessage ?? L.Get("Wizard_ComparisonNotRead"),
+        };
 
         var sourcePart = string.IsNullOrWhiteSpace(report.ComparisonSource)
             ? string.Empty
-            : $"，来源：{report.ComparisonSource}";
+            : L.Format("Wizard_SourcePart", report.ComparisonSource);
 
         if (string.Equals(report.ComparisonStatus, "matched", StringComparison.OrdinalIgnoreCase)
             && !string.IsNullOrWhiteSpace(report.MatchedRegisteredAt))
         {
-            return $"{report.ComparisonMessage}（登记日期：{report.MatchedRegisteredAt}{sourcePart}）";
+            return L.Format("Wizard_ComparisonMatchedDetail", message, report.MatchedRegisteredAt, sourcePart);
         }
 
         if (string.Equals(report.ComparisonStatus, "hash_mismatch", StringComparison.OrdinalIgnoreCase)
             && report.TableDiffCount > 0)
         {
-            return $"{report.ComparisonMessage}（差异表 {report.TableDiffCount} 张{sourcePart}）";
+            return L.Format("Wizard_ComparisonMismatchDetail", message, report.TableDiffCount, sourcePart);
         }
 
         return string.IsNullOrEmpty(sourcePart)
-            ? report.ComparisonMessage
-            : $"{report.ComparisonMessage}（来源：{report.ComparisonSource}）";
+            ? message
+            : L.Format("Wizard_ComparisonWithSource", message, report.ComparisonSource);
     }
 
     private static ParsedBuildReport? TryReadBuildReport(string outputDirectory, string gameId)
@@ -738,11 +742,11 @@ internal static class InteractiveWizard
             if (root.TryGetProperty("timings_ms", out var timingsEl) && timingsEl.ValueKind == JsonValueKind.Object)
             {
                 var parts = new List<string>();
-                TryAppendTiming(parts, timingsEl, "game_version", "版本识别");
-                TryAppendTiming(parts, timingsEl, "inventory", "盘点");
-                TryAppendTiming(parts, timingsEl, "export", "导出");
-                TryAppendTiming(parts, timingsEl, "db_build", "建库");
-                TryAppendTiming(parts, timingsEl, "db_hash", "哈希");
+                TryAppendTiming(parts, timingsEl, "game_version", L.Get("Wizard_TimingGameVersion"));
+                TryAppendTiming(parts, timingsEl, "inventory", L.Get("Wizard_TimingInventory"));
+                TryAppendTiming(parts, timingsEl, "export", L.Get("Wizard_TimingExport"));
+                TryAppendTiming(parts, timingsEl, "db_build", L.Get("Wizard_TimingDbBuild"));
+                TryAppendTiming(parts, timingsEl, "db_hash", L.Get("Wizard_TimingDbHash"));
                 if (parts.Count > 0)
                 {
                     timingsSummary = string.Join(" / ", parts);
@@ -833,28 +837,28 @@ internal static class InteractiveWizard
     {
         if (ex is DirectoryNotFoundException or FileNotFoundException)
         {
-            return "请确认游戏目录完整且已通过 Steam 下载完成，可在 Steam 中对该游戏执行“验证游戏文件的完整性”后重试。";
+            return L.Get("Wizard_AdviceMissingFiles");
         }
 
         if (ex is UnauthorizedAccessException)
         {
-            return "请检查输出目录是否具有写入权限，建议改选到桌面、文档或其他可写磁盘目录后重试。";
+            return L.Get("Wizard_AdvicePermission");
         }
 
         if (ex is InvalidDataException)
         {
-            return "请确认所选目录是未损坏的 FINAL FANTASY I–VI Pixel Remaster 安装根目录（含 *_Data 文件夹），或在 Steam 中验证文件完整性后重试。";
+            return L.Get("Wizard_AdviceInvalidData");
         }
 
         if (ex is IOException)
         {
-            if (ex.Message.Contains("非空", StringComparison.Ordinal)
-                || ex.Message.Contains("不是 ffpr-export", StringComparison.Ordinal))
+            if (ex.Message.Contains("--force", StringComparison.Ordinal)
+                || ex.Message.Contains(OutputGuard.ToolName, StringComparison.Ordinal))
             {
-                return "请重新运行向导并选择一个空目录或新的输出目录名称，或手动清理目标目录后重试。";
+                return L.Get("Wizard_AdviceOutputOccupied");
             }
 
-            return "请确认目标磁盘剩余空间充足，且旧数据库文件未被其他软件占用后重试。";
+            return L.Get("Wizard_AdviceDiskSpace");
         }
 
         return SuggestGenericAdvice();
@@ -862,13 +866,13 @@ internal static class InteractiveWizard
 
     private static string SuggestGenericAdvice()
     {
-        return "请核对游戏目录与输出目录后重试；如需排查详情，可在命令行运行 ffpr-export build-db --game \"<游戏目录>\" --keep-json 查看完整日志。";
+        return L.Get("Wizard_AdviceGeneric");
     }
 
     private static void WaitForExitPrompt(WizardEnvironment env)
     {
         env.Output.WriteLine();
-        env.Output.Write("按回车退出……");
+        env.Output.Write(L.Get("Wizard_PressEnterToExit"));
         _ = env.Input.ReadLine();
     }
 }

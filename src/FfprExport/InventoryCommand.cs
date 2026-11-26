@@ -63,7 +63,7 @@ internal static class InventoryCommand
                     var rawJobs = Program.RequireValue(args, ref i, "--jobs");
                     if (!int.TryParse(rawJobs, NumberStyles.Integer, CultureInfo.InvariantCulture, out jobs) || jobs < 1)
                     {
-                        throw new ArgumentException($"--jobs 必须是正整数：{rawJobs}");
+                        throw new ArgumentException(L.Format("Cli_JobsMustBePositive", rawJobs));
                     }
 
                     break;
@@ -71,7 +71,7 @@ internal static class InventoryCommand
                     force = true;
                     break;
                 default:
-                    throw new ArgumentException($"inventory 收到未知参数：{args[i]}");
+                    throw new ArgumentException(L.Format("Inventory_UnknownArg", args[i]));
             }
         }
 
@@ -100,7 +100,7 @@ internal static class InventoryCommand
                 var rows = new List<InventoryAssetRow>();
                 if (!bundle.ExistsOnDisk)
                 {
-                    var err = $"目录中声明的 bundle 文件不存在：{bundle.RelativePath}";
+                    var err = L.Format("Inventory_MissingBundle", bundle.RelativePath);
                     failures.Add(new InventoryFailure(bundle.RelativePath, err));
                     bundleResults.Add((new BundleInventorySummary(
                         bundle.RelativePath, 0, false, false, 0, bundle.CatalogAssets.Count, 0, 0, 0, 0, err), rows));
@@ -199,7 +199,7 @@ internal static class InventoryCommand
                 {
                     var err = OutputGuard.TruncateError(ex.Message);
                     failures.Add(new InventoryFailure(bundle.RelativePath, err));
-                    Console.Error.WriteLine($"盘点 bundle 失败：{bundle.RelativePath}：{ex.Message}");
+                    Console.Error.WriteLine(L.Format("Inventory_BundleFailed", bundle.RelativePath, ex.Message));
                     bundleResults.Add((new BundleInventorySummary(
                         bundle.RelativePath, bundle.FileSize, true, false, 0, bundle.CatalogAssets.Count, 0, 0, 0, 0, err), rows));
                 }
@@ -267,7 +267,7 @@ internal static class InventoryCommand
             {
                 var err = OutputGuard.TruncateError(ex.Message);
                 failures.Add(new InventoryFailure(dataFile.FileName, err));
-                Console.Error.WriteLine($"盘点数据文件失败：{dataFile.FileName}：{ex.Message}");
+                Console.Error.WriteLine(L.Format("Inventory_DataFileFailed", dataFile.FileName, ex.Message));
                 dataFileSummaries.Add(new
                 {
                     file = dataFile.FileName,
@@ -481,10 +481,17 @@ internal static class InventoryCommand
             manifest,
             FieldJsonWriter.SerializerOptions);
 
-        Console.WriteLine(
-            $"[{game.Spec.Id}] 盘点完成：Unity {game.UnityVersion}，Steam buildid {game.SteamBuildId ?? "未知"}，" +
-            $"bundle {orderedBundles.Length} 个，*_Data {dataFiles.Count} 个，总资产 {allRows.Count} 个，" +
-            $"失败 {orderedFailures.Length} 个，耗时 {stopwatch.Elapsed.TotalSeconds:F2}s -> {outputArgument}");
+        Console.WriteLine(L.Format(
+            "Inventory_Completed",
+            game.Spec.Id,
+            game.UnityVersion,
+            game.SteamBuildId ?? L.Get("Common_Unknown"),
+            orderedBundles.Length,
+            dataFiles.Count,
+            allRows.Count,
+            orderedFailures.Length,
+            stopwatch.Elapsed.TotalSeconds,
+            outputArgument));
 
         return orderedFailures.Length == 0 ? 0 : 1;
     }

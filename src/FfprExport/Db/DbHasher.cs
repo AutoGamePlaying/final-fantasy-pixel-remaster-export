@@ -33,7 +33,7 @@ internal static class DbHasher
     {
         if (string.IsNullOrWhiteSpace(dbPath) || !File.Exists(dbPath))
         {
-            throw new FileNotFoundException($"数据库文件不存在：{dbPath}", dbPath);
+            throw new FileNotFoundException(L.Format("Db_FileNotFound", dbPath), dbPath);
         }
 
         var fileSha256 = DbParsers.ComputeFileSha256(dbPath);
@@ -78,7 +78,7 @@ internal static class DbHasher
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "SELECT sqlite_version()";
         return Convert.ToString(cmd.ExecuteScalar(), CultureInfo.InvariantCulture)
-            ?? throw new InvalidDataException("查询 sqlite_version() 返回空值");
+            ?? throw new InvalidDataException(L.Get("Db_SqliteVersionNull"));
     }
 
     public static IReadOnlyList<string> ListOrdinaryTables(SqliteConnection conn)
@@ -201,7 +201,7 @@ internal static class DbHasher
                     return;
                 }
             default:
-                throw new InvalidDataException($"规范化内容哈希不支持的 SQLite 值类型：{value.GetType().FullName}");
+                throw new InvalidDataException(L.Format("Db_UnsupportedCanonicalType", value.GetType().FullName));
         }
     }
 
@@ -258,7 +258,7 @@ internal static class DbHasher
                     return;
                 }
             default:
-                throw new InvalidDataException($"规范化内容哈希不支持的 SQLite 值类型：{value.GetType().FullName}");
+                throw new InvalidDataException(L.Format("Db_UnsupportedCanonicalType", value.GetType().FullName));
         }
     }
 

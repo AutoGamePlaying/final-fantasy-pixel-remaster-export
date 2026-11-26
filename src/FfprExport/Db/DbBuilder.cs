@@ -54,12 +54,12 @@ internal sealed partial class DbBuilder
     {
         if (string.IsNullOrWhiteSpace(_options.ExportDirectory) || !Directory.Exists(_exportRoot))
         {
-            throw new DirectoryNotFoundException($"导出目录不存在：{_options.ExportDirectory}");
+            throw new DirectoryNotFoundException(L.Format("Db_ExportDirNotFound", _options.ExportDirectory));
         }
 
         if (string.IsNullOrWhiteSpace(_options.OutputPath))
         {
-            throw new ArgumentException("缺少 --out <数据库文件路径> 参数");
+            throw new ArgumentException(L.Get("Db_MissingOutArg"));
         }
 
         var fullOutPath = Path.GetFullPath(_options.OutputPath);
@@ -206,7 +206,7 @@ internal sealed partial class DbBuilder
                 // Ignore rollback failure when propagating original stage exception.
             }
 
-            throw new InvalidOperationException($"构建阶段 {stageName} 失败：{ex.Message}", ex);
+            throw new InvalidOperationException(L.Format("Db_StageFailed", stageName, ex.Message), ex);
         }
     }
 
@@ -415,7 +415,7 @@ internal sealed partial class DbBuilder
     {
         if (Directory.Exists(fullOutPath))
         {
-            throw new ArgumentException($"--out 必须是文件路径，不能指向已有目录：{outputArgument}");
+            throw new ArgumentException(L.Format("Db_OutIsDirectory", outputArgument));
         }
 
         var (depsFull, depsDisplay, _) = OutputGuard.ResolveDepsRoot();
@@ -430,7 +430,7 @@ internal sealed partial class DbBuilder
                     && !rel.StartsWith($"..{Path.AltDirectorySeparatorChar}", StringComparison.Ordinal)
                     && !Path.IsPathRooted(rel)))
             {
-                throw new ArgumentException($"--out 不能写入受保护目录 {depsDisplay}/{sub}：{outputArgument}");
+                throw new ArgumentException(L.Format("Db_OutProtectedDir", depsDisplay, sub, outputArgument));
             }
         }
     }

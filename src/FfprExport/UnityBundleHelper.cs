@@ -340,7 +340,7 @@ internal static class UnityBundleHelper
             AssetReadFlags.ForceFromCldb | AssetReadFlags.SkipMonoBehaviourFields);
         if (baseTemplate is null)
         {
-            throw new InvalidDataException($"缺少 MonoBehaviour 基础模板（PathId={info.PathId}）");
+            throw new InvalidDataException(L.Format("Unity_MissingMonoBehaviourBaseTemplate", info.PathId));
         }
 
         var (baseField, baseBytesConsumed) = ReadValueFromAsset(aInst, info, baseTemplate);
@@ -379,8 +379,11 @@ internal static class UnityBundleHelper
 
         if (baseBytesConsumed < info.ByteSize)
         {
-            throw new InvalidDataException(
-                $"MonoBehaviour 缺少类型树且无法通过 IL2CPP 解析剩余 {info.ByteSize - baseBytesConsumed} 字节（PathId={info.PathId}, Script={resolvedScript?.FullName ?? "未知"}）");
+            throw new InvalidDataException(L.Format(
+                "Unity_MissingTypeTreeAndCpp2Il",
+                info.ByteSize - baseBytesConsumed,
+                info.PathId,
+                resolvedScript?.FullName ?? L.Get("Common_Unknown")));
         }
 
         return (baseField, "BaseOnly", resolvedScript);

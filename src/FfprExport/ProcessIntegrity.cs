@@ -46,12 +46,12 @@ internal sealed record ProcessIntegrityInfo(
 
     public string DisplayLabel => Kind switch
     {
-        ProcessIntegrityKind.Untrusted => "不受信任（Untrusted）",
-        ProcessIntegrityKind.Low => "低完整性（Low）",
-        ProcessIntegrityKind.Medium => "中完整性（Medium）",
-        ProcessIntegrityKind.High => "高完整性（High）",
-        ProcessIntegrityKind.System => "系统级（System）",
-        _ => "未知",
+        ProcessIntegrityKind.Untrusted => L.Get("Integrity_Untrusted"),
+        ProcessIntegrityKind.Low => L.Get("Integrity_Low"),
+        ProcessIntegrityKind.Medium => L.Get("Integrity_Medium"),
+        ProcessIntegrityKind.High => L.Get("Integrity_High"),
+        ProcessIntegrityKind.System => L.Get("Integrity_System"),
+        _ => L.Get("Integrity_Unknown"),
     };
 }
 
@@ -91,7 +91,7 @@ internal static class ProcessIntegrity
 
         if (!OperatingSystem.IsWindows())
         {
-            return new ProcessIntegrityInfo(ProcessIntegrityKind.Unknown, null, "非 Windows 平台");
+            return new ProcessIntegrityInfo(ProcessIntegrityKind.Unknown, null, L.Get("Integrity_NonWindows"));
         }
 
         return DetectWindowsIntegrityLevel();
@@ -168,7 +168,7 @@ internal static class ProcessIntegrity
                 return new ProcessIntegrityInfo(
                     ProcessIntegrityKind.Unknown,
                     null,
-                    string.Create(CultureInfo.InvariantCulture, $"OpenProcessToken 失败（Win32={err}）"));
+                    L.Format("Integrity_OpenTokenFailed", err));
             }
 
             try
@@ -185,7 +185,7 @@ internal static class ProcessIntegrity
                     return new ProcessIntegrityInfo(
                         ProcessIntegrityKind.Unknown,
                         null,
-                        string.Create(CultureInfo.InvariantCulture, $"GetTokenInformation 查询长度失败（Win32={firstErr}）"));
+                        L.Format("Integrity_QueryLenFailed", firstErr));
                 }
 
                 if (requiredLength == 0 || requiredLength > 64 * 1024)
@@ -193,7 +193,7 @@ internal static class ProcessIntegrity
                     return new ProcessIntegrityInfo(
                         ProcessIntegrityKind.Unknown,
                         null,
-                        string.Create(CultureInfo.InvariantCulture, $"TokenIntegrityLevel 缓冲区长度异常（{requiredLength}）"));
+                        L.Format("Integrity_BadBufferLen", requiredLength));
                 }
 
                 var buffer = Marshal.AllocHGlobal(checked((int)requiredLength));
@@ -210,7 +210,7 @@ internal static class ProcessIntegrity
                         return new ProcessIntegrityInfo(
                             ProcessIntegrityKind.Unknown,
                             null,
-                            string.Create(CultureInfo.InvariantCulture, $"GetTokenInformation 读取失败（Win32={err}）"));
+                            L.Format("Integrity_ReadTokenFailed", err));
                     }
 
                     var label = Marshal.PtrToStructure<SidAndAttributes>(buffer);
@@ -219,7 +219,7 @@ internal static class ProcessIntegrity
                         return new ProcessIntegrityInfo(
                             ProcessIntegrityKind.Unknown,
                             null,
-                            "TokenIntegrityLevel SID 为空");
+                            L.Get("Integrity_NullSid"));
                     }
 
                     var countPtr = GetSidSubAuthorityCount(label.Sid);
@@ -228,7 +228,7 @@ internal static class ProcessIntegrity
                         return new ProcessIntegrityInfo(
                             ProcessIntegrityKind.Unknown,
                             null,
-                            "GetSidSubAuthorityCount 返回空指针");
+                            L.Get("Integrity_NullSubAuthCount"));
                     }
 
                     var subAuthorityCount = Marshal.ReadByte(countPtr);
@@ -237,7 +237,7 @@ internal static class ProcessIntegrity
                         return new ProcessIntegrityInfo(
                             ProcessIntegrityKind.Unknown,
                             null,
-                            "Integrity SID 缺少 SubAuthority");
+                            L.Get("Integrity_ZeroSubAuth"));
                     }
 
                     var ridPtr = GetSidSubAuthority(label.Sid, (uint)(subAuthorityCount - 1));
@@ -246,7 +246,7 @@ internal static class ProcessIntegrity
                         return new ProcessIntegrityInfo(
                             ProcessIntegrityKind.Unknown,
                             null,
-                            "GetSidSubAuthority 返回空指针");
+                            L.Get("Integrity_NullSubAuth"));
                     }
 
                     var rid = unchecked((uint)Marshal.ReadInt32(ridPtr));

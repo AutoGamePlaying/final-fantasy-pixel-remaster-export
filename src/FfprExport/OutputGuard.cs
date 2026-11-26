@@ -44,7 +44,7 @@ internal static class OutputGuard
     {
         if (string.IsNullOrWhiteSpace(outputArgument))
         {
-            throw new ArgumentException("--out 不能为空");
+            throw new ArgumentException(L.Get("OutputGuard_OutEmpty"));
         }
 
         var fullOut = Path.GetFullPath(outputArgument);
@@ -52,7 +52,7 @@ internal static class OutputGuard
 
         if (IsSameOrDescendant(fullGame, fullOut) || IsSameOrDescendant(fullOut, fullGame))
         {
-            throw new ArgumentException($"--out 不能与游戏目录重叠或互为父子目录：{outputArgument}");
+            throw new ArgumentException(L.Format("OutputGuard_OverlapGame", outputArgument));
         }
 
         // Prevent writing into protected read-only tool/dependency subpaths inside .deps / FFPR_DEPS.
@@ -61,7 +61,7 @@ internal static class OutputGuard
         {
             if (IsSamePath(depsFull, fullOut))
             {
-                throw new ArgumentException($"--out 不能直接指向依赖根目录 {depsDisplay}：{outputArgument}");
+                throw new ArgumentException(L.Format("OutputGuard_DepsRoot", depsDisplay, outputArgument));
             }
 
             string[] protectedSubpaths =
@@ -80,14 +80,14 @@ internal static class OutputGuard
                 if (IsSameOrDescendant(protectedFull, fullOut))
                 {
                     var protectedDisplay = Path.Combine(depsDisplay, subpath).Replace('\\', '/');
-                    throw new ArgumentException($"--out 不能指向受保护目录 {protectedDisplay} 或其内部：{outputArgument}");
+                    throw new ArgumentException(L.Format("OutputGuard_ProtectedDepsSubdir", protectedDisplay, outputArgument));
                 }
             }
 
             var ffprRoot = Path.GetFullPath(Path.Combine(depsFull, "ffpr"));
             if (IsSamePath(ffprRoot, fullOut))
             {
-                throw new ArgumentException($"--out 不能直接指向受保护目录 {depsDisplay}/ffpr 本身：{outputArgument}");
+                throw new ArgumentException(L.Format("OutputGuard_ProtectedDepsFfpr", depsDisplay, outputArgument));
             }
         }
 
@@ -104,13 +104,13 @@ internal static class OutputGuard
         {
             if (!force)
             {
-                throw new IOException($"输出目录非空：{outputArgument}；如需清空并重新生成，请加 --force");
+                throw new IOException(L.Format("OutputGuard_DirNotEmpty", outputArgument));
             }
 
             using var manifest = RequireOwnManifest(outputPath, outputArgument);
             EnsureManifestMatchesCommand(manifest.RootElement, outputArgument, expectedCommand);
             var fileCount = Directory.EnumerateFiles(outputPath, "*", SearchOption.AllDirectories).LongCount();
-            Console.WriteLine($"即将清空输出目录：{outputArgument}；文件数：{fileCount}");
+            Console.WriteLine(L.Format("OutputGuard_ClearingDir", outputArgument, fileCount));
             DeleteOwnEntries(outputPath, expectedCommand);
         }
 
@@ -134,12 +134,12 @@ internal static class OutputGuard
             if (force)
             {
                 var deletedFiles = DeleteOwnEntries(outputPath, expectedCommand);
-                Console.WriteLine($"已清空输出目录：{outputArgument}；删除文件数：{deletedFiles}");
+                Console.WriteLine(L.Format("OutputGuard_ClearedDir", outputArgument, deletedFiles));
             }
             else
             {
                 resumed = true;
-                Console.WriteLine($"续跑模式：复用已有输出目录 {outputArgument}（已导出文件将跳过）");
+                Console.WriteLine(L.Format("OutputGuard_ResumeMode", outputArgument));
             }
         }
 
@@ -154,7 +154,7 @@ internal static class OutputGuard
         {
             if (Directory.Exists(entry) && IsOtherCommandSubdirectory(entry, expectedCommand))
             {
-                Console.WriteLine($"保留其他子命令的输出目录：{Path.GetFileName(entry)}/");
+                Console.WriteLine(L.Format("OutputGuard_PreserveOtherCommand", Path.GetFileName(entry)));
                 continue;
             }
 
@@ -175,7 +175,7 @@ internal static class OutputGuard
 
     private static JsonDocument RequireOwnManifest(string outputPath, string outputArgument)
     {
-        var message = $"{outputArgument} 不是 {ToolName} 的输出目录，拒绝清空或复用；请换一个空目录或手动清理后重试";
+        var message = L.Format("OutputGuard_NotOwnDir", outputArgument, ToolName);
         var manifestPath = Path.Combine(outputPath, "manifest.json");
         if (!File.Exists(manifestPath))
         {
@@ -209,8 +209,12 @@ internal static class OutputGuard
         var actualCommand = root.TryGetProperty("command", out var cmdEl) ? cmdEl.GetString() : null;
         if (!string.Equals(actualCommand, expectedCommand, StringComparison.Ordinal))
         {
-            throw new IOException(
-                $"{outputArgument} 是 {ToolName} {actualCommand ?? "未知命令"} 的输出目录，不能由 {expectedCommand} 清空或复用");
+            throw new IOException(L.Format(
+                "OutputGuard_WrongCommand",
+                outputArgument,
+                ToolName,
+                actualCommand ?? L.Get("BuildDb_UnknownCommand"),
+                expectedCommand));
         }
     }
 
@@ -227,8 +231,7 @@ internal static class OutputGuard
             if (!string.IsNullOrEmpty(actualGameId)
                 && !string.Equals(actualGameId, expectedGameId, StringComparison.OrdinalIgnoreCase))
             {
-                throw new IOException(
-                    $"{outputArgument} 是 {actualGameId} 的输出目录，不能用于 {expectedGameId}（如需更换请另选目录）");
+                throw new IOException(L.Format("OutputGuard_WrongGame", outputArgument, actualGameId, expectedGameId));
             }
         }
     }
@@ -268,7 +271,7 @@ internal static class OutputGuard
         var target = Path.GetFullPath(Path.Combine(fullRoot, relativeUnixPath.Replace('/', Path.DirectorySeparatorChar)));
         if (!IsSameOrDescendant(fullRoot, target) || IsSamePath(fullRoot, target))
         {
-            throw new InvalidDataException($"目标路径越界：{relativeUnixPath}");
+            throw new InvalidDataException(L.Format("OutputGuard_PathTraversal", relativeUnixPath));
         }
 
         return target;

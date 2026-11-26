@@ -41,7 +41,7 @@ internal static class AddressablesCatalog
     {
         if (!File.Exists(game.CatalogPath))
         {
-            throw new FileNotFoundException($"找不到 Addressables 目录文件：{game.CatalogPath}");
+            throw new FileNotFoundException(L.Format("Catalog_NotFound", game.CatalogPath));
         }
 
         using var stream = File.OpenRead(game.CatalogPath);

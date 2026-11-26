@@ -15,11 +15,29 @@ internal static class Program
 
         try
         {
+            var remainingArgs = AppLocalization.ApplyCliLanguageOrThrow(args);
+            return await RunAsync(remainingArgs);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(L.Format("Common_ErrorPrefix", ex.Message));
+            return 2;
+        }
+    }
+
+    /// <summary>
+    /// In-process subcommand entry point that preserves the currently active language without
+    /// re-reading AGP_LANG (used by BuildDbCommand when invoking `db build` and `db hash`).
+    /// </summary>
+    internal static async Task<int> RunInProcessAsync(string[] args)
+    {
+        try
+        {
             return await RunAsync(args);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"错误：{ex.Message}");
+            Console.Error.WriteLine(L.Format("Common_ErrorPrefix", ex.Message));
             return 2;
         }
     }
@@ -51,7 +69,7 @@ internal static class Program
             case "db":
                 return await Db.DbCommand.RunAsync(args[1..]);
             default:
-                throw new ArgumentException($"未知子命令：{args[0]}；可用命令：inventory、export");
+                throw new ArgumentException(L.Format("Cli_UnknownSubcommand", args[0]));
         }
     }
 
@@ -59,7 +77,7 @@ internal static class Program
     {
         if (index + 1 >= args.Length)
         {
-            throw new ArgumentException($"选项 {option} 需要一个值");
+            throw new ArgumentException(L.Format("Cli_OptionRequiresValue", option));
         }
 
         index++;
@@ -68,22 +86,6 @@ internal static class Program
 
     private static void PrintHelp()
     {
-        Console.WriteLine(
-            $"""
-            {OutputGuard.ToolName} {ToolVersion} — FINAL FANTASY I–VI Pixel Remaster 资源盘点与导出工具
-
-            用法：
-              ffpr-export build-db  --game <Steam 游戏目录> [--out <输出目录>] [--steam-buildid <编号>] [--keep-json] [--jobs N] [--force]
-              ffpr-export inventory --game <Steam 游戏目录> [--out <输出目录>] [--jobs N] [--force]
-              ffpr-export export    --game <Steam 游戏目录> [--out <输出目录>] [--jobs N] [--force]
-
-            选项：
-              --game <目录>   Steam 游戏安装目录（自动识别 FF1–FF6、Unity 版本与 Steam buildid）
-              --out <目录>    输出目录（build-db 默认 %LOCALAPPDATA%\agp\ffpr-export\output\<ffN>-<Steam 构建号>，可用 AGP_HOME 覆盖；inventory/export 默认 .deps/ffpr/<ffN>/…）
-              --jobs <N>      并行线程数（默认 min(CPU 核数, 8)）
-              --force         清空已有输出目录（仅允许清空带本工具同名子命令 manifest.json 的目录）
-              --version       打印工具及 AssetsTools.NET 版本
-              --help          打印本帮助信息
-            """);
+        Console.WriteLine(L.Format("Cli_HelpText", OutputGuard.ToolName, ToolVersion));
     }
 }

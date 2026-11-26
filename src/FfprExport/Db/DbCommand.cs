@@ -23,7 +23,7 @@ internal static class DbCommand
             "stats" => RunStats(rest),
             "sql" => RunSql(rest),
             "write-fixture" => RunWriteFixture(rest),
-            _ => throw new ArgumentException($"未知 db 子命令：{sub}；可用子命令：build、hash、stats、sql"),
+            _ => throw new ArgumentException(L.Format("Db_UnknownSubcommand", sub)),
         };
 
         return Task.FromResult(exitCode);
@@ -53,48 +53,54 @@ internal static class DbCommand
                     var rawJobs = Program.RequireValue(args, ref i, "--jobs");
                     if (!int.TryParse(rawJobs, NumberStyles.Integer, CultureInfo.InvariantCulture, out jobs) || jobs < 1)
                     {
-                        throw new ArgumentException($"--jobs 必须是正整数：{rawJobs}");
+                        throw new ArgumentException(L.Format("Cli_JobsMustBePositive", rawJobs));
                     }
 
                     break;
                 default:
-                    throw new ArgumentException($"db build 未知参数：{args[i]}");
+                    throw new ArgumentException(L.Format("Db_BuildUnknownArg", args[i]));
             }
         }
 
         if (string.IsNullOrWhiteSpace(exportDir))
         {
-            throw new ArgumentException("db build 缺少 --export <导出目录> 参数");
+            throw new ArgumentException(L.Get("Db_BuildMissingExport"));
         }
 
         if (string.IsNullOrWhiteSpace(outPath))
         {
             outPath = TryInferDefaultOutPath(exportDir)
-                ?? throw new ArgumentException("db build 缺少 --out <数据库文件路径> 参数");
+                ?? throw new ArgumentException(L.Get("Db_BuildMissingOut"));
         }
 
         var report = DbBuilder.Build(new DbBuildOptions(exportDir, outPath, jobs));
 
-        Console.WriteLine(
-            $"构建完成：{report.OutputPath}（游戏 {report.GameId}，schema v{report.SchemaVersion}，SQLite {report.SqliteVersion}，{FormatBytes(report.FileSizeBytes)}，耗时 {report.TotalMillis} ms）");
-        Console.WriteLine($"清单文件：{report.ManifestPath}");
-        Console.WriteLine($"文件哈希（file_sha256）：{report.FileSha256}");
-        Console.WriteLine($"内容哈希（content_sha256）：{report.ContentSha256}");
-        Console.WriteLine("阶段报告：");
+        Console.WriteLine(L.Format(
+            "Db_BuildComplete",
+            report.OutputPath,
+            report.GameId,
+            report.SchemaVersion,
+            report.SqliteVersion,
+            FormatBytes(report.FileSizeBytes),
+            report.TotalMillis));
+        Console.WriteLine(L.Format("Db_BuildManifest", report.ManifestPath));
+        Console.WriteLine(L.Format("Db_BuildFileHash", report.FileSha256));
+        Console.WriteLine(L.Format("Db_BuildContentHash", report.ContentSha256));
+        Console.WriteLine(L.Get("Db_BuildStageReport"));
         foreach (var stage in report.Stages)
         {
-            var noteSuffix = string.IsNullOrEmpty(stage.Note) ? string.Empty : $"  说明={stage.Note}";
+            var noteSuffix = string.IsNullOrEmpty(stage.Note) ? string.Empty : L.Format("Db_BuildStageNote", stage.Note);
             Console.WriteLine(
                 $"  {stage.Stage,-14} {stage.Status,-8} rows={stage.Rows,-8} millis={stage.Millis,-6}{noteSuffix}");
         }
 
         if (report.TotalIssues == 0)
         {
-            Console.WriteLine("构建问题（build_issue）：0 条");
+            Console.WriteLine(L.Get("Db_BuildIssuesZero"));
         }
         else
         {
-            Console.WriteLine($"构建问题（build_issue）：共 {report.TotalIssues} 条");
+            Console.WriteLine(L.Format("Db_BuildIssuesCount", report.TotalIssues));
             foreach (var issue in report.Issues)
             {
                 Console.WriteLine($"  {issue.Stage,-12} {issue.Kind,-28} {issue.Count}");
@@ -126,12 +132,12 @@ internal static class DbCommand
                 default:
                     if (args[i].StartsWith('-'))
                     {
-                        throw new ArgumentException($"db hash 未知参数：{args[i]}");
+                        throw new ArgumentException(L.Format("Db_HashUnknownArg", args[i]));
                     }
 
                     if (dbPath is not null)
                     {
-                        throw new ArgumentException($"db hash 多余的位置参数：{args[i]}");
+                        throw new ArgumentException(L.Format("Db_HashExtraPositional", args[i]));
                     }
 
                     dbPath = args[i];
@@ -141,7 +147,7 @@ internal static class DbCommand
 
         if (string.IsNullOrWhiteSpace(dbPath))
         {
-            throw new ArgumentException("db hash 缺少 <库> 路径参数");
+            throw new ArgumentException(L.Get("Db_HashMissingDb"));
         }
 
         var report = DbHasher.HashDatabase(dbPath);
@@ -152,11 +158,11 @@ internal static class DbCommand
         }
         else
         {
-            Console.WriteLine($"数据库：{dbPath}");
-            Console.WriteLine($"格式版本：v{report.Format}（schema v{report.SchemaVersion}，SQLite {report.SqliteVersion}）");
-            Console.WriteLine($"文件哈希（file_sha256）：{report.FileSha256}");
-            Console.WriteLine($"内容哈希（content_sha256）：{report.ContentSha256}");
-            Console.WriteLine($"普通表哈希（共 {report.Tables.Count} 张）：");
+            Console.WriteLine(L.Format("Db_HashDatabase", dbPath));
+            Console.WriteLine(L.Format("Db_HashFormat", report.Format, report.SchemaVersion, report.SqliteVersion));
+            Console.WriteLine(L.Format("Db_BuildFileHash", report.FileSha256));
+            Console.WriteLine(L.Format("Db_BuildContentHash", report.ContentSha256));
+            Console.WriteLine(L.Format("Db_HashTablesHeader", report.Tables.Count));
             foreach (var table in report.Tables)
             {
                 Console.WriteLine($"  {table.Name,-28} {table.Rows,8}  {table.Sha256}");
@@ -184,12 +190,12 @@ internal static class DbCommand
                 default:
                     if (args[i].StartsWith('-'))
                     {
-                        throw new ArgumentException($"db stats 未知参数：{args[i]}");
+                        throw new ArgumentException(L.Format("Db_StatsUnknownArg", args[i]));
                     }
 
                     if (dbPath is not null)
                     {
-                        throw new ArgumentException($"db stats 多余的位置参数：{args[i]}");
+                        throw new ArgumentException(L.Format("Db_StatsExtraPositional", args[i]));
                     }
 
                     dbPath = args[i];
@@ -199,27 +205,27 @@ internal static class DbCommand
 
         if (string.IsNullOrWhiteSpace(dbPath))
         {
-            throw new ArgumentException("db stats 缺少 <库> 路径参数");
+            throw new ArgumentException(L.Get("Db_StatsMissingDb"));
         }
 
         using var reader = DbReader.Open(dbPath);
         var stats = reader.GetStats();
 
-        Console.WriteLine($"数据库：{stats.Path}");
-        Console.WriteLine($"文件大小：{stats.FileSizeBytes} 字节（{FormatBytes(stats.FileSizeBytes)}），SQLite {stats.SqliteVersion}");
-        Console.WriteLine("元信息（meta）：");
+        Console.WriteLine(L.Format("Db_HashDatabase", stats.Path));
+        Console.WriteLine(L.Format("Db_StatsFileSize", stats.FileSizeBytes, FormatBytes(stats.FileSizeBytes), stats.SqliteVersion));
+        Console.WriteLine(L.Get("Db_StatsMetaHeader"));
         foreach (var (k, v) in stats.Meta)
         {
             Console.WriteLine($"  {k} = {v}");
         }
 
-        Console.WriteLine("区域行数汇总：");
+        Console.WriteLine(L.Get("Db_StatsAreaSummaryHeader"));
         foreach (var areaGroup in stats.Tables.GroupBy(t => t.Area).OrderBy(g => g.Key, StringComparer.Ordinal))
         {
-            Console.WriteLine($"  {areaGroup.Key,-14} {areaGroup.Sum(t => t.Rows),10}（{areaGroup.Count()} 张表）");
+            Console.WriteLine(L.Format("Db_StatsAreaRow", areaGroup.Key, areaGroup.Sum(t => t.Rows), areaGroup.Count()));
         }
 
-        Console.WriteLine("数据表行数：");
+        Console.WriteLine(L.Get("Db_StatsTableRowsHeader"));
         foreach (var t in stats.Tables)
         {
             Console.WriteLine($"  {t.Name,-28} {t.Rows,10}");
@@ -227,11 +233,11 @@ internal static class DbCommand
 
         if (stats.TotalIssues == 0)
         {
-            Console.WriteLine("构建问题（build_issue）：0 条");
+            Console.WriteLine(L.Get("Db_BuildIssuesZero"));
         }
         else
         {
-            Console.WriteLine($"构建问题（build_issue）：共 {stats.TotalIssues} 条");
+            Console.WriteLine(L.Format("Db_BuildIssuesCount", stats.TotalIssues));
             foreach (var issue in stats.Issues)
             {
                 Console.WriteLine($"  {issue.Stage,-12} {issue.Kind,-28} {issue.Count}");
@@ -260,7 +266,7 @@ internal static class DbCommand
                 default:
                     if (args[i].StartsWith('-') && dbPath is null)
                     {
-                        throw new ArgumentException($"db sql 未知参数：{args[i]}");
+                        throw new ArgumentException(L.Format("Db_SqlUnknownArg", args[i]));
                     }
 
                     if (dbPath is null)
@@ -273,7 +279,7 @@ internal static class DbCommand
                     }
                     else
                     {
-                        throw new ArgumentException($"db sql 多余的位置参数：{args[i]}");
+                        throw new ArgumentException(L.Format("Db_SqlExtraPositional", args[i]));
                     }
 
                     break;
@@ -282,12 +288,12 @@ internal static class DbCommand
 
         if (string.IsNullOrWhiteSpace(dbPath))
         {
-            throw new ArgumentException("db sql 缺少 <库> 路径参数");
+            throw new ArgumentException(L.Get("Db_SqlMissingDb"));
         }
 
         if (string.IsNullOrWhiteSpace(sql))
         {
-            throw new ArgumentException("db sql 缺少只读 SQL 查询语句参数");
+            throw new ArgumentException(L.Get("Db_SqlMissingQuery"));
         }
 
         using var reader = DbReader.Open(dbPath);
@@ -312,23 +318,23 @@ internal static class DbCommand
                     outDir = Program.RequireValue(args, ref i, "--out");
                     break;
                 default:
-                    throw new ArgumentException($"db write-fixture 未知参数：{args[i]}");
+                    throw new ArgumentException(L.Format("Db_WriteFixtureUnknownArg", args[i]));
             }
         }
 
         if (string.IsNullOrWhiteSpace(outDir))
         {
-            throw new ArgumentException("db write-fixture 缺少 --out <目录> 参数");
+            throw new ArgumentException(L.Get("Db_WriteFixtureMissingOut"));
         }
 
         var fullOut = Path.GetFullPath(outDir);
         if (Directory.Exists(fullOut) && Directory.EnumerateFileSystemEntries(fullOut).Any())
         {
-            throw new IOException($"合成夹具输出目录非空：{outDir}");
+            throw new IOException(L.Format("Db_WriteFixtureDirNotEmpty", outDir));
         }
 
         SyntheticDbFixture.CreateSyntheticExport(fullOut);
-        Console.WriteLine($"已生成合成导出目录：{fullOut}");
+        Console.WriteLine(L.Format("Db_WriteFixtureCreated", fullOut));
         return 0;
     }
 
@@ -387,15 +393,6 @@ internal static class DbCommand
 
     private static void PrintHelp()
     {
-        Console.WriteLine(
-            """
-            ffpr-export db — FF1–6 Pixel Remaster SQLite 数据库构建与只读查询工具
-
-            用法：
-              ffpr-export db build --export <.deps/ffpr/ffN/export> --out <ffN.sqlite> [--jobs N]
-              ffpr-export db hash  <库> [--json]
-              ffpr-export db stats <库>
-              ffpr-export db sql   <库> "<SELECT …>"
-            """);
+        Console.WriteLine(L.Get("Db_HelpText"));
     }
 }
