@@ -168,4 +168,78 @@ public sealed class SourceSafetyTests
         Assert.Contains(@"<Compile Include=""..\FfprExport\TextFileWriter.cs""", guiCsproj, StringComparison.Ordinal);
         Assert.False(File.Exists(Path.Combine(root, "src", "FfprExport.Gui", "TextFileWriter.cs")));
     }
+
+    [Fact]
+    public void NonTestSourcesAndScripts_NeverUseGetTempPathOrGetTempFileName_AndNeverRequireAdminOrSelfExtractNatives()
+    {
+        var root = TestHarness.FindRepoRoot();
+        var targets = new List<string>();
+
+        var srcRoot = Path.Combine(root, "src");
+        foreach (var path in Directory.EnumerateFiles(srcRoot, "*", SearchOption.AllDirectories))
+        {
+            var relFromSrc = Path.GetRelativePath(srcRoot, path).Replace('\\', '/');
+            if (relFromSrc.Split('/').Any(s => s is "bin" or "obj"))
+            {
+                continue;
+            }
+
+            if (Path.GetExtension(path) is ".cs" or ".csproj" or ".manifest")
+            {
+                targets.Add(path);
+            }
+        }
+
+        var scriptsRoot = Path.Combine(root, "scripts");
+        foreach (var path in Directory.EnumerateFiles(scriptsRoot, "*", SearchOption.TopDirectoryOnly))
+        {
+            if (Path.GetExtension(path) is ".sh" or ".ps1")
+            {
+                targets.Add(path);
+            }
+        }
+
+        Assert.True(targets.Count >= 25, $"应扫描到全部非测试源码与脚本，实际仅 {targets.Count} 个");
+
+        var violations = new List<string>();
+        foreach (var path in targets.OrderBy(p => p, StringComparer.Ordinal))
+        {
+            var rel = Path.GetRelativePath(root, path).Replace('\\', '/');
+            var content = File.ReadAllText(path);
+
+            if (content.Contains("GetTempPath", StringComparison.Ordinal))
+            {
+                violations.Add($"{rel} 不得出现 GetTempPath");
+            }
+
+            if (content.Contains("GetTempFileName", StringComparison.Ordinal))
+            {
+                violations.Add($"{rel} 不得出现 GetTempFileName");
+            }
+
+            if (Path.GetExtension(path) is ".csproj" or ".sh" or ".ps1"
+                && Regex.IsMatch(content, @"IncludeNativeLibrariesForSelfExtract\s*[=>]\s*true", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            {
+                violations.Add($"{rel} 不得将 IncludeNativeLibrariesForSelfExtract 设为 true");
+            }
+
+            if (Path.GetExtension(path) == ".manifest"
+                && content.Contains("requireAdministrator", StringComparison.OrdinalIgnoreCase))
+            {
+                violations.Add($"{rel} 不得包含 requireAdministrator");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            "检测到违反无 TEMP / 无管理员 / 不自解压原生库规范的代码：\n" + string.Join("\n", violations));
+
+        // Verify ProcessIntegrity.cs is linked into GUI without duplication and both csproj disable native self-extract.
+        var cliCsproj = File.ReadAllText(Path.Combine(root, "src", "FfprExport", "FfprExport.csproj"));
+        var guiCsproj = File.ReadAllText(Path.Combine(root, "src", "FfprExport.Gui", "FfprExport.Gui.csproj"));
+        Assert.Contains("<IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>", cliCsproj, StringComparison.Ordinal);
+        Assert.Contains("<IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>", guiCsproj, StringComparison.Ordinal);
+        Assert.Contains(@"<Compile Include=""..\FfprExport\ProcessIntegrity.cs""", guiCsproj, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(root, "src", "FfprExport.Gui", "ProcessIntegrity.cs")));
+    }
 }
