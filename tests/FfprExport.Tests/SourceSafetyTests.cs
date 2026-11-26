@@ -10,29 +10,19 @@ public sealed class SourceSafetyTests
         var root = TestHarness.FindRepoRoot();
         var targets = new List<string>();
 
-        foreach (var path in Directory.EnumerateFiles(Path.Combine(root, "src", "FfprExport"), "*", SearchOption.TopDirectoryOnly))
+        var srcRoot = Path.Combine(root, "src");
+        foreach (var path in Directory.EnumerateFiles(srcRoot, "*", SearchOption.AllDirectories))
         {
-            if (Path.GetExtension(path) is ".cs" or ".csproj")
+            var relFromSrc = Path.GetRelativePath(srcRoot, path).Replace('\\', '/');
+            var segments = relFromSrc.Split('/');
+            if (segments.Any(s => s is "bin" or "obj"))
+            {
+                continue;
+            }
+
+            if (Path.GetExtension(path) is ".cs" or ".csproj" or ".manifest")
             {
                 targets.Add(path);
-            }
-        }
-
-        var guiDir = Path.Combine(root, "src", "FfprExport.Gui");
-        if (Directory.Exists(guiDir))
-        {
-            foreach (var path in Directory.EnumerateFiles(guiDir, "*", SearchOption.AllDirectories))
-            {
-                var rel = Path.GetRelativePath(guiDir, path).Replace('\\', '/');
-                if (rel.StartsWith("bin/", StringComparison.Ordinal) || rel.StartsWith("obj/", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                if (Path.GetExtension(path) is ".cs" or ".csproj" or ".manifest")
-                {
-                    targets.Add(path);
-                }
             }
         }
 
@@ -108,5 +98,74 @@ public sealed class SourceSafetyTests
         Assert.Contains("format FfprExport.sln --verify-no-changes", checkScript, StringComparison.Ordinal);
         Assert.Contains("build FfprExport.sln -c Release", checkScript, StringComparison.Ordinal);
         Assert.Contains("test FfprExport.sln", checkScript, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AllSourceFiles_UseTextFileWriterInsteadOfDirectTextWrites()
+    {
+        var root = TestHarness.FindRepoRoot();
+        var srcRoot = Path.Combine(root, "src");
+        var csFiles = Directory.EnumerateFiles(srcRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(path =>
+            {
+                var rel = Path.GetRelativePath(srcRoot, path).Replace('\\', '/');
+                return !rel.Split('/').Any(s => s is "bin" or "obj");
+            })
+            .OrderBy(p => p, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(csFiles.Length >= 25, $"应扫描到 src/ 下全部 C# 源码文件，实际仅 {csFiles.Length} 个");
+
+        const string helperRelativePath = "src/FfprExport/TextFileWriter.cs";
+        var helperFound = false;
+
+        (string Name, Regex Pattern)[] forbiddenPatterns =
+        [
+            ("File.WriteAllText/Async", new Regex(@"\bFile\.WriteAllText(?:Async)?\s*\(", RegexOptions.CultureInvariant)),
+            ("File.WriteAllLines/Async", new Regex(@"\bFile\.WriteAllLines(?:Async)?\s*\(", RegexOptions.CultureInvariant)),
+            ("File.AppendAllText/Async", new Regex(@"\bFile\.AppendAllText(?:Async)?\s*\(", RegexOptions.CultureInvariant)),
+            ("File.AppendAllLines/Async", new Regex(@"\bFile\.AppendAllLines(?:Async)?\s*\(", RegexOptions.CultureInvariant)),
+            ("File.CreateText", new Regex(@"\bFile\.CreateText\s*\(", RegexOptions.CultureInvariant)),
+            ("File.AppendText", new Regex(@"\bFile\.AppendText\s*\(", RegexOptions.CultureInvariant)),
+            ("new StreamWriter", new Regex(@"\bnew\s+StreamWriter\s*\(", RegexOptions.CultureInvariant)),
+            ("new JsonTextWriter", new Regex(@"\bnew\s+JsonTextWriter\s*\(", RegexOptions.CultureInvariant)),
+            ("new Utf8JsonWriter", new Regex(@"\bnew\s+Utf8JsonWriter\s*\(", RegexOptions.CultureInvariant)),
+            ("WriteIndented = true", new Regex(@"\bWriteIndented\s*=\s*true\b", RegexOptions.CultureInvariant)),
+            ("Indented = true", new Regex(@"\bIndented\s*=\s*true\b", RegexOptions.CultureInvariant)),
+        ];
+
+        var violations = new List<string>();
+        foreach (var path in csFiles)
+        {
+            var rel = Path.GetRelativePath(root, path).Replace('\\', '/');
+            var content = File.ReadAllText(path);
+
+            if (string.Equals(rel, helperRelativePath, StringComparison.Ordinal))
+            {
+                helperFound = true;
+                Assert.Contains("public const string LineEnding = \"\\n\";", content, StringComparison.Ordinal);
+                Assert.Contains("encoderShouldEmitUTF8Identifier: false", content, StringComparison.Ordinal);
+                continue;
+            }
+
+            foreach (var (name, pattern) in forbiddenPatterns)
+            {
+                foreach (Match match in pattern.Matches(content))
+                {
+                    var lineNumber = 1 + content[..match.Index].Count(c => c == '\n');
+                    violations.Add($"{rel}:{lineNumber} 禁止直接调用 {name}（请统一通过 TextFileWriter）");
+                }
+            }
+        }
+
+        Assert.True(helperFound, $"未找到公共文本写入辅助类：{helperRelativePath}");
+        Assert.True(
+            violations.Count == 0,
+            "检测到绕过 TextFileWriter 的直接文本/JSON 写入调用：\n" + string.Join("\n", violations));
+
+        // Ensure GUI links the shared TextFileWriter without duplicating it.
+        var guiCsproj = File.ReadAllText(Path.Combine(root, "src", "FfprExport.Gui", "FfprExport.Gui.csproj"));
+        Assert.Contains(@"<Compile Include=""..\FfprExport\TextFileWriter.cs""", guiCsproj, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(root, "src", "FfprExport.Gui", "TextFileWriter.cs")));
     }
 }
