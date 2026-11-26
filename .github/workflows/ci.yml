@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           if [[ -e .deps ]]; then
-            echo "错误：CI 工作区中不应存在 .deps 目录" >&2
+            echo "Error: .deps directory must not exist in CI workspace" >&2
             exit 1
           fi
           bash scripts/check.sh
@@ -69,7 +69,7 @@ jobs:
           $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
           $guiExe = Join-Path $PWD "src\FfprExport.Gui\bin\Release\net10.0-windows\ffpr-export-gui.exe"
           if (-not (Test-Path -LiteralPath $guiExe -PathType Leaf)) {
-            throw "错误：未找到构建出的窗口程序：$guiExe"
+            throw "Error: Built GUI executable not found: $guiExe"
           }
           $stdoutFile = Join-Path $env:RUNNER_TEMP "gui-selftest-build.stdout.txt"
           $stderrFile = Join-Path $env:RUNNER_TEMP "gui-selftest-build.stderr.txt"
@@ -97,7 +97,7 @@ jobs:
             }
             $selfTestExit = $selfTest.ExitCode
             if ($selfTestExit -ne 0) {
-              throw "错误：ffpr-export-gui.exe --self-test 失败（退出码 $selfTestExit）"
+              throw "Error: ffpr-export-gui.exe --self-test failed (exit code $selfTestExit)"
             }
           } finally {
             Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
@@ -213,7 +213,7 @@ jobs:
           diffs = []
           for field in ("file_sha256", "content_sha256", "schema_version"):
               if linux_data.get(field) != win_data.get(field):
-                  diffs.append(f"字段 {field} 不一致：Linux={linux_data.get(field)} vs Windows={win_data.get(field)}")
+                  diffs.append(f"Field '{field}' mismatch: Linux={linux_data.get(field)} vs Windows={win_data.get(field)}")
 
           linux_tables = {t["name"]: t for t in linux_data.get("tables", [])}
           win_tables = {t["name"]: t for t in win_data.get("tables", [])}
@@ -224,9 +224,9 @@ jobs:
               lt = linux_tables.get(name)
               wt = win_tables.get(name)
               if lt is None:
-                  diff_tables.append(f"  - {name}: Linux 缺失，Windows rows={wt['rows']} sha256={wt['sha256']}")
+                  diff_tables.append(f"  - {name}: missing on Linux; Windows rows={wt['rows']} sha256={wt['sha256']}")
               elif wt is None:
-                  diff_tables.append(f"  - {name}: Windows 缺失，Linux rows={lt['rows']} sha256={lt['sha256']}")
+                  diff_tables.append(f"  - {name}: missing on Windows; Linux rows={lt['rows']} sha256={lt['sha256']}")
               elif lt["rows"] != wt["rows"] or lt["sha256"] != wt["sha256"]:
                   diff_tables.append(
                       f"  - {name}: Linux(rows={lt['rows']}, sha256={lt['sha256']}) != "
@@ -234,16 +234,16 @@ jobs:
                   )
 
           if diffs or diff_tables:
-              print("错误：Linux 与 Windows 构建的假数据库哈希不一致！", file=sys.stderr)
+              print("Error: Synthetic database hashes differ between Linux and Windows!", file=sys.stderr)
               for line in diffs:
                   print(line, file=sys.stderr)
               if diff_tables:
-                  print(f"存在差异的表（共 {len(diff_tables)} 张）：", file=sys.stderr)
+                  print(f"Differing tables ({len(diff_tables)}):", file=sys.stderr)
                   for line in diff_tables:
                       print(line, file=sys.stderr)
               sys.exit(1)
 
-          print(f"核对通过：Linux 与 Windows 哈希完全一致（共 {len(all_names)} 张表）。")
+          print(f"OK: Linux and Windows database hashes match identically ({len(all_names)} tables).")
           PY
 
       - name: Compare Linux and Windows export file hashes
@@ -264,7 +264,7 @@ jobs:
           all_paths = sorted(set(linux_files) | set(win_files))
 
           if not all_paths:
-              print("错误：合成导出哈希清单为空！", file=sys.stderr)
+              print("Error: Synthetic export hash manifest is empty!", file=sys.stderr)
               sys.exit(1)
 
           diff_files = []
@@ -272,9 +272,9 @@ jobs:
               lf = linux_files.get(rel_path)
               wf = win_files.get(rel_path)
               if lf is None:
-                  diff_files.append(f"  - {rel_path}: Linux 缺失，Windows(size={wf['size']}, sha256={wf['sha256']})")
+                  diff_files.append(f"  - {rel_path}: missing on Linux; Windows(size={wf['size']}, sha256={wf['sha256']})")
               elif wf is None:
-                  diff_files.append(f"  - {rel_path}: Windows 缺失，Linux(size={lf['size']}, sha256={lf['sha256']})")
+                  diff_files.append(f"  - {rel_path}: missing on Windows; Linux(size={lf['size']}, sha256={lf['sha256']})")
               elif lf["sha256"] != wf["sha256"] or lf["size"] != wf["size"]:
                   diff_files.append(
                       f"  - {rel_path}: Linux(size={lf['size']}, sha256={lf['sha256']}) != "
@@ -282,18 +282,18 @@ jobs:
                   )
               elif lf.get("has_cr") or wf.get("has_cr") or lf.get("has_bom") or wf.get("has_bom"):
                   diff_files.append(
-                      f"  - {rel_path}: 检测到 CR 或 BOM（Linux cr={lf.get('has_cr')}/bom={lf.get('has_bom')}, "
-                      f"Windows cr={wf.get('has_cr')}/bom={wf.get('has_bom')}）"
+                      f"  - {rel_path}: CR or BOM detected (Linux cr={lf.get('has_cr')}/bom={lf.get('has_bom')}, "
+                      f"Windows cr={wf.get('has_cr')}/bom={wf.get('has_bom')})"
                   )
 
           if diff_files:
-              print("错误：Linux 与 Windows 合成导出文件哈希不一致！", file=sys.stderr)
-              print(f"存在差异的文件（共 {len(diff_files)} 个）：", file=sys.stderr)
+              print("Error: Synthetic export file hashes differ between Linux and Windows!", file=sys.stderr)
+              print(f"Differing files ({len(diff_files)}):", file=sys.stderr)
               for line in diff_files:
                   print(line, file=sys.stderr)
               sys.exit(1)
 
-          print(f"核对通过：Linux 与 Windows 合成导出文件哈希完全一致（共 {len(all_paths)} 个文件）。")
+          print(f"OK: Linux and Windows synthetic export file hashes match identically ({len(all_paths)} files).")
           PY
 
   package-windows:
@@ -323,24 +323,24 @@ jobs:
         shell: bash
         run: |
           if [[ -e .deps ]]; then
-            echo "错误：CI 工作区中不应存在 .deps 目录" >&2
+            echo "Error: .deps directory must not exist in CI workspace" >&2
             exit 1
           fi
           if [[ ! -f VERSION ]]; then
-            echo "错误：仓库根目录缺少 VERSION 文件" >&2
+            echo "Error: Missing VERSION file in repository root" >&2
             exit 1
           fi
           PACKAGE_VERSION="$(tr -d '[:space:]' < VERSION)"
           SHORT_SHA="$(git rev-parse --short=7 HEAD)"
           if [[ -z "$PACKAGE_VERSION" || -z "$SHORT_SHA" ]]; then
-            echo "错误：无法解析版本号或提交短号" >&2
+            echo "Error: Failed to resolve package version or short commit SHA" >&2
             exit 1
           fi
           {
             echo "PACKAGE_VERSION=${PACKAGE_VERSION}"
             echo "SHORT_SHA=${SHORT_SHA}"
           } >> "${GITHUB_ENV}"
-          echo "==> 打包目标：ffpr-export-${PACKAGE_VERSION}-${SHORT_SHA}-win-x64"
+          echo "==> Package target: ffpr-export-${PACKAGE_VERSION}-${SHORT_SHA}-win-x64"
 
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
@@ -369,12 +369,12 @@ jobs:
             Remove-Item -LiteralPath $verifyDir -Recurse -Force
           }
           Expand-Archive -LiteralPath $zipPath -DestinationPath $verifyDir -Force
-          Write-Host "==> 解压后的压缩包内容："
+          Write-Host "==> Extracted archive contents:"
           Get-ChildItem -LiteralPath $verifyDir -File | Sort-Object Name | Format-Table Name, Length -AutoSize
-          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "e_sqlite3.dll", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "使用说明.txt")) {
+          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "e_sqlite3.dll", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "README-Windows.txt")) {
             $itemPath = Join-Path $verifyDir $name
             if (-not (Test-Path -LiteralPath $itemPath -PathType Leaf)) {
-              throw "错误：压缩包缺少文件：$name"
+              throw "Error: Packaged archive is missing file: $name"
             }
           }
           $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
@@ -404,7 +404,7 @@ jobs:
             }
             $p = [System.Diagnostics.Process]::Start($psi)
             if ($null -eq $p) {
-              throw "错误：无法启动 $ExePath"
+              throw "Error: Failed to start process: $ExePath"
             }
             try {
               $errTask = $p.StandardError.ReadToEndAsync()
@@ -427,13 +427,29 @@ jobs:
             }
           }
 
-          Write-Host "==> 常规打包自检：ffpr-export-gui.exe --self-test --require-cli"
+          Write-Host "==> Standard packaged self-test: ffpr-export-gui.exe --self-test --require-cli"
           $normalSelfTest = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--self-test", "--require-cli")
           if ($normalSelfTest.ExitCode -ne 0) {
-            throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($normalSelfTest.ExitCode)）"
+            throw "Error: Packaged ffpr-export-gui.exe --self-test --require-cli failed (exit code $($normalSelfTest.ExitCode))"
           }
 
-          Write-Host "==> 模拟 TEMP 不可写（TEMP/TMP 指向阻塞文件）自检"
+          Write-Host "==> Verifying single-file localization resources (en, zh-Hans, ja)"
+          foreach ($langCheck in @(
+            @{ Code = "en"; Marker = "Usage:" },
+            @{ Code = "zh-Hans"; Marker = "用法：" },
+            @{ Code = "ja"; Marker = "使い方：" }
+          )) {
+            $cliLang = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("--lang", $langCheck.Code, "--help")
+            if ($cliLang.ExitCode -ne 0 -or -not $cliLang.Stdout.Contains($langCheck.Marker)) {
+              throw "Error: Packaged ffpr-export.exe --lang $($langCheck.Code) --help failed (exit code $($cliLang.ExitCode))"
+            }
+            $guiLang = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--lang", $langCheck.Code, "--self-test", "--require-cli")
+            if ($guiLang.ExitCode -ne 0) {
+              throw "Error: Packaged ffpr-export-gui.exe --lang $($langCheck.Code) --self-test --require-cli failed (exit code $($guiLang.ExitCode))"
+            }
+          }
+
+          Write-Host "==> Simulating unwritable TEMP (TEMP/TMP pointing to a regular file)"
           $blockedTemp = Join-Path $env:RUNNER_TEMP "ci-blocked-temp-file"
           $noTempAgpHome = Join-Path $env:RUNNER_TEMP "agp-home-notemp-ci"
           $noTempFixtureDir = Join-Path $env:RUNNER_TEMP "fixture-notemp-ci"
@@ -450,22 +466,22 @@ jobs:
 
             $guiNoTemp = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--self-test", "--require-cli") -EnvOverrides $blockedEnv
             if ($guiNoTemp.ExitCode -ne 0) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($guiNoTemp.ExitCode)）"
+              throw "Error: Packaged ffpr-export-gui.exe --self-test --require-cli failed under blocked TEMP (exit code $($guiNoTemp.ExitCode))"
             }
 
             $cliHelpNoTemp = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("--help") -EnvOverrides $blockedEnv
             if ($cliHelpNoTemp.ExitCode -ne 0 -or -not $cliHelpNoTemp.Stdout.Contains("ffpr-export")) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export.exe --help 失败（退出码 $($cliHelpNoTemp.ExitCode)）"
+              throw "Error: Packaged ffpr-export.exe --help failed under blocked TEMP (exit code $($cliHelpNoTemp.ExitCode))"
             }
 
             $fixtureWrite = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("db", "write-fixture", "--out", $noTempFixtureDir) -EnvOverrides $blockedEnv
             if ($fixtureWrite.ExitCode -ne 0) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export.exe db write-fixture 失败（退出码 $($fixtureWrite.ExitCode)）"
+              throw "Error: Packaged ffpr-export.exe db write-fixture failed under blocked TEMP (exit code $($fixtureWrite.ExitCode))"
             }
 
             $fixtureBuild = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("db", "build", "--export", $noTempFixtureDir, "--out", $noTempFixtureDb) -EnvOverrides $blockedEnv
             if ($fixtureBuild.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $noTempFixtureDb -PathType Leaf)) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export.exe db build（加载 e_sqlite3.dll）失败（退出码 $($fixtureBuild.ExitCode)）"
+              throw "Error: Packaged ffpr-export.exe db build (loading e_sqlite3.dll) failed under blocked TEMP (exit code $($fixtureBuild.ExitCode))"
             }
           } finally {
             Remove-Item -LiteralPath $blockedTemp, $noTempFixtureDb, "$noTempFixtureDb.manifest.json" -Force -ErrorAction SilentlyContinue

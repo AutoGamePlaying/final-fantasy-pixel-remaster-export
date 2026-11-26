@@ -34,18 +34,18 @@ jobs:
         shell: bash
         run: |
           if [[ ! -f VERSION ]]; then
-            echo "错误：仓库根目录缺少 VERSION 文件" >&2
+            echo "Error: Missing VERSION file in repository root" >&2
             exit 1
           fi
           TAG_NAME="${GITHUB_REF_NAME}"
           TAG_VERSION="${TAG_NAME#v}"
           FILE_VERSION="$(tr -d '[:space:]' < VERSION)"
           if [[ -z "$TAG_VERSION" || "$TAG_VERSION" != "$FILE_VERSION" ]]; then
-            echo "错误：tag 版本（${TAG_NAME} -> ${TAG_VERSION}）与 VERSION 文件（${FILE_VERSION}）不一致" >&2
+            echo "Error: Tag version (${TAG_NAME} -> ${TAG_VERSION}) does not match VERSION file (${FILE_VERSION})" >&2
             exit 1
           fi
           echo "RELEASE_VERSION=${FILE_VERSION}" >> "${GITHUB_ENV}"
-          echo "==> 版本校验通过：${TAG_NAME}（VERSION=${FILE_VERSION}）"
+          echo "==> Version check passed: ${TAG_NAME} (VERSION=${FILE_VERSION})"
 
       - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           if [[ -e .deps ]]; then
-            echo "错误：发布工作区中不应存在 .deps 目录" >&2
+            echo "Error: .deps directory must not exist in release workspace" >&2
             exit 1
           fi
           bash scripts/check.sh
@@ -83,12 +83,12 @@ jobs:
             Remove-Item -LiteralPath $verifyDir -Recurse -Force
           }
           Expand-Archive -LiteralPath $zipPath -DestinationPath $verifyDir -Force
-          Write-Host "==> 解压后的发布压缩包内容："
+          Write-Host "==> Extracted release archive contents:"
           Get-ChildItem -LiteralPath $verifyDir -File | Sort-Object Name | Format-Table Name, Length -AutoSize
-          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "e_sqlite3.dll", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "使用说明.txt")) {
+          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "e_sqlite3.dll", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "README-Windows.txt")) {
             $itemPath = Join-Path $verifyDir $name
             if (-not (Test-Path -LiteralPath $itemPath -PathType Leaf)) {
-              throw "错误：发布压缩包缺少文件：$name"
+              throw "Error: Release archive is missing file: $name"
             }
           }
           $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
@@ -118,7 +118,7 @@ jobs:
             }
             $p = [System.Diagnostics.Process]::Start($psi)
             if ($null -eq $p) {
-              throw "错误：无法启动 $ExePath"
+              throw "Error: Failed to start process: $ExePath"
             }
             try {
               $errTask = $p.StandardError.ReadToEndAsync()
@@ -141,13 +141,29 @@ jobs:
             }
           }
 
-          Write-Host "==> 常规发布包自检：ffpr-export-gui.exe --self-test --require-cli"
+          Write-Host "==> Standard release package self-test: ffpr-export-gui.exe --self-test --require-cli"
           $normalSelfTest = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--self-test", "--require-cli")
           if ($normalSelfTest.ExitCode -ne 0) {
-            throw "错误：发布包中的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($normalSelfTest.ExitCode)）"
+            throw "Error: Release ffpr-export-gui.exe --self-test --require-cli failed (exit code $($normalSelfTest.ExitCode))"
           }
 
-          Write-Host "==> 模拟 TEMP 不可写（TEMP/TMP 指向阻塞文件）自检"
+          Write-Host "==> Verifying single-file localization resources (en, zh-Hans, ja)"
+          foreach ($langCheck in @(
+            @{ Code = "en"; Marker = "Usage:" },
+            @{ Code = "zh-Hans"; Marker = "用法：" },
+            @{ Code = "ja"; Marker = "使い方：" }
+          )) {
+            $cliLang = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("--lang", $langCheck.Code, "--help")
+            if ($cliLang.ExitCode -ne 0 -or -not $cliLang.Stdout.Contains($langCheck.Marker)) {
+              throw "Error: Release ffpr-export.exe --lang $($langCheck.Code) --help failed (exit code $($cliLang.ExitCode))"
+            }
+            $guiLang = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--lang", $langCheck.Code, "--self-test", "--require-cli")
+            if ($guiLang.ExitCode -ne 0) {
+              throw "Error: Release ffpr-export-gui.exe --lang $($langCheck.Code) --self-test --require-cli failed (exit code $($guiLang.ExitCode))"
+            }
+          }
+
+          Write-Host "==> Simulating unwritable TEMP (TEMP/TMP pointing to a regular file)"
           $blockedTemp = Join-Path $env:RUNNER_TEMP "release-blocked-temp-file"
           $noTempAgpHome = Join-Path $env:RUNNER_TEMP "agp-home-notemp-release"
           $noTempFixtureDir = Join-Path $env:RUNNER_TEMP "fixture-notemp-release"
@@ -164,22 +180,22 @@ jobs:
 
             $guiNoTemp = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--self-test", "--require-cli") -EnvOverrides $blockedEnv
             if ($guiNoTemp.ExitCode -ne 0) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($guiNoTemp.ExitCode)）"
+              throw "Error: Release ffpr-export-gui.exe --self-test --require-cli failed under blocked TEMP (exit code $($guiNoTemp.ExitCode))"
             }
 
             $cliHelpNoTemp = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("--help") -EnvOverrides $blockedEnv
             if ($cliHelpNoTemp.ExitCode -ne 0 -or -not $cliHelpNoTemp.Stdout.Contains("ffpr-export")) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export.exe --help 失败（退出码 $($cliHelpNoTemp.ExitCode)）"
+              throw "Error: Release ffpr-export.exe --help failed under blocked TEMP (exit code $($cliHelpNoTemp.ExitCode))"
             }
 
             $fixtureWrite = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("db", "write-fixture", "--out", $noTempFixtureDir) -EnvOverrides $blockedEnv
             if ($fixtureWrite.ExitCode -ne 0) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export.exe db write-fixture 失败（退出码 $($fixtureWrite.ExitCode)）"
+              throw "Error: Release ffpr-export.exe db write-fixture failed under blocked TEMP (exit code $($fixtureWrite.ExitCode))"
             }
 
             $fixtureBuild = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("db", "build", "--export", $noTempFixtureDir, "--out", $noTempFixtureDb) -EnvOverrides $blockedEnv
             if ($fixtureBuild.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $noTempFixtureDb -PathType Leaf)) {
-              throw "错误：TEMP 不可写模拟下 ffpr-export.exe db build（加载 e_sqlite3.dll）失败（退出码 $($fixtureBuild.ExitCode)）"
+              throw "Error: Release ffpr-export.exe db build (loading e_sqlite3.dll) failed under blocked TEMP (exit code $($fixtureBuild.ExitCode))"
             }
           } finally {
             Remove-Item -LiteralPath $blockedTemp, $noTempFixtureDb, "$noTempFixtureDb.manifest.json" -Force -ErrorAction SilentlyContinue
@@ -192,35 +208,36 @@ jobs:
           ZIP_NAME="ffpr-export-${RELEASE_VERSION}-win-x64.zip"
           for required in "dist/${ZIP_NAME}" "dist/SHA256SUMS" "dist/known-builds.json"; do
             if [[ ! -f "$required" ]]; then
-              echo "错误：缺少发布产物：$required" >&2
+              echo "Error: Missing release artifact: $required" >&2
               exit 1
             fi
           done
 
           cat > "${RUNNER_TEMP}/release-notes.md" <<EOF
-          ## 说明
+          ## Notes
 
-          - 本发布包**不含任何游戏数据**（仅包含图形界面工具、命令行导出与建库工具、校验文件与已知构建清单）。
-          - 同时支持《FINAL FANTASY I–VI Pixel Remaster》全六作（FF1–6），工具会自动识别游戏编号、Unity 版本与 Steam 构建号。
-          - 构建完成后，工具会自动将生成的数据库与 \`known-builds.json\` 中的已知构建记录进行哈希比对。
+          - This release archive contains **no game files or game data** (only the GUI app, CLI exporter/builder, checksums, and known-builds registry).
+          - Supports all six *FINAL FANTASY I–VI Pixel Remaster* titles (FF1–FF6) with automatic game, Unity version, and Steam Build ID detection.
+          - Supports English (default), Simplified Chinese (\`zh-Hans\`), and Japanese (\`ja\`) in both the GUI and CLI.
+          - Automatically verifies built SQLite database hashes against \`known-builds.json\`.
 
-          ## 快速使用（Windows）
+          ## Quick Start (Windows)
 
-          1. 下载 \`${ZIP_NAME}\` 并用 \`SHA256SUMS\` 校验完整性后**完整解压**；
-          2. 双击运行 \`ffpr-export-gui.exe\`，程序会自动扫描并默认勾选本机 Steam 中的 FF1–FF6；
-          3. 点击 **“开始导出”** 即可依次导出并在 \`%LOCALAPPDATA%\\agp\\ffpr-export\\output\\<游戏代号>-<构建号>\\\` 中生成 SQLite 数据库。
+          1. Download \`${ZIP_NAME}\`, verify its SHA-256 against \`SHA256SUMS\`, and **extract the entire archive** to a regular folder.
+          2. Double-click \`ffpr-export-gui.exe\`; installed FF1–FF6 games in your Steam libraries are auto-detected and selected by default.
+          3. Click **Start Export** to build SQLite databases under \`%LOCALAPPDATA%\\agp\\ffpr-export\\output\\<game>-<buildid>\\\`.
 
-          命令行用法也可直接在同一解压目录运行：
+          CLI usage from the same extracted folder:
 
           \`\`\`powershell
-          ffpr-export build-db --game "<Steam 游戏目录>"
+          .\ffpr-export.exe build-db --game "<Steam game directory>"
           \`\`\`
 
-          ## 附件
+          ## Assets
 
-          - \`${ZIP_NAME}\`：Windows x64 原生版 \`ffpr-export-gui.exe\`（图形界面）、\`ffpr-export.exe\`（命令行/向导）、\`e_sqlite3.dll\`（SQLite 原生库，随目录分发不解压至 TEMP）、\`使用说明.txt\`、\`known-builds.json\`、\`SHA256SUMS\`、\`README.md\`、\`LICENSE\`
-          - \`SHA256SUMS\`：发布附件的 SHA-256 校验值
-          - \`known-builds.json\`：FF1–6 已登记的游戏版本与数据库哈希清单
+          - \`${ZIP_NAME}\`: Windows x64 native \`ffpr-export-gui.exe\` (GUI), \`ffpr-export.exe\` (CLI / wizard), \`e_sqlite3.dll\` (sibling SQLite native library; never extracted to TEMP), \`README-Windows.txt\`, \`known-builds.json\`, \`SHA256SUMS\`, \`README.md\`, \`LICENSE\`
+          - \`SHA256SUMS\`: SHA-256 checksums for release assets
+          - \`known-builds.json\`: Registered FF1–FF6 game versions and database hashes
           EOF
 
       - name: Create GitHub Release
