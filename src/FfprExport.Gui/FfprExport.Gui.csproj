@@ -13,10 +13,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\FfprExport\AgpPaths.cs" Link="Shared\AgpPaths.cs" />
     <Compile Include="..\FfprExport\PathSupport.cs" Link="Shared\PathSupport.cs" />
+    <Compile Include="..\FfprExport\ProcessIntegrity.cs" Link="Shared\ProcessIntegrity.cs" />
     <Compile Include="..\FfprExport\SteamLocator.cs" Link="Shared\SteamLocator.cs" />
     <Compile Include="..\FfprExport\TextFileWriter.cs" Link="Shared\TextFileWriter.cs" />
   </ItemGroup>
