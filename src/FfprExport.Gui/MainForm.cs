@@ -15,6 +15,7 @@ internal sealed class MainForm : Form
 
     private readonly bool _skipInitialLoad;
     private readonly GuiStartupLogger? _startupLogger;
+    private readonly string? _settingsPathOverride;
     private readonly string _settingsPath;
     private readonly List<GuiGameEntry> _games = [];
     private readonly List<GuiGameExportResult> _results = [];
@@ -68,6 +69,7 @@ internal sealed class MainForm : Form
     {
         _skipInitialLoad = skipInitialLoad;
         _startupLogger = startupLogger;
+        _settingsPathOverride = settingsPathOverride;
         _settingsPath = ResolveSettingsPathSafely(settingsPathOverride);
 
         _uiFont = CreateFontSafe("界面字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Regular);
@@ -633,8 +635,17 @@ internal sealed class MainForm : Form
 
         try
         {
-            var settingsResult = GuiSettingsStore.LoadWithDiagnostics(_settingsPath);
+            var legacySettingsPath = string.IsNullOrWhiteSpace(_settingsPathOverride)
+                ? GuiSettingsStore.GetLegacySettingsPathForMigration()
+                : null;
+            var settingsResult = GuiSettingsStore.LoadWithMigration(_settingsPath, legacySettingsPath);
             _settings = settingsResult.Settings;
+            if (!string.IsNullOrWhiteSpace(settingsResult.InfoMessage))
+            {
+                _startupLogger?.WriteInfo(settingsResult.InfoMessage);
+                AppendLogLine($"提示：{settingsResult.InfoMessage}");
+            }
+
             if (!string.IsNullOrWhiteSpace(settingsResult.WarningMessage))
             {
                 LogStartupDiagnosticWarning(settingsResult.WarningMessage, settingsResult.Error, "LoadSettings");
@@ -669,7 +680,7 @@ internal sealed class MainForm : Form
         catch (Exception ex)
         {
             _outputRootFallbackWarning = $"确定默认输出目录失败：{ex.Message}；请点击「浏览…」手动选择。";
-            _outputRootTextBox.Text = GuiOutputPlanner.DefaultExportRootFolderName;
+            _outputRootTextBox.Text = Path.Combine(AgpPaths.AgpFolderName, AgpPaths.ToolName, AgpPaths.OutputFolderName);
             LogStartupDiagnosticWarning(_outputRootFallbackWarning, ex, "ResolveDefaultOutputRoot");
         }
         finally
@@ -1249,28 +1260,16 @@ internal sealed class MainForm : Form
 
     private void OnOpenOutputFolderClicked(object? sender, EventArgs e)
     {
-        string? targetDir = null;
-        if (_resultsListView.SelectedItems.Count > 0
+        var selectedDir = _resultsListView.SelectedItems.Count > 0
             && _resultsListView.SelectedItems[0].Tag is GuiGameExportResult selected
-            && TryDirectoryExists(selected.OutputDirectory))
-        {
-            targetDir = selected.OutputDirectory;
-        }
-        else
-        {
-            var root = GuiGameScanner.NormalizeUserPath(_outputRootTextBox.Text);
-            if (TryDirectoryExists(root))
-            {
-                try
-                {
-                    targetDir = Path.GetFullPath(root);
-                }
-                catch
-                {
-                    targetDir = root;
-                }
-            }
-        }
+            ? selected.OutputDirectory
+            : null;
+        var recentDirs = _results.Select(r => r.OutputDirectory).ToArray();
+        var targetDir = GuiOutputPlanner.ResolveFolderToOpen(
+            selectedDir,
+            recentDirs,
+            _outputRootTextBox.Text,
+            TryDirectoryExists);
 
         if (string.IsNullOrWhiteSpace(targetDir))
         {
@@ -1462,7 +1461,7 @@ internal sealed class MainForm : Form
         }
         catch
         {
-            // Never block closing or export if %APPDATA% is read-only.
+            // Never block closing or export if the settings directory is read-only.
         }
     }
 
@@ -1536,7 +1535,7 @@ internal sealed class MainForm : Form
         {
             RecordStartupWarning($"获取默认设置路径失败：{ex.Message}；已改用临时回退路径。");
             _startupLogger?.WriteException("ResolveSettingsPathSafely", ex);
-            return Path.Combine(".", GuiOutputPlanner.ToolName, "settings.json");
+            return Path.Combine(".", AgpPaths.AgpFolderName, AgpPaths.ToolName, AgpPaths.SettingsFileName);
         }
     }
 

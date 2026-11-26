@@ -38,6 +38,7 @@ public sealed class GuiCoreTests
         var repoRoot = TestHarness.FindRepoRoot();
         var guiCsproj = File.ReadAllText(Path.Combine(repoRoot, "src", "FfprExport.Gui", "FfprExport.Gui.csproj"), Encoding.UTF8);
 
+        Assert.Contains(@"<Compile Include=""..\FfprExport\AgpPaths.cs""", guiCsproj, StringComparison.Ordinal);
         Assert.Contains(@"<Compile Include=""..\FfprExport\SteamLocator.cs""", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<OutputType>WinExe</OutputType>", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<TargetFramework>net10.0-windows</TargetFramework>", guiCsproj, StringComparison.Ordinal);
@@ -45,7 +46,118 @@ public sealed class GuiCoreTests
         Assert.Contains("<EnableWindowsTargeting>true</EnableWindowsTargeting>", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<AssemblyName>ffpr-export-gui</AssemblyName>", guiCsproj, StringComparison.Ordinal);
         Assert.Contains("<TreatWarningsAsErrors>true</TreatWarningsAsErrors>", guiCsproj, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(repoRoot, "src", "FfprExport.Gui", "AgpPaths.cs")));
         Assert.False(File.Exists(Path.Combine(repoRoot, "src", "FfprExport.Gui", "SteamLocator.cs")));
+    }
+
+    [Fact]
+    public void AgpPaths_ResolvesUnifiedRootPriorityAcrossPlatformsAndFallbacks()
+    {
+        // Test process itself must already be isolated with AGP_HOME pointing into a temporary directory.
+        var activeAgpHome = Environment.GetEnvironmentVariable(AgpPaths.AgpHomeEnvVar);
+        Assert.False(string.IsNullOrWhiteSpace(activeAgpHome), "测试进程必须通过 AGP_HOME 隔离");
+
+        // 1. AGP_HOME takes top priority on both Windows and Linux/macOS and acts directly as the "agp" layer.
+        var winFromEnv = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: key => key switch
+            {
+                AgpPaths.AgpHomeEnvVar => @"D:\CustomAgp\",
+                AgpPaths.LocalAppDataEnvVar => @"C:\Users\Alice\AppData\Local",
+                _ => null,
+            },
+            getSpecialFolder: _ => @"C:\Users\Alice\AppData\Local");
+        Assert.Equal(AgpRootSource.AgpHomeEnv, winFromEnv.Source);
+        Assert.False(winFromEnv.UsedFallback);
+        Assert.Equal(@"D:\CustomAgp", winFromEnv.AgpHome);
+        Assert.Equal(@"D:\CustomAgp\ffpr-export\output", AgpPaths.GetOutputRoot(winFromEnv));
+        Assert.Equal(@"D:\CustomAgp\ffpr-export\output\ff5-20265087", AgpPaths.GetGameOutputDirectory("ff5", "20265087", winFromEnv));
+        Assert.Equal(@"D:\CustomAgp\ffpr-export\logs", AgpPaths.GetLogsDirectory(winFromEnv));
+        Assert.Equal(@"D:\CustomAgp\ffpr-export\settings.json", AgpPaths.GetSettingsPath(winFromEnv));
+
+        var unixFromEnv = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: false,
+            getEnvironmentVariable: key => key switch
+            {
+                AgpPaths.AgpHomeEnvVar => "/tmp/custom-agp/",
+                AgpPaths.XdgDataHomeEnvVar => "/home/alice/.xdg-data",
+                AgpPaths.HomeEnvVar => "/home/alice",
+                _ => null,
+            },
+            getSpecialFolder: _ => "/home/alice");
+        Assert.Equal(AgpRootSource.AgpHomeEnv, unixFromEnv.Source);
+        Assert.Equal("/tmp/custom-agp", unixFromEnv.AgpHome);
+        Assert.Equal("/tmp/custom-agp/ffpr-export/output", AgpPaths.GetOutputRoot(unixFromEnv));
+        Assert.Equal("/tmp/custom-agp/ffpr-export/logs", AgpPaths.GetLogsDirectory(unixFromEnv));
+        Assert.Equal("/tmp/custom-agp/ffpr-export/settings.json", AgpPaths.GetSettingsPath(unixFromEnv));
+
+        // 2. Windows without AGP_HOME -> %LOCALAPPDATA%\agp (SpecialFolder first, then LOCALAPPDATA env).
+        var winDefault = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData
+                ? @"C:\Users\Alice\AppData\Local"
+                : null);
+        Assert.Equal(AgpRootSource.WindowsLocalAppData, winDefault.Source);
+        Assert.False(winDefault.UsedFallback);
+        Assert.Equal(@"C:\Users\Alice\AppData\Local\agp", winDefault.AgpHome);
+        Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\output", AgpPaths.GetOutputRoot(winDefault));
+        Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\logs", AgpPaths.GetLogsDirectory(winDefault));
+        Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\settings.json", AgpPaths.GetSettingsPath(winDefault));
+
+        var winEnvFallback = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: key => key == AgpPaths.LocalAppDataEnvVar ? @"C:\Users\Bob\AppData\Local" : null,
+            getSpecialFolder: _ => throw new UnauthorizedAccessException("Shell folder unavailable"));
+        Assert.Equal(AgpRootSource.WindowsLocalAppData, winEnvFallback.Source);
+        Assert.Equal(@"C:\Users\Bob\AppData\Local\agp", winEnvFallback.AgpHome);
+
+        // 3a. Linux/macOS without AGP_HOME, with XDG_DATA_HOME -> $XDG_DATA_HOME/agp.
+        var unixXdg = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: false,
+            getEnvironmentVariable: key => key switch
+            {
+                AgpPaths.XdgDataHomeEnvVar => "/var/data/xdg/",
+                AgpPaths.HomeEnvVar => "/home/alice",
+                _ => null,
+            },
+            getSpecialFolder: _ => "/home/alice");
+        Assert.Equal(AgpRootSource.XdgDataHome, unixXdg.Source);
+        Assert.Equal("/var/data/xdg/agp", unixXdg.AgpHome);
+        Assert.Equal("/var/data/xdg/agp/ffpr-export/output", AgpPaths.GetOutputRoot(unixXdg));
+
+        // 3b. Linux/macOS without AGP_HOME and without XDG_DATA_HOME -> ~/.local/share/agp.
+        var unixDefault = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: false,
+            getEnvironmentVariable: key => key == AgpPaths.HomeEnvVar ? "/home/alice" : null,
+            getSpecialFolder: _ => null);
+        Assert.Equal(AgpRootSource.UnixDefaultLocalShare, unixDefault.Source);
+        Assert.Equal("/home/alice/.local/share/agp", unixDefault.AgpHome);
+        Assert.Equal("/home/alice/.local/share/agp/ffpr-export/output", AgpPaths.GetOutputRoot(unixDefault));
+        Assert.Equal("/home/alice/.local/share/agp/ffpr-export/logs", AgpPaths.GetLogsDirectory(unixDefault));
+        Assert.Equal("/home/alice/.local/share/agp/ffpr-export/settings.json", AgpPaths.GetSettingsPath(unixDefault));
+
+        // 4. Safe fallbacks when all primary providers fail: base dir -> temp dir -> relative "agp".
+        var baseFallback = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: _ => throw new UnauthorizedAccessException("无法读取 LocalAppData"),
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            getTempDirectory: () => @"C:\Temp");
+        Assert.Equal(AgpRootSource.FallbackBaseDirectory, baseFallback.Source);
+        Assert.True(baseFallback.UsedFallback);
+        Assert.Equal(@"D:\Tools\ffpr\agp", baseFallback.AgpHome);
+        Assert.Contains("无法读取 LocalAppData", baseFallback.WarningMessage, StringComparison.Ordinal);
+
+        var tempFallback = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: false,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: _ => null,
+            getBaseDirectory: () => string.Empty,
+            getTempDirectory: () => "/tmp/fallback");
+        Assert.Equal(AgpRootSource.FallbackTempDirectory, tempFallback.Source);
+        Assert.True(tempFallback.UsedFallback);
+        Assert.Equal("/tmp/fallback/agp", tempFallback.AgpHome);
     }
 
     [Fact]
@@ -102,17 +214,23 @@ public sealed class GuiCoreTests
     {
         using var ws = new TempWorkspace("ffpr-gui-output-plan");
 
-        var defaultFromDocs = GuiOutputPlanner.GetDefaultOutputRoot(documentsDirectory: Path.Combine(ws.Root, "Documents"));
-        Assert.Equal(Path.Combine(ws.Root, "Documents", "FF-Export"), defaultFromDocs);
+        var defaultFromAgpEnv = GuiOutputPlanner.GetDefaultOutputRoot(
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null);
+        Assert.Equal(Path.Combine(ws.AgpHomeDir, "ffpr-export", "output"), defaultFromAgpEnv);
 
-        var defaultFromProfile = GuiOutputPlanner.GetDefaultOutputRoot(userProfileDirectory: Path.Combine(ws.Root, "UserHome"));
-        Assert.Equal(Path.Combine(ws.Root, "UserHome", "Documents", "FF-Export"), defaultFromProfile);
+        var defaultWin = GuiOutputPlanner.GetDefaultOutputRoot(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData
+                ? @"C:\Users\Alice\AppData\Local"
+                : null);
+        Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\output", defaultWin);
 
         Assert.Equal("ff5-20265087", GuiOutputPlanner.BuildGameFolderName("FF5", "20265087"));
         Assert.Equal("ff5-unknown", GuiOutputPlanner.BuildGameFolderName("ff5", null));
         Assert.Equal("ff2-build_1_2", GuiOutputPlanner.BuildGameFolderName("ff2", " build:1/2 "));
 
-        var outRoot = Path.Combine(ws.Root, "FF-Export");
+        var outRoot = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output");
         var ff1Spec = GameDetector.KnownGames.Single(g => g.Id == "ff1");
         var ff5Spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
         var ff6Spec = GameDetector.KnownGames.Single(g => g.Id == "ff6");
@@ -168,6 +286,27 @@ public sealed class GuiCoreTests
         Assert.Contains("ff5-20265087", singlePreview, StringComparison.Ordinal);
         var multiPreview = GuiOutputPlanner.FormatOutputPreview(outRoot, [ff1Game, ff5Game, ff6Game]);
         Assert.Contains("3 个子目录", multiPreview, StringComparison.Ordinal);
+
+        // "打开输出文件夹" opens the actual directory used (selected result -> sole result -> current root).
+        var customRoot = Path.Combine(ws.Root, "Custom Browsed Root");
+        Directory.CreateDirectory(customRoot);
+        Assert.Equal(
+            ff5Target,
+            GuiOutputPlanner.ResolveFolderToOpen(ff5Target, [ff5Target, ff6Target], customRoot));
+        Assert.Equal(
+            ff5Target,
+            GuiOutputPlanner.ResolveFolderToOpen(null, [ff5Target], customRoot));
+        Assert.Equal(
+            customRoot,
+            GuiOutputPlanner.ResolveFolderToOpen(null, [ff5Target, ff6Target], customRoot));
+        Assert.Equal(
+            customRoot,
+            GuiOutputPlanner.ResolveFolderToOpen(Path.Combine(ws.Root, "missing-result"), null, customRoot));
+        Assert.Equal(
+            outRoot,
+            GuiOutputPlanner.ResolveFolderToOpen(Path.Combine(outRoot, "missing-child"), null, Path.Combine(ws.Root, "missing-root")));
+        Assert.Null(
+            GuiOutputPlanner.ResolveFolderToOpen(null, null, Path.Combine(ws.Root, "missing-root")));
     }
 
     [Fact]
@@ -313,7 +452,7 @@ public sealed class GuiCoreTests
         // Command arguments preserve spaces cleanly and respect --force.
         var argsWithoutForce = CliCommandHelper.BuildBuildDbArguments(
             @"C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY V PR",
-            @"C:\Users\Alice\Documents\FF-Export\ff5-20265087",
+            @"C:\Users\Alice\AppData\Local\agp\ffpr-export\output\ff5-20265087",
             force: false);
         Assert.Equal(
             [
@@ -321,7 +460,7 @@ public sealed class GuiCoreTests
                 "--game",
                 @"C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY V PR",
                 "--out",
-                @"C:\Users\Alice\Documents\FF-Export\ff5-20265087",
+                @"C:\Users\Alice\AppData\Local\agp\ffpr-export\output\ff5-20265087",
             ],
             argsWithoutForce);
 
@@ -381,9 +520,9 @@ public sealed class GuiCoreTests
     public void GuiSettingsStore_RoundTripsOutputRootAndCheckedStates()
     {
         using var ws = new TempWorkspace("ffpr-gui-settings");
-        var appData = Path.Combine(ws.Root, "AppData");
-        var settingsPath = GuiSettingsStore.GetDefaultSettingsPath(appData);
-        Assert.Equal(Path.Combine(appData, "ffpr-export", "settings.json"), settingsPath);
+        var settingsPath = GuiSettingsStore.GetDefaultSettingsPath(
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null);
+        Assert.Equal(Path.Combine(ws.AgpHomeDir, "ffpr-export", "settings.json"), settingsPath);
 
         // Missing file returns defaults where every game starts checked.
         var emptyLoaded = GuiSettingsStore.Load(settingsPath);
@@ -418,6 +557,90 @@ public sealed class GuiCoreTests
         var recovered = GuiSettingsStore.Load(settingsPath);
         Assert.Null(recovered.OutputRoot);
         Assert.True(GuiSettingsStore.ResolveInitialCheckedState(recovered, ff1Dir));
+    }
+
+    [Fact]
+    public void GuiSettingsStore_MigratesLegacySettingsPreservingBackupAndRespectingPrecedence()
+    {
+        using var ws = new TempWorkspace("ffpr-gui-settings-migrate");
+        var legacyAppData = Path.Combine(ws.Root, "LegacyAppData");
+        var legacyPath = GuiSettingsStore.GetLegacySettingsPath(
+            getSpecialFolder: f => f == Environment.SpecialFolder.ApplicationData ? legacyAppData : null)!;
+        var newPath = GuiSettingsStore.GetDefaultSettingsPath(
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null);
+
+        Assert.Equal(Path.Combine(legacyAppData, "ffpr-export", "settings.json"), legacyPath);
+        Assert.Equal(Path.Combine(ws.AgpHomeDir, "ffpr-export", "settings.json"), newPath);
+
+        // When AGP_HOME is set, automatic migration lookup returns null so host %APPDATA% is never touched.
+        Assert.Null(GuiSettingsStore.GetLegacySettingsPathForMigration(
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null,
+            getSpecialFolder: _ => legacyAppData));
+        Assert.Equal(
+            legacyPath,
+            GuiSettingsStore.GetLegacySettingsPathForMigration(
+                isWindowsOverride: true,
+                getEnvironmentVariable: _ => null,
+                getSpecialFolder: f => f switch
+                {
+                    Environment.SpecialFolder.LocalApplicationData => Path.Combine(ws.Root, "LocalAppData"),
+                    Environment.SpecialFolder.ApplicationData => legacyAppData,
+                    _ => null,
+                }));
+
+        // 1. Old exists, new does not exist -> read old, write new, rename old to .migrated (not deleted).
+        var ff5Dir = Path.Combine(ws.Root, "games", "FINAL FANTASY V PR");
+        var legacySettings = new GuiSettings
+        {
+            OutputRoot = Path.Combine(ws.Root, "My Custom Out"),
+            CheckedGames = new Dictionary<string, bool>(StringComparer.Ordinal)
+            {
+                [ff5Dir] = false,
+            },
+        };
+        GuiSettingsStore.Save(legacyPath, legacySettings);
+        var originalLegacyContent = File.ReadAllText(legacyPath, Encoding.UTF8);
+
+        var migratedResult = GuiSettingsStore.LoadWithMigration(newPath, legacyPath);
+        Assert.Null(migratedResult.WarningMessage);
+        Assert.Null(migratedResult.Error);
+        Assert.Equal(legacyPath, migratedResult.MigratedFromPath);
+        Assert.Equal(legacyPath + ".migrated", migratedResult.MigratedBackupPath);
+        Assert.NotNull(migratedResult.InfoMessage);
+        Assert.Equal(legacySettings.OutputRoot, migratedResult.Settings.OutputRoot);
+        Assert.False(GuiSettingsStore.ResolveInitialCheckedState(migratedResult.Settings, ff5Dir));
+
+        Assert.True(File.Exists(newPath));
+        Assert.False(File.Exists(legacyPath));
+        Assert.True(File.Exists(legacyPath + ".migrated"));
+        Assert.Equal(originalLegacyContent, File.ReadAllText(legacyPath + ".migrated", Encoding.UTF8));
+
+        var reloadedNew = GuiSettingsStore.Load(newPath);
+        Assert.Equal(legacySettings.OutputRoot, reloadedNew.OutputRoot);
+        Assert.False(GuiSettingsStore.ResolveInitialCheckedState(reloadedNew, ff5Dir));
+
+        // 2. When new already exists, old is NOT migrated and NOT renamed.
+        var newerSettings = new GuiSettings
+        {
+            OutputRoot = Path.Combine(ws.Root, "Newer Out"),
+            CheckedGames = new Dictionary<string, bool>(StringComparer.Ordinal),
+        };
+        GuiSettingsStore.Save(newPath, newerSettings);
+        GuiSettingsStore.Save(legacyPath, legacySettings);
+
+        var keepNewResult = GuiSettingsStore.LoadWithMigration(newPath, legacyPath);
+        Assert.Null(keepNewResult.MigratedFromPath);
+        Assert.Equal(newerSettings.OutputRoot, keepNewResult.Settings.OutputRoot);
+        Assert.True(File.Exists(legacyPath));
+
+        // 3. Corrupt old settings (when new does not exist) emits warning and leaves old untouched.
+        File.Delete(newPath);
+        File.WriteAllText(legacyPath, "{corrupt-legacy", OutputGuard.Utf8WithoutBom);
+        var corruptMigration = GuiSettingsStore.LoadWithMigration(newPath, legacyPath);
+        Assert.NotNull(corruptMigration.WarningMessage);
+        Assert.Null(corruptMigration.MigratedFromPath);
+        Assert.False(File.Exists(newPath));
+        Assert.True(File.Exists(legacyPath));
     }
 
     [Fact]
@@ -497,12 +720,21 @@ public sealed class GuiCoreTests
     public void GuiStartupLogger_ResolvesPrimaryLogPathWritesStartupLineAndFallsBackToTemp()
     {
         using var ws = new TempWorkspace("ffpr-gui-startup-log");
-        var localAppData = Path.Combine(ws.Root, "LocalAppData");
+        var agpHome = ws.AgpHomeDir;
         var tempRoot = Path.Combine(ws.Root, "TempRoot");
         Directory.CreateDirectory(tempRoot);
 
-        var primaryDir = GuiStartupLogger.GetPrimaryLogDirectory(localAppData);
-        Assert.Equal(Path.Combine(localAppData, "ffpr-export", "logs"), primaryDir);
+        var primaryDir = GuiStartupLogger.GetPrimaryLogDirectory(
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? agpHome : null);
+        Assert.Equal(Path.Combine(agpHome, "ffpr-export", "logs"), primaryDir);
+
+        var winPrimaryDir = GuiStartupLogger.GetPrimaryLogDirectory(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData
+                ? @"C:\Users\Alice\AppData\Local"
+                : null);
+        Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\logs", winPrimaryDir);
 
         var ts = new DateTimeOffset(2026, 11, 26, 10, 30, 45, TimeSpan.FromHours(9));
         var info = new GuiStartupInfo(
@@ -519,12 +751,12 @@ public sealed class GuiCoreTests
 
         var logger = GuiStartupLogger.Start(
             info,
-            localAppDataOverride: localAppData,
+            agpHomeOverride: agpHome,
             tempDirectoryOverride: tempRoot);
 
         Assert.False(logger.UsedTempFallback);
         Assert.Null(logger.InitializationWarning);
-        Assert.Equal(Path.Combine(localAppData, "ffpr-export", "logs", "gui-20261126-103045.log"), logger.LogFilePath);
+        Assert.Equal(Path.Combine(agpHome, "ffpr-export", "logs", "gui-20261126-103045.log"), logger.LogFilePath);
         Assert.True(File.Exists(logger.LogFilePath));
 
         var lines = File.ReadAllLines(logger.LogFilePath!, Encoding.UTF8);
@@ -542,12 +774,12 @@ public sealed class GuiCoreTests
         Assert.Contains("args=--self-test", startLine, StringComparison.Ordinal);
 
         // When primary log directory cannot be created (blocked by a regular file), fall back to %TEMP%.
-        var blockedLocalAppData = Path.Combine(ws.Root, "blocked-localappdata");
-        File.WriteAllText(blockedLocalAppData, "not a directory", OutputGuard.Utf8WithoutBom);
+        var blockedAgpHome = Path.Combine(ws.Root, "blocked-agp-home");
+        File.WriteAllText(blockedAgpHome, "not a directory", OutputGuard.Utf8WithoutBom);
 
         var fallbackLogger = GuiStartupLogger.Start(
             info,
-            localAppDataOverride: blockedLocalAppData,
+            agpHomeOverride: blockedAgpHome,
             tempDirectoryOverride: tempRoot);
         Assert.True(fallbackLogger.UsedTempFallback);
         Assert.NotNull(fallbackLogger.LogFilePath);
@@ -555,14 +787,14 @@ public sealed class GuiCoreTests
         Assert.True(File.Exists(fallbackLogger.LogFilePath));
         Assert.NotNull(fallbackLogger.InitializationWarning);
 
-        // When %TEMP%\ffpr-export is also blocked by a regular file, fall back directly to %TEMP%.
+        // When %TEMP%\agp is also blocked by a regular file, fall back directly to %TEMP%.
         var tempRootDirect = Path.Combine(ws.Root, "TempDirect");
         Directory.CreateDirectory(tempRootDirect);
-        File.WriteAllText(Path.Combine(tempRootDirect, "ffpr-export"), "file blocks subdir", OutputGuard.Utf8WithoutBom);
+        File.WriteAllText(Path.Combine(tempRootDirect, "agp"), "file blocks subdir", OutputGuard.Utf8WithoutBom);
 
         var directTempLogger = GuiStartupLogger.Start(
             info,
-            localAppDataOverride: blockedLocalAppData,
+            agpHomeOverride: blockedAgpHome,
             tempDirectoryOverride: tempRootDirect);
         Assert.True(directTempLogger.UsedTempFallback);
         Assert.Equal(Path.Combine(tempRootDirect, "gui-20261126-103045.log"), directTempLogger.LogFilePath);
@@ -573,7 +805,7 @@ public sealed class GuiCoreTests
         File.WriteAllText(blockedTemp, "not a directory", OutputGuard.Utf8WithoutBom);
         var degradedLogger = GuiStartupLogger.Start(
             info,
-            localAppDataOverride: blockedLocalAppData,
+            agpHomeOverride: blockedAgpHome,
             tempDirectoryOverride: blockedTemp);
         Assert.Null(degradedLogger.LogFilePath);
         Assert.NotNull(degradedLogger.InitializationWarning);
@@ -585,8 +817,8 @@ public sealed class GuiCoreTests
     public void GuiStartupLogger_RetainsLatestTenLogsHandlesCollisionsAndPreservesUnrelatedFiles()
     {
         using var ws = new TempWorkspace("ffpr-gui-log-retention");
-        var localAppData = Path.Combine(ws.Root, "LocalAppData");
-        var logsDir = Path.Combine(localAppData, "ffpr-export", "logs");
+        var agpHome = ws.AgpHomeDir;
+        var logsDir = Path.Combine(agpHome, "ffpr-export", "logs");
         Directory.CreateDirectory(logsDir);
 
         for (var sec = 1; sec <= 12; sec++)
@@ -603,8 +835,8 @@ public sealed class GuiCoreTests
         var ts = new DateTimeOffset(2026, 11, 26, 10, 0, 13, TimeSpan.FromHours(9));
         var info = GuiStartupLogger.CollectStartupInfo(typeof(GuiCoreTests).Assembly, "PerMonitorV2", [], ts);
 
-        var first = GuiStartupLogger.Start(info, localAppDataOverride: localAppData, maxLogFiles: 10);
-        var second = GuiStartupLogger.Start(info, localAppDataOverride: localAppData, maxLogFiles: 10);
+        var first = GuiStartupLogger.Start(info, agpHomeOverride: agpHome, maxLogFiles: 10);
+        var second = GuiStartupLogger.Start(info, agpHomeOverride: agpHome, maxLogFiles: 10);
 
         Assert.Equal(Path.Combine(logsDir, "gui-20261126-100013.log"), first.LogFilePath);
         Assert.Equal(Path.Combine(logsDir, "gui-20261126-100013-1.log"), second.LogFilePath);
@@ -645,7 +877,6 @@ public sealed class GuiCoreTests
     public void GuiStartupLogger_FormatsCompleteExceptionsFatalDialogAndSelfTestStderr()
     {
         using var ws = new TempWorkspace("ffpr-gui-ex-format");
-        var localAppData = Path.Combine(ws.Root, "LocalAppData");
 
         Exception captured;
         try
@@ -684,7 +915,7 @@ public sealed class GuiCoreTests
         Assert.Contains("字段格式异常", aggDetails, StringComparison.Ordinal);
 
         var info = GuiStartupLogger.CollectStartupInfo(typeof(GuiCoreTests).Assembly, "PerMonitorV2");
-        var logger = GuiStartupLogger.Start(info, localAppDataOverride: localAppData);
+        var logger = GuiStartupLogger.Start(info, agpHomeOverride: ws.AgpHomeDir);
         logger.WriteException("UnitTest", captured);
         logger.WriteUnhandledObject("AppDomain", "raw-non-exception-error", isTerminating: true);
 
@@ -721,9 +952,10 @@ public sealed class GuiCoreTests
 
         // 1. Settings path & load diagnostics: provider exception, corrupt JSON, null JSON, unreadable directory path.
         var fallbackSettingsPath = GuiSettingsStore.GetDefaultSettingsPath(
-            systemAppDataProvider: () => throw new UnauthorizedAccessException("AppData 不可访问"),
-            fallbackBaseDirectory: ws.Root);
-        Assert.Equal(Path.Combine(ws.Root, "ffpr-export", "settings.json"), fallbackSettingsPath);
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: _ => throw new UnauthorizedAccessException("LocalAppData 不可访问"),
+            getBaseDirectory: () => ws.Root);
+        Assert.Equal(Path.Combine(ws.Root, "agp", "ffpr-export", "settings.json"), fallbackSettingsPath);
 
         var missingResult = GuiSettingsStore.LoadWithDiagnostics(Path.Combine(ws.Root, "missing-settings.json"));
         Assert.Null(missingResult.WarningMessage);
@@ -794,50 +1026,36 @@ public sealed class GuiCoreTests
         Assert.Equal("control-default", ultimateFallback.Font);
         Assert.NotNull(ultimateFallback.WarningMessage);
 
-        // 3. Default output root fallbacks when Documents is redirected/missing or throws.
-        var existingDocs = Path.Combine(ws.Root, "RealDocs");
-        var existingProfile = Path.Combine(ws.Root, "RealProfile");
+        // 3. Default output root fallbacks when primary AGP root providers fail or return empty.
         var existingBase = Path.Combine(ws.Root, "AppBase");
         var existingTemp = Path.Combine(ws.Root, "TempDir");
-        Directory.CreateDirectory(existingDocs);
-        Directory.CreateDirectory(existingProfile);
         Directory.CreateDirectory(existingBase);
         Directory.CreateDirectory(existingTemp);
 
         var normalRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
-            getDocumentsDirectory: () => existingDocs,
-            getUserProfileDirectory: () => existingProfile,
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null,
             getBaseDirectory: () => existingBase,
             getTempDirectory: () => existingTemp);
         Assert.False(normalRoot.UsedFallback);
         Assert.Null(normalRoot.WarningMessage);
-        Assert.Equal(Path.Combine(existingDocs, "FF-Export"), normalRoot.OutputRoot);
+        Assert.Equal(Path.Combine(ws.AgpHomeDir, "ffpr-export", "output"), normalRoot.OutputRoot);
 
-        var missingDocsRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
-            getDocumentsDirectory: () => Path.Combine(ws.Root, "RedirectedMissingDocs"),
-            getUserProfileDirectory: () => existingProfile,
+        var throwingPrimaryRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: _ => throw new UnauthorizedAccessException("无法读取 LocalAppData 目录"),
             getBaseDirectory: () => existingBase,
             getTempDirectory: () => existingTemp);
-        Assert.True(missingDocsRoot.UsedFallback);
-        Assert.Equal(Path.Combine(existingProfile, "FF-Export"), missingDocsRoot.OutputRoot);
-        Assert.Contains("文档", missingDocsRoot.WarningMessage, StringComparison.Ordinal);
-
-        var throwingDocsAndMissingProfile = GuiOutputPlanner.ResolveDefaultOutputRoot(
-            getDocumentsDirectory: () => throw new UnauthorizedAccessException("无法读取文档目录"),
-            getUserProfileDirectory: () => Path.Combine(ws.Root, "MissingProfile"),
-            getBaseDirectory: () => existingBase,
-            getTempDirectory: () => existingTemp);
-        Assert.True(throwingDocsAndMissingProfile.UsedFallback);
-        Assert.Equal(Path.Combine(existingBase, "FF-Export"), throwingDocsAndMissingProfile.OutputRoot);
-        Assert.Contains("无法读取文档目录", throwingDocsAndMissingProfile.WarningMessage, StringComparison.Ordinal);
+        Assert.True(throwingPrimaryRoot.UsedFallback);
+        Assert.Contains("无法读取 LocalAppData 目录", throwingPrimaryRoot.WarningMessage, StringComparison.Ordinal);
 
         var tempOnlyRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
-            getDocumentsDirectory: () => string.Empty,
-            getUserProfileDirectory: () => string.Empty,
-            getBaseDirectory: () => Path.Combine(ws.Root, "MissingBase"),
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: _ => string.Empty,
+            getBaseDirectory: () => string.Empty,
             getTempDirectory: () => existingTemp);
         Assert.True(tempOnlyRoot.UsedFallback);
-        Assert.Equal(Path.Combine(existingTemp, "FF-Export"), tempOnlyRoot.OutputRoot);
+        Assert.Equal(Path.Combine(existingTemp, "agp", "ffpr-export", "output"), tempOnlyRoot.OutputRoot);
 
         // 4. Steam scan safe wrapper catches permission & IO exceptions and prompts manual selection.
         var deniedScan = GuiGameScanner.DiscoverSteamGamesSafe(

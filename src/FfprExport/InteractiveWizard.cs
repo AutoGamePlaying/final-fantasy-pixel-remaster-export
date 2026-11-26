@@ -12,7 +12,8 @@ internal sealed record WizardEnvironment(
     string BaseDirectory,
     Func<IReadOnlyList<DiscoveredSteamGame>> DiscoverGames,
     Func<string, DiscoveredSteamGame> InspectManualGameDirectory,
-    Func<string[], Task<int>> RunBuildDb);
+    Func<string[], Task<int>> RunBuildDb,
+    Func<string>? ResolveDefaultOutputRoot = null);
 
 /// <summary>
 /// Interactive Chinese-language wizard launched when ffpr-export is started with no arguments
@@ -116,8 +117,7 @@ internal static class InteractiveWizard
 
     internal static string BuildDefaultGameFolderName(string gameId, string? steamBuildId)
     {
-        var buildTag = SanitizeBuildIdForFolder(steamBuildId);
-        return $"{gameId}-{buildTag}";
+        return AgpPaths.BuildGameFolderName(gameId, steamBuildId);
     }
 
     private static async Task<int> RunCoreAsync(WizardEnvironment env)
@@ -152,7 +152,7 @@ internal static class InteractiveWizard
 
         output.WriteLine();
 
-        // Step 2: Select output directory (default: <exeDir>/output/<gameId>-<steamBuildId>/).
+        // Step 2: Select output directory (default: <agpHome>/ffpr-export/output/<gameId>-<steamBuildId>/).
         var plannedBuilds = SelectOutputDirectories(env, selectedGames);
         if (plannedBuilds is null || plannedBuilds.Count == 0)
         {
@@ -333,8 +333,11 @@ internal static class InteractiveWizard
         IReadOnlyList<DiscoveredSteamGame> selectedGames)
     {
         var output = env.Output;
-        var baseDir = PathSupport.TrimTrailingSeparators(Path.GetFullPath(env.BaseDirectory));
-        var defaultOutputRoot = Path.Combine(baseDir, "output");
+        var defaultOutputRoot = env.ResolveDefaultOutputRoot is not null
+            ? PathSupport.TrimTrailingSeparators(Path.GetFullPath(env.ResolveDefaultOutputRoot()))
+            : AgpPaths.GetOutputRoot(
+                isWindowsOverride: null,
+                getBaseDirectory: () => env.BaseDirectory);
 
         if (selectedGames.Count == 1)
         {
@@ -804,31 +807,6 @@ internal static class InteractiveWizard
             detected.GameDirectory,
             detected.SteamBuildId,
             detected.AppManifestPath ?? string.Empty);
-    }
-
-    private static string SanitizeBuildIdForFolder(string? steamBuildId)
-    {
-        if (string.IsNullOrWhiteSpace(steamBuildId))
-        {
-            return "unknown";
-        }
-
-        var invalidChars = Path.GetInvalidFileNameChars();
-        var sb = new StringBuilder(steamBuildId.Length);
-        foreach (var ch in steamBuildId.Trim())
-        {
-            if (char.IsWhiteSpace(ch) || Array.IndexOf(invalidChars, ch) >= 0)
-            {
-                sb.Append('_');
-            }
-            else
-            {
-                sb.Append(ch);
-            }
-        }
-
-        var sanitized = sb.ToString().Trim('_');
-        return string.IsNullOrEmpty(sanitized) ? "unknown" : sanitized;
     }
 
     private static bool IsCancelToken(string trimmed)

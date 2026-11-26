@@ -1,19 +1,84 @@
-using System.Text;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace FfprExport.Tests;
 
 internal sealed record CliResult(int ExitCode, string Stdout, string Stderr);
 
+/// <summary>
+/// Ensures every unit test and child process in this test assembly uses an isolated temporary
+/// AGP_HOME directory and never writes to the host machine's real %LOCALAPPDATA% / ~/.local/share.
+/// </summary>
+internal static class TestAgpIsolation
+{
+    private static readonly object Gate = new();
+    private static string? s_ownedTempAgpHome;
+
+    [ModuleInitializer]
+    internal static void Initialize()
+    {
+        _ = EnsureIsolatedAgpHome();
+    }
+
+    public static string EnsureIsolatedAgpHome()
+    {
+        lock (Gate)
+        {
+            var existing = Environment.GetEnvironmentVariable(AgpPaths.AgpHomeEnvVar);
+            if (!string.IsNullOrWhiteSpace(existing))
+            {
+                return existing.Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(s_ownedTempAgpHome))
+            {
+                s_ownedTempAgpHome = Path.Combine(
+                    Path.GetTempPath(),
+                    $"ffpr-test-agp-{Environment.ProcessId}-{Guid.NewGuid():N}");
+                Directory.CreateDirectory(s_ownedTempAgpHome);
+                AppDomain.CurrentDomain.ProcessExit += (_, _) => CleanupOwnedDir();
+            }
+
+            Environment.SetEnvironmentVariable(AgpPaths.AgpHomeEnvVar, s_ownedTempAgpHome);
+            return s_ownedTempAgpHome;
+        }
+    }
+
+    private static void CleanupOwnedDir()
+    {
+        var dir = s_ownedTempAgpHome;
+        if (string.IsNullOrWhiteSpace(dir))
+        {
+            return;
+        }
+
+        try
+        {
+            var ioDir = PathSupport.ToIoPath(dir);
+            if (Directory.Exists(ioDir))
+            {
+                Directory.Delete(ioDir, recursive: true);
+            }
+        }
+        catch
+        {
+            // Ignore transient cleanup errors during test host teardown.
+        }
+    }
+}
+
 internal sealed class TempWorkspace : IDisposable
 {
     public string Root { get; }
     public string DepsDir { get; }
+    public string AgpHomeDir { get; }
 
     public TempWorkspace(string prefix)
     {
         Root = Path.Combine(Path.GetTempPath(), $"{prefix}-{Environment.ProcessId}-{Guid.NewGuid():N}");
         DepsDir = Path.Combine(Root, ".deps");
+        AgpHomeDir = Path.Combine(Root, "agp-home");
         Directory.CreateDirectory(DepsDir);
     }
 
@@ -84,7 +149,8 @@ internal static class TestHarness
         string? ffprDeps = null,
         string? workingDirectory = null,
         string? standardInput = null,
-        IReadOnlyDictionary<string, string?>? extraEnv = null)
+        IReadOnlyDictionary<string, string?>? extraEnv = null,
+        string? agpHome = null)
     {
         var dllPath = Path.Combine(AppContext.BaseDirectory, "ffpr-export.dll");
         if (!File.Exists(dllPath))
@@ -122,6 +188,10 @@ internal static class TestHarness
         {
             startInfo.Environment[OutputGuard.DepsEnvVar] = ffprDeps;
         }
+
+        startInfo.Environment[AgpPaths.AgpHomeEnvVar] = string.IsNullOrWhiteSpace(agpHome)
+            ? TestAgpIsolation.EnsureIsolatedAgpHome()
+            : agpHome.Trim();
 
         if (extraEnv is not null)
         {

@@ -603,6 +603,67 @@ public sealed class BuildDbTests
         Assert.True(db1.GetProperty("tables").GetArrayLength() > 0);
     }
 
+    [Fact]
+    public async Task BuildDbCli_WithoutOutOption_UsesUnifiedAgpOutputDirectoryAndRespectsExplicitOut()
+    {
+        using var ws = new TempWorkspace("ffpr-build-db-default-out");
+        var spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
+        var steamRoot = Path.Combine(ws.Root, "Steam Library");
+        var gameDir = SyntheticUnityFixtureBuilder.BuildSyntheticSteamGame(
+            steamRoot,
+            spec,
+            steamBuildId: "20265087",
+            customCommonFolderName: "FINAL FANTASY V PR");
+
+        var peBytes = BuildMinimalPeWithVersionResource(
+            fileVersion: (2019, 4, 26, 32270),
+            productVersion: (1, 0, 0, 0),
+            stringFileVersion: "2019.4.26.3227036",
+            stringProductVersion: "2019.4.26.3227036",
+            sectionName: ".rsrc",
+            pe32Plus: true);
+        await File.WriteAllBytesAsync(Path.Combine(gameDir, spec.ExeName), peBytes);
+
+        // 1. Omitting --out uses <AGP_HOME>/ffpr-export/output/<gameId>-<steamBuildId>/.
+        var defaultRes = await TestHarness.RunCliAsync(
+            ["build-db", "--game", gameDir, "--jobs", "2"],
+            ffprDeps: ws.DepsDir,
+            agpHome: ws.AgpHomeDir);
+        Assert.True(defaultRes.ExitCode == 0, $"stdout:\n{defaultRes.Stdout}\nstderr:\n{defaultRes.Stderr}");
+        var expectedFromManifest = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output", "ff5-20265087");
+        Assert.True(File.Exists(Path.Combine(expectedFromManifest, "ff5.sqlite")));
+        Assert.True(File.Exists(Path.Combine(expectedFromManifest, "ff5.sqlite.build.json")));
+
+        // 2. Without appmanifest: --steam-buildid determines folder tag; without both -> unknown.
+        var acfPath = Path.Combine(steamRoot, "steamapps", $"appmanifest_{spec.AppId}.acf");
+        File.Delete(acfPath);
+
+        var manualTagRes = await TestHarness.RunCliAsync(
+            ["build-db", "--game", gameDir, "--steam-buildid", "98765432", "--jobs", "2"],
+            ffprDeps: ws.DepsDir,
+            agpHome: ws.AgpHomeDir);
+        Assert.True(manualTagRes.ExitCode == 0, $"stdout:\n{manualTagRes.Stdout}\nstderr:\n{manualTagRes.Stderr}");
+        var expectedManualDir = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output", "ff5-98765432");
+        Assert.True(File.Exists(Path.Combine(expectedManualDir, "ff5.sqlite")));
+
+        var unknownTagRes = await TestHarness.RunCliAsync(
+            ["build-db", "--game", gameDir, "--jobs", "2"],
+            ffprDeps: ws.DepsDir,
+            agpHome: ws.AgpHomeDir);
+        Assert.True(unknownTagRes.ExitCode == 0, $"stdout:\n{unknownTagRes.Stdout}\nstderr:\n{unknownTagRes.Stderr}");
+        var expectedUnknownDir = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output", "ff5-unknown");
+        Assert.True(File.Exists(Path.Combine(expectedUnknownDir, "ff5.sqlite")));
+
+        // 3. Explicit --out still takes precedence over AGP_HOME default.
+        var explicitOut = Path.Combine(ws.Root, "explicit-custom-out");
+        var explicitRes = await TestHarness.RunCliAsync(
+            ["build-db", "--game", gameDir, "--out", explicitOut, "--jobs", "2"],
+            ffprDeps: ws.DepsDir,
+            agpHome: ws.AgpHomeDir);
+        Assert.True(explicitRes.ExitCode == 0, $"stdout:\n{explicitRes.Stdout}\nstderr:\n{explicitRes.Stderr}");
+        Assert.True(File.Exists(Path.Combine(explicitOut, "ff5.sqlite")));
+    }
+
     internal static byte[] BuildMinimalPeWithVersionResource(
         (ushort Major, ushort Minor, ushort Build, ushort Revision) fileVersion,
         (ushort Major, ushort Minor, ushort Build, ushort Revision) productVersion,

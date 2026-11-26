@@ -8,14 +8,25 @@ PHYS_ROOT="$(pwd -P)"
 HOST_ROOT="$(pwd -W 2>/dev/null || pwd)"
 
 CI_LOG_FILE=""
-cleanup_ci_log() {
+CHECK_AGP_HOME=""
+cleanup_temp() {
   if [[ -n "$CI_LOG_FILE" && -f "$CI_LOG_FILE" ]]; then
     rm -f "$CI_LOG_FILE"
   fi
+  if [[ -n "$CHECK_AGP_HOME" && -d "$CHECK_AGP_HOME" ]]; then
+    rm -rf "$CHECK_AGP_HOME"
+  fi
 }
 
-if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
-  trap cleanup_ci_log EXIT
+trap cleanup_temp EXIT
+
+if [[ -z "${AGP_HOME:-}" ]]; then
+  CHECK_AGP_HOME="$(mktemp -d "${TMPDIR:-/tmp}/ffpr-check-agp.XXXXXX")"
+  if command -v cygpath >/dev/null 2>&1; then
+    export AGP_HOME="$(cygpath -w "$CHECK_AGP_HOME")"
+  else
+    export AGP_HOME="$CHECK_AGP_HOME"
+  fi
 fi
 
 emit_ci_annotations() {

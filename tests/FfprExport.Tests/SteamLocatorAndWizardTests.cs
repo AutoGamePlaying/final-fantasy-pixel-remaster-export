@@ -277,12 +277,15 @@ public sealed class SteamLocatorAndWizardTests
                     KnownBuildsRegistry.MessageMatched,
                     "2026-11-25");
                 return Task.FromResult(0);
-            });
+            },
+            ResolveDefaultOutputRoot: () => AgpPaths.GetOutputRoot(
+                isWindowsOverride: null,
+                getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null));
 
         var exitCode = await InteractiveWizard.RunAsync(env);
         Assert.Equal(0, exitCode);
 
-        var expectedOutDir = Path.Combine(baseDir, "output", "ff5-20265087");
+        var expectedOutDir = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output", "ff5-20265087");
         var call = Assert.Single(invokedCalls);
         Assert.Equal(["--game", ff5Dir, "--out", expectedOutDir], call);
 
@@ -548,7 +551,8 @@ public sealed class SteamLocatorAndWizardTests
             [],
             ffprDeps: ws.DepsDir,
             standardInput: pipedInput,
-            extraEnv: extraEnv);
+            extraEnv: extraEnv,
+            agpHome: ws.AgpHomeDir);
 
         Assert.True(result.ExitCode == 0, $"stdout:\n{result.Stdout}\nstderr:\n{result.Stderr}");
         Assert.True(File.Exists(Path.Combine(outDir, "ff5.sqlite")));
@@ -556,6 +560,22 @@ public sealed class SteamLocatorAndWizardTests
         Assert.Contains("导出与建库向导", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("FINAL FANTASY V", result.Stdout, StringComparison.Ordinal);
         Assert.Contains("按回车退出", result.Stdout, StringComparison.Ordinal);
+
+        // Verify pressing Enter for default output writes into <AGP_HOME>/ffpr-export/output/<gameId>-<buildId>/.
+        var defaultPipedInput = OperatingSystem.IsWindows()
+            ? (SteamLocator.DiscoverGames().Count > 0 ? $"0\n\"{gameDir}\"\n\n\n\n" : $"\"{gameDir}\"\n\n\n\n")
+            : "1\n\n\n\n";
+        var defaultResult = await TestHarness.RunCliAsync(
+            [],
+            ffprDeps: ws.DepsDir,
+            standardInput: defaultPipedInput,
+            extraEnv: extraEnv,
+            agpHome: ws.AgpHomeDir);
+
+        var expectedDefaultDir = Path.Combine(ws.AgpHomeDir, "ffpr-export", "output", "ff5-20265087");
+        Assert.True(defaultResult.ExitCode == 0, $"stdout:\n{defaultResult.Stdout}\nstderr:\n{defaultResult.Stderr}");
+        Assert.True(File.Exists(Path.Combine(expectedDefaultDir, "ff5.sqlite")));
+        Assert.True(File.Exists(Path.Combine(expectedDefaultDir, "ff5.sqlite.build.json")));
     }
 
     private static void WriteSyntheticPeExe(string gameDir, string exeName)

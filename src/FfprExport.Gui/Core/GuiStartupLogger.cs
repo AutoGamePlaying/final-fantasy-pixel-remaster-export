@@ -116,7 +116,7 @@ internal static class GuiFontFallbackPolicy
 }
 
 /// <summary>
-/// Writes per-launch diagnostic logs under %LOCALAPPDATA%\ffpr-export\logs\gui-yyyyMMdd-HHmmss.log
+/// Writes per-launch diagnostic logs under &lt;AGP 根目录&gt;\ffpr-export\logs\gui-yyyyMMdd-HHmmss.log
 /// (falling back to %TEMP% when the primary log directory cannot be created), retains only the
 /// latest 10 log files, and formats complete crash diagnostics for logs, MessageBox, and stderr.
 /// </summary>
@@ -152,54 +152,19 @@ internal sealed partial class GuiStartupLogger
     public string? InitializationWarning { get; }
 
     public static string? GetPrimaryLogDirectory(
-        string? localAppDataOverride = null,
-        Func<string?>? systemLocalAppDataProvider = null)
+        bool? isWindowsOverride = null,
+        Func<string, string?>? getEnvironmentVariable = null,
+        Func<Environment.SpecialFolder, string?>? getSpecialFolder = null,
+        Func<string?>? getBaseDirectory = null,
+        Func<string?>? getTempDirectory = null)
     {
-        string? localAppData = null;
-        if (!string.IsNullOrWhiteSpace(localAppDataOverride))
-        {
-            localAppData = localAppDataOverride.Trim();
-        }
-        else
-        {
-            try
-            {
-                localAppData = systemLocalAppDataProvider is not null
-                    ? systemLocalAppDataProvider()
-                    : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            }
-            catch
-            {
-                localAppData = null;
-            }
-
-            if (string.IsNullOrWhiteSpace(localAppData))
-            {
-                try
-                {
-                    localAppData = Environment.GetEnvironmentVariable("LOCALAPPDATA");
-                }
-                catch
-                {
-                    localAppData = null;
-                }
-            }
-        }
-
-        if (string.IsNullOrWhiteSpace(localAppData))
-        {
-            return null;
-        }
-
-        try
-        {
-            return PathSupport.TrimTrailingSeparators(
-                Path.Combine(localAppData.Trim(), GuiOutputPlanner.ToolName, "logs"));
-        }
-        catch
-        {
-            return null;
-        }
+        var root = AgpPaths.ResolveAgpHome(
+            isWindowsOverride,
+            getEnvironmentVariable,
+            getSpecialFolder,
+            getBaseDirectory,
+            getTempDirectory);
+        return root.UsedFallback ? null : AgpPaths.GetLogsDirectory(root);
     }
 
     public static IReadOnlyList<string> GetFallbackLogDirectories(
@@ -246,7 +211,7 @@ internal sealed partial class GuiStartupLogger
         try
         {
             var scoped = PathSupport.TrimTrailingSeparators(
-                Path.Combine(trimmedTemp, GuiOutputPlanner.ToolName, "logs"));
+                Path.Combine(trimmedTemp, AgpPaths.AgpFolderName, AgpPaths.ToolName, AgpPaths.LogsFolderName));
             if (!string.IsNullOrWhiteSpace(scoped))
             {
                 results.Add(scoped);
@@ -315,17 +280,41 @@ internal sealed partial class GuiStartupLogger
 
     public static GuiStartupLogger Start(
         GuiStartupInfo startupInfo,
-        string? localAppDataOverride = null,
+        string? agpHomeOverride = null,
         string? tempDirectoryOverride = null,
         int maxLogFiles = DefaultMaxLogFiles,
-        Func<string?>? systemLocalAppDataProvider = null,
-        Func<string?>? systemTempProvider = null)
+        bool? isWindowsOverride = null,
+        Func<string, string?>? getEnvironmentVariable = null,
+        Func<Environment.SpecialFolder, string?>? getSpecialFolder = null,
+        Func<string?>? systemTempProvider = null,
+        Func<string?>? getBaseDirectory = null)
     {
+        Func<string, string?>? effectiveGetEnv = !string.IsNullOrWhiteSpace(agpHomeOverride)
+            ? name => string.Equals(name, AgpPaths.AgpHomeEnvVar, StringComparison.Ordinal)
+                ? agpHomeOverride
+                : (getEnvironmentVariable ?? Environment.GetEnvironmentVariable)(name)
+            : getEnvironmentVariable;
+
+        var rootResolution = AgpPaths.ResolveAgpHome(
+            isWindowsOverride,
+            effectiveGetEnv,
+            getSpecialFolder,
+            getBaseDirectory,
+            systemTempProvider);
+
         var candidates = new List<(string Directory, bool IsTempFallback)>();
-        var primaryDir = GetPrimaryLogDirectory(localAppDataOverride, systemLocalAppDataProvider);
-        if (!string.IsNullOrWhiteSpace(primaryDir))
+        var errors = new List<string>();
+        if (!rootResolution.UsedFallback)
         {
-            candidates.Add((primaryDir, IsTempFallback: false));
+            var primaryDir = AgpPaths.GetLogsDirectory(rootResolution);
+            if (!string.IsNullOrWhiteSpace(primaryDir))
+            {
+                candidates.Add((primaryDir, IsTempFallback: false));
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(rootResolution.WarningMessage))
+        {
+            errors.Add(rootResolution.WarningMessage);
         }
 
         foreach (var fallbackDir in GetFallbackLogDirectories(tempDirectoryOverride, systemTempProvider))
@@ -337,10 +326,9 @@ internal sealed partial class GuiStartupLogger
         }
 
         var startupLine = FormatStartupLine(startupInfo);
-        var errors = new List<string>();
-        if (primaryDir is null)
+        if (candidates.Count == 0 && errors.Count == 0)
         {
-            errors.Add("无法获取 LOCALAPPDATA 目录");
+            errors.Add("无法获取默认 AGP 日志目录");
         }
 
         foreach (var (directory, isTempFallback) in candidates)

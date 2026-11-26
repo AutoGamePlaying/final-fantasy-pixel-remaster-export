@@ -111,6 +111,11 @@ case "$(uname -s)" in
     echo "==> 执行打包后窗口程序自检：ffpr-export-gui.exe --self-test --require-cli"
     (
       cd "$PACKAGE_DIR"
+      if command -v cygpath >/dev/null 2>&1; then
+        export AGP_HOME="$(cygpath -w "$STAGE_DIR/agp-home")"
+      else
+        export AGP_HOME="$STAGE_DIR/agp-home"
+      fi
       ./ffpr-export-gui.exe --self-test --require-cli
     )
     ;;
@@ -126,9 +131,9 @@ printf '%s\r\n' \
   '1. 将整个压缩包完整解压到任意文件夹（不要在压缩包内直接双击运行）。' \
   '2. 保持 ffpr-export-gui.exe、ffpr-export.exe 与 known-builds.json 在同一目录。' \
   '3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。' \
-  '4. 确认已勾选的游戏后，点击“开始导出”即可依次生成 SQLite 数据库。' \
-  '5. 导出结果默认保存在“文档\FF-Export\<游戏代号>-<构建号>\”目录中。' \
-  '6. 高级命令行用法与说明请查看同目录的 README.md。' \
+  '4. 确认已勾选的游戏后，点击「开始导出」即可依次生成 SQLite 数据库。' \
+  '5. 导出结果默认保存在「%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\」目录中。' \
+  '6. 高级命令行用法、AGP_HOME 与说明请查看同目录的 README.md。' \
   > "$PACKAGE_DIR/使用说明.txt"
 
 (

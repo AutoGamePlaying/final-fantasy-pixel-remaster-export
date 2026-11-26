@@ -174,15 +174,25 @@ try {
     $packagedGuiExe = Join-Path $packageDir "ffpr-export-gui.exe"
     $selfTestOut = Join-Path $stageDir "gui-selftest.stdout.txt"
     $selfTestErr = Join-Path $stageDir "gui-selftest.stderr.txt"
-    $selfTestProc = Start-Process `
-        -FilePath $packagedGuiExe `
-        -ArgumentList @("--self-test", "--require-cli") `
-        -WorkingDirectory $packageDir `
-        -RedirectStandardOutput $selfTestOut `
-        -RedirectStandardError $selfTestErr `
-        -Wait `
-        -PassThru `
-        -NoNewWindow
+    $previousAgpHome = $env:AGP_HOME
+    try {
+        $env:AGP_HOME = Join-Path $stageDir "agp-home"
+        $selfTestProc = Start-Process `
+            -FilePath $packagedGuiExe `
+            -ArgumentList @("--self-test", "--require-cli") `
+            -WorkingDirectory $packageDir `
+            -RedirectStandardOutput $selfTestOut `
+            -RedirectStandardError $selfTestErr `
+            -Wait `
+            -PassThru `
+            -NoNewWindow
+    } finally {
+        if ($null -eq $previousAgpHome) {
+            Remove-Item Env:AGP_HOME -ErrorAction SilentlyContinue
+        } else {
+            $env:AGP_HOME = $previousAgpHome
+        }
+    }
     if (Test-Path -LiteralPath $selfTestOut -PathType Leaf) {
         $outText = [System.IO.File]::ReadAllText($selfTestOut, $utf8NoBom).Trim()
         if (-not [string]::IsNullOrWhiteSpace($outText)) {
@@ -207,8 +217,8 @@ try {
         "2. 保持 ffpr-export-gui.exe、ffpr-export.exe 与 known-builds.json 在同一目录。",
         "3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。",
         "4. 确认已勾选的游戏后，点击「开始导出」即可依次生成 SQLite 数据库。",
-        "5. 导出结果默认保存在「文档\FF-Export\<游戏代号>-<构建号>\」目录中。",
-        "6. 高级命令行用法与说明请查看同目录的 README.md。"
+        "5. 导出结果默认保存在「%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\」目录中。",
+        "6. 高级命令行用法、AGP_HOME 与说明请查看同目录的 README.md。"
     )
     $guideName = "使用说明.txt"
     $guidePath = Join-Path $packageDir $guideName

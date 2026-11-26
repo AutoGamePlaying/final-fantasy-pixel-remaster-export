@@ -73,12 +73,13 @@ internal static class Program
             {OutputGuard.ToolName} {ToolVersion} — FINAL FANTASY I–VI Pixel Remaster 资源盘点与导出工具
 
             用法：
+              ffpr-export build-db  --game <Steam 游戏目录> [--out <输出目录>] [--steam-buildid <编号>] [--keep-json] [--jobs N] [--force]
               ffpr-export inventory --game <Steam 游戏目录> [--out <输出目录>] [--jobs N] [--force]
               ffpr-export export    --game <Steam 游戏目录> [--out <输出目录>] [--jobs N] [--force]
 
             选项：
               --game <目录>   Steam 游戏安装目录（自动识别 FF1–FF6、Unity 版本与 Steam buildid）
-              --out <目录>    输出目录（默认 .deps/ffpr/<ffN>/inventory 或 export，可通过 FFPR_DEPS 覆盖基准目录）
+              --out <目录>    输出目录（build-db 默认 %LOCALAPPDATA%\agp\ffpr-export\output\<ffN>-<Steam 构建号>，可用 AGP_HOME 覆盖；inventory/export 默认 .deps/ffpr/<ffN>/…）
               --jobs <N>      并行线程数（默认 min(CPU 核数, 8)）
               --force         清空已有输出目录（仅允许清空带本工具同名子命令 manifest.json 的目录）
               --version       打印工具及 AssetsTools.NET 版本

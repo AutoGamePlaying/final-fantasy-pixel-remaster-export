@@ -15,6 +15,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\FfprExport\AgpPaths.cs" Link="Shared\AgpPaths.cs" />
     <Compile Include="..\FfprExport\PathSupport.cs" Link="Shared\PathSupport.cs" />
     <Compile Include="..\FfprExport\SteamLocator.cs" Link="Shared\SteamLocator.cs" />
   </ItemGroup>

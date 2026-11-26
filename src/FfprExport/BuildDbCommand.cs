@@ -177,7 +177,11 @@ internal static class BuildDbCommand
 
         // Step 1: Detect game (FF1-FF6), validate output guardrails, and prepare output directory.
         var game = GameDetector.Detect(options.GameDirectory);
-        var outputArgument = options.OutputArgument ?? $"ffpr-{game.Spec.Id}-build";
+        var effectiveBuildId = !string.IsNullOrWhiteSpace(game.SteamBuildId)
+            ? game.SteamBuildId
+            : options.SteamBuildId;
+        var outputArgument = options.OutputArgument
+            ?? AgpPaths.GetGameOutputDirectory(game.Spec.Id, effectiveBuildId);
         var outputPath = PathSupport.TrimTrailingSeparators(
             OutputGuard.ValidateOutputPath(outputArgument, game.GameDirectory));
 
@@ -610,7 +614,7 @@ internal static class BuildDbCommand
 
             选项：
               --game <目录>            Steam 游戏安装目录（自动识别 FF1–FF6）
-              --out <目录>             输出目录（默认当前目录下的 ffpr-<ffN>-build）
+              --out <目录>             输出目录（默认 %LOCALAPPDATA%\agp\ffpr-export\output\<ffN>-<Steam 构建号>，可用 AGP_HOME 覆盖根目录）
               --steam-buildid <编号>   无法读取 appmanifest_<appid>.acf 时手动指定 Steam 构建号
               --keep-json              保留 <out>/json/ 中间导出目录（默认建库后自动删除）
               --jobs <N>               并行线程数（默认 min(CPU 核数, 8)）
