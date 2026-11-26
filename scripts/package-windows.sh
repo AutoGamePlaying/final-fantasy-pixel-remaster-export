@@ -106,6 +106,19 @@ cp "$ROOT/known-builds.json" "$PACKAGE_DIR/known-builds.json"
 cp "$ROOT/README.md" "$PACKAGE_DIR/README.md"
 cp "$ROOT/LICENSE" "$PACKAGE_DIR/LICENSE"
 
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    echo "==> 执行打包后窗口程序自检：ffpr-export-gui.exe --self-test --require-cli"
+    (
+      cd "$PACKAGE_DIR"
+      ./ffpr-export-gui.exe --self-test --require-cli
+    )
+    ;;
+  *)
+    echo "==> 跳过打包后窗口程序自检（当前为非 Windows 交叉打包环境，Windows 上将由 package-windows.ps1 与 CI 执行）"
+    ;;
+esac
+
 # Generate short Chinese quick-start guide (<= 10 lines, CRLF for Windows Notepad).
 printf '%s\r\n' \
   'FFPR 导出工具（FINAL FANTASY I–VI Pixel Remaster）使用说明' \

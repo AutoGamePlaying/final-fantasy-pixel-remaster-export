@@ -99,6 +99,7 @@ try {
     $dotnetGuiOut = Join-Path $stageDir "dotnet-publish-gui"
     $packageDir = Join-Path $stageDir "package"
     $distDir = Join-Path $root "dist"
+    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 
     New-Item -ItemType Directory -Path $dotnetCliOut -Force | Out-Null
     New-Item -ItemType Directory -Path $dotnetGuiOut -Force | Out-Null
@@ -169,16 +170,44 @@ try {
     Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination (Join-Path $packageDir "README.md") -Force
     Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination (Join-Path $packageDir "LICENSE") -Force
 
+    Write-Host "==> 执行打包后窗口程序自检：ffpr-export-gui.exe --self-test --require-cli"
+    $packagedGuiExe = Join-Path $packageDir "ffpr-export-gui.exe"
+    $selfTestOut = Join-Path $stageDir "gui-selftest.stdout.txt"
+    $selfTestErr = Join-Path $stageDir "gui-selftest.stderr.txt"
+    $selfTestProc = Start-Process `
+        -FilePath $packagedGuiExe `
+        -ArgumentList @("--self-test", "--require-cli") `
+        -WorkingDirectory $packageDir `
+        -RedirectStandardOutput $selfTestOut `
+        -RedirectStandardError $selfTestErr `
+        -Wait `
+        -PassThru `
+        -NoNewWindow
+    if (Test-Path -LiteralPath $selfTestOut -PathType Leaf) {
+        $outText = [System.IO.File]::ReadAllText($selfTestOut, $utf8NoBom).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($outText)) {
+            Write-Host $outText
+        }
+    }
+    if (Test-Path -LiteralPath $selfTestErr -PathType Leaf) {
+        $errText = [System.IO.File]::ReadAllText($selfTestErr, $utf8NoBom).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($errText)) {
+            [Console]::Error.WriteLine($errText)
+        }
+    }
+    if ($selfTestProc.ExitCode -ne 0) {
+        throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($selfTestProc.ExitCode)）"
+    }
+
     # Generate short Chinese quick-start guide (<= 10 lines, UTF-8 without BOM, CRLF endings).
-    $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
     $guideLines = @(
         "FFPR 导出工具（FINAL FANTASY I–VI Pixel Remaster）使用说明",
         "",
         "1. 将整个压缩包完整解压到任意文件夹（不要在压缩包内直接双击运行）。",
         "2. 保持 ffpr-export-gui.exe、ffpr-export.exe 与 known-builds.json 在同一目录。",
         "3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。",
-        "4. 确认已勾选的游戏后，点击“开始导出”即可依次生成 SQLite 数据库。",
-        "5. 导出结果默认保存在“文档\FF-Export\<游戏代号>-<构建号>\”目录中。",
+        "4. 确认已勾选的游戏后，点击「开始导出」即可依次生成 SQLite 数据库。",
+        "5. 导出结果默认保存在「文档\FF-Export\<游戏代号>-<构建号>\」目录中。",
         "6. 高级命令行用法与说明请查看同目录的 README.md。"
     )
     $guideName = "使用说明.txt"

@@ -89,11 +89,38 @@ jobs:
             }
           }
           $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
-          # WinExe (GUI subsystem): `& exe` does not wait and leaves $LASTEXITCODE unset, so wait explicitly.
-          $selfTest = Start-Process -FilePath $packagedGui -ArgumentList @('--self-test', '--require-cli') -Wait -PassThru -NoNewWindow
-          $selfTestExit = $selfTest.ExitCode
-          if ($selfTestExit -ne 0) {
-            throw "错误：发布包中的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $selfTestExit）"
+          $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+          $stdoutFile = Join-Path $env:RUNNER_TEMP "gui-selftest-release.stdout.txt"
+          $stderrFile = Join-Path $env:RUNNER_TEMP "gui-selftest-release.stderr.txt"
+          try {
+            # WinExe (GUI subsystem): wait explicitly with Start-Process and redirect stdio so logs and errors are visible.
+            $selfTest = Start-Process `
+              -FilePath $packagedGui `
+              -ArgumentList @('--self-test', '--require-cli') `
+              -WorkingDirectory $verifyDir `
+              -RedirectStandardOutput $stdoutFile `
+              -RedirectStandardError $stderrFile `
+              -Wait `
+              -PassThru `
+              -NoNewWindow
+            if (Test-Path -LiteralPath $stdoutFile -PathType Leaf) {
+              $outText = [System.IO.File]::ReadAllText($stdoutFile, $utf8NoBom).Trim()
+              if (-not [string]::IsNullOrWhiteSpace($outText)) {
+                Write-Host $outText
+              }
+            }
+            if (Test-Path -LiteralPath $stderrFile -PathType Leaf) {
+              $errText = [System.IO.File]::ReadAllText($stderrFile, $utf8NoBom).Trim()
+              if (-not [string]::IsNullOrWhiteSpace($errText)) {
+                [Console]::Error.WriteLine($errText)
+              }
+            }
+            $selfTestExit = $selfTest.ExitCode
+            if ($selfTestExit -ne 0) {
+              throw "错误：发布包中的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $selfTestExit）"
+            }
+          } finally {
+            Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
           }
 
       - name: Prepare Release notes

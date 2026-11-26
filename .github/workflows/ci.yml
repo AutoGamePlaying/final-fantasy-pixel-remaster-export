@@ -64,15 +64,42 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
+          $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
           $guiExe = Join-Path $PWD "src\FfprExport.Gui\bin\Release\net10.0-windows\ffpr-export-gui.exe"
           if (-not (Test-Path -LiteralPath $guiExe -PathType Leaf)) {
             throw "错误：未找到构建出的窗口程序：$guiExe"
           }
-          # WinExe (GUI subsystem): `& exe` does not wait and leaves $LASTEXITCODE unset, so wait explicitly.
-          $selfTest = Start-Process -FilePath $guiExe -ArgumentList @('--self-test') -Wait -PassThru -NoNewWindow
-          $selfTestExit = $selfTest.ExitCode
-          if ($selfTestExit -ne 0) {
-            throw "错误：ffpr-export-gui.exe --self-test 失败（退出码 $selfTestExit）"
+          $stdoutFile = Join-Path $env:RUNNER_TEMP "gui-selftest-build.stdout.txt"
+          $stderrFile = Join-Path $env:RUNNER_TEMP "gui-selftest-build.stderr.txt"
+          try {
+            # WinExe (GUI subsystem): wait explicitly with Start-Process and redirect stdio so logs and errors are visible.
+            $selfTest = Start-Process `
+              -FilePath $guiExe `
+              -ArgumentList @('--self-test') `
+              -RedirectStandardOutput $stdoutFile `
+              -RedirectStandardError $stderrFile `
+              -Wait `
+              -PassThru `
+              -NoNewWindow
+            if (Test-Path -LiteralPath $stdoutFile -PathType Leaf) {
+              $outText = [System.IO.File]::ReadAllText($stdoutFile, $utf8NoBom).Trim()
+              if (-not [string]::IsNullOrWhiteSpace($outText)) {
+                Write-Host $outText
+              }
+            }
+            if (Test-Path -LiteralPath $stderrFile -PathType Leaf) {
+              $errText = [System.IO.File]::ReadAllText($stderrFile, $utf8NoBom).Trim()
+              if (-not [string]::IsNullOrWhiteSpace($errText)) {
+                [Console]::Error.WriteLine($errText)
+              }
+            }
+            $selfTestExit = $selfTest.ExitCode
+            if ($selfTestExit -ne 0) {
+              throw "错误：ffpr-export-gui.exe --self-test 失败（退出码 $selfTestExit）"
+            }
+          } finally {
+            Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
           }
 
   fixture-hash:
@@ -274,11 +301,38 @@ jobs:
             }
           }
           $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
-          # WinExe (GUI subsystem): `& exe` does not wait and leaves $LASTEXITCODE unset, so wait explicitly.
-          $selfTest = Start-Process -FilePath $packagedGui -ArgumentList @('--self-test', '--require-cli') -Wait -PassThru -NoNewWindow
-          $selfTestExit = $selfTest.ExitCode
-          if ($selfTestExit -ne 0) {
-            throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $selfTestExit）"
+          $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+          $stdoutFile = Join-Path $env:RUNNER_TEMP "gui-selftest-pkg.stdout.txt"
+          $stderrFile = Join-Path $env:RUNNER_TEMP "gui-selftest-pkg.stderr.txt"
+          try {
+            # WinExe (GUI subsystem): wait explicitly with Start-Process and redirect stdio so logs and errors are visible.
+            $selfTest = Start-Process `
+              -FilePath $packagedGui `
+              -ArgumentList @('--self-test', '--require-cli') `
+              -WorkingDirectory $verifyDir `
+              -RedirectStandardOutput $stdoutFile `
+              -RedirectStandardError $stderrFile `
+              -Wait `
+              -PassThru `
+              -NoNewWindow
+            if (Test-Path -LiteralPath $stdoutFile -PathType Leaf) {
+              $outText = [System.IO.File]::ReadAllText($stdoutFile, $utf8NoBom).Trim()
+              if (-not [string]::IsNullOrWhiteSpace($outText)) {
+                Write-Host $outText
+              }
+            }
+            if (Test-Path -LiteralPath $stderrFile -PathType Leaf) {
+              $errText = [System.IO.File]::ReadAllText($stderrFile, $utf8NoBom).Trim()
+              if (-not [string]::IsNullOrWhiteSpace($errText)) {
+                [Console]::Error.WriteLine($errText)
+              }
+            }
+            $selfTestExit = $selfTest.ExitCode
+            if ($selfTestExit -ne 0) {
+              throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $selfTestExit）"
+            }
+          } finally {
+            Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
           }
 
       - name: Upload Windows package artifact
