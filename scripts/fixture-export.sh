@@ -14,11 +14,12 @@ MANIFEST_OUT=""
 
 usage() {
   cat >&2 <<'EOF'
-用法：scripts/fixture-export.sh [--manifest-out <JSON 文件>]
+Usage: scripts/fixture-export.sh [--manifest-out <JSON file>]
 
-使用合成 Unity 游戏数据运行真实 inventory 与 export，并收集每个输出文件的 SHA-256 清单。
-  --manifest-out <文件>  将清单 JSON 写入指定文件（不传时输出到标准输出）
-  -h, --help             显示此帮助信息
+Runs real `inventory` and `export` against synthetic Unity game assets and collects
+a per-file SHA-256 manifest.
+  --manifest-out <file>  Write manifest JSON to the specified file (defaults to stdout)
+  -h, --help             Show this help message
 EOF
 }
 
@@ -26,7 +27,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --manifest-out)
       if [[ $# -lt 2 ]]; then
-        echo "错误：--manifest-out 缺少文件路径参数" >&2
+        echo "Error: --manifest-out requires a file path argument" >&2
         exit 2
       fi
       MANIFEST_OUT="$2"
@@ -37,7 +38,7 @@ while [[ $# -gt 0 ]]; do
       exit 0
       ;;
     *)
-      echo "错误：未知参数：$1" >&2
+      echo "Error: Unknown argument: $1" >&2
       usage
       exit 2
       ;;
@@ -75,7 +76,7 @@ resolve_dotnet() {
   fi
 
   if [[ ! -x "$DOTNET_BIN" ]]; then
-    echo "错误：找不到 dotnet 可执行文件：$DOTNET_BIN（请安装 .NET 10 SDK 到 .deps/dotnet 或设置 DOTNET_ROOT）" >&2
+    echo "Error: dotnet executable not found: $DOTNET_BIN (install .NET 10 SDK to .deps/dotnet or set DOTNET_ROOT)" >&2
     exit 2
   fi
 }
@@ -101,10 +102,10 @@ fi
 
 RAW_MANIFEST="$STAGE_DIR/export-hashes.json"
 
-echo "==> 编译合成导出核对测试（Release）" >&2
+echo "==> Building synthetic export verification tests (Release)" >&2
 "$DOTNET_BIN" build tests/FfprExport.Tests/FfprExport.Tests.csproj -c Release >&2
 
-echo "==> 运行合成数据导出并收集逐文件 SHA-256 清单" >&2
+echo "==> Running synthetic export and collecting per-file SHA-256 manifest" >&2
 FFPR_EXPORT_FIXTURE_MANIFEST_OUT="$(to_native_path "$RAW_MANIFEST")" \
   "$DOTNET_BIN" test tests/FfprExport.Tests/FfprExport.Tests.csproj \
     -c Release \
@@ -112,14 +113,14 @@ FFPR_EXPORT_FIXTURE_MANIFEST_OUT="$(to_native_path "$RAW_MANIFEST")" \
     --filter "FullyQualifiedName=FfprExport.Tests.LineEndingTests.ExportFixture_GeneratesCrossPlatformHashManifest" >&2
 
 if [[ ! -s "$RAW_MANIFEST" ]]; then
-  echo "错误：合成导出未生成有效的 SHA-256 清单：$RAW_MANIFEST" >&2
+  echo "Error: Synthetic export did not produce a valid SHA-256 manifest: $RAW_MANIFEST" >&2
   exit 1
 fi
 
 if [[ -n "$MANIFEST_OUT" ]]; then
   mkdir -p "$(dirname -- "$MANIFEST_OUT")"
   cp "$RAW_MANIFEST" "$MANIFEST_OUT"
-  echo "==> 已写入导出哈希清单：$MANIFEST_OUT" >&2
+  echo "==> Wrote export hash manifest: $MANIFEST_OUT" >&2
 else
   cat "$RAW_MANIFEST"
 fi

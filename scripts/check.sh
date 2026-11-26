@@ -493,7 +493,7 @@ else
 fi
 
 if [[ ! -x "$DOTNET_BIN" ]]; then
-  echo "错误：找不到 dotnet 可执行文件：$DOTNET_BIN（请安装 .NET 10 SDK 到 .deps/dotnet 或设置 DOTNET_ROOT）" >&2
+  echo "Error: dotnet executable not found: $DOTNET_BIN (install .NET 10 SDK to .deps/dotnet or set DOTNET_ROOT)" >&2
   exit 2
 fi
 
@@ -520,7 +520,7 @@ if [[ "$SKIP_FMT" == "0" ]]; then
   echo "==> dotnet format --verify-no-changes"
   "$DOTNET_BIN" format FfprExport.sln --verify-no-changes
 else
-  echo "==> 跳过 dotnet format（非 Linux 环境或已设置 FFPR_CHECK_SKIP_FMT）"
+  echo "==> Skipping dotnet format (non-Linux environment or FFPR_CHECK_SKIP_FMT is set)"
 fi
 
 echo "==> dotnet build -c Release"
