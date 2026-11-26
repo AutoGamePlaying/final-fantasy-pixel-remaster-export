@@ -333,11 +333,24 @@ internal static class InteractiveWizard
         IReadOnlyList<DiscoveredSteamGame> selectedGames)
     {
         var output = env.Output;
-        var defaultOutputRoot = env.ResolveDefaultOutputRoot is not null
-            ? PathSupport.TrimTrailingSeparators(Path.GetFullPath(env.ResolveDefaultOutputRoot()))
-            : AgpPaths.GetOutputRoot(
+        string defaultOutputRoot;
+        if (env.ResolveDefaultOutputRoot is not null)
+        {
+            defaultOutputRoot = PathSupport.TrimTrailingSeparators(Path.GetFullPath(env.ResolveDefaultOutputRoot()));
+        }
+        else
+        {
+            var agpRoot = AgpPaths.RequireWritableAgpHome(
                 isWindowsOverride: null,
                 getBaseDirectory: () => env.BaseDirectory);
+            var rootNotice = AgpPaths.FormatCliNotice(agpRoot);
+            if (!string.IsNullOrWhiteSpace(rootNotice))
+            {
+                output.WriteLine(rootNotice);
+            }
+
+            defaultOutputRoot = AgpPaths.GetOutputRoot(agpRoot);
+        }
 
         if (selectedGames.Count == 1)
         {

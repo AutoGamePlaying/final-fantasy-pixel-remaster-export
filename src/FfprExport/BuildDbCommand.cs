@@ -180,8 +180,23 @@ internal static class BuildDbCommand
         var effectiveBuildId = !string.IsNullOrWhiteSpace(game.SteamBuildId)
             ? game.SteamBuildId
             : options.SteamBuildId;
-        var outputArgument = options.OutputArgument
-            ?? AgpPaths.GetGameOutputDirectory(game.Spec.Id, effectiveBuildId);
+        string outputArgument;
+        if (options.OutputArgument is not null)
+        {
+            outputArgument = options.OutputArgument;
+        }
+        else
+        {
+            var agpRoot = AgpPaths.RequireWritableAgpHome();
+            var rootNotice = AgpPaths.FormatCliNotice(agpRoot);
+            if (!string.IsNullOrWhiteSpace(rootNotice))
+            {
+                outWriter.WriteLine(rootNotice);
+            }
+
+            outputArgument = AgpPaths.GetGameOutputDirectory(game.Spec.Id, effectiveBuildId, agpRoot);
+        }
+
         var outputPath = PathSupport.TrimTrailingSeparators(
             OutputGuard.ValidateOutputPath(outputArgument, game.GameDirectory));
 
