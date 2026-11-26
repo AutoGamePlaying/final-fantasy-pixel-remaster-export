@@ -12,7 +12,7 @@ else
 fi
 
 if [[ ! -x "$DOTNET_BIN" ]]; then
-  echo "错误：找不到 dotnet 可执行文件：$DOTNET_BIN（请安装 .NET 10 SDK 到 .deps/dotnet 或设置 DOTNET_ROOT）" >&2
+  echo "Error: dotnet executable not found: $DOTNET_BIN (install .NET 10 SDK to .deps/dotnet or set DOTNET_ROOT)" >&2
   exit 2
 fi
 
@@ -33,12 +33,12 @@ if [[ -n "$RAW_TAG" ]]; then
 elif [[ -f "$ROOT/VERSION" ]]; then
   VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 else
-  echo "错误：找不到 git tag 且仓库根目录缺少 VERSION 文件" >&2
+  echo "Error: No exact git tag found and VERSION file is missing in repository root" >&2
   exit 2
 fi
 
 if [[ -z "$VERSION" ]]; then
-  echo "错误：解析到的版本号为空" >&2
+  echo "Error: Resolved package version is empty" >&2
   exit 2
 fi
 
@@ -52,8 +52,8 @@ trap 'rm -rf "$STAGE_DIR"' EXIT
 
 mkdir -p "$DOTNET_CLI_OUT" "$DOTNET_GUI_OUT" "$PACKAGE_DIR" "$ROOT/dist"
 
-echo "==> 打包版本：$VERSION（git: $GIT_COMMIT）"
-echo "==> 发布 ffpr-export.exe（win-x64 self-contained single-file，原生库随目录分发不解压到 TEMP）"
+echo "==> Packaging version: $VERSION (git: $GIT_COMMIT)"
+echo "==> Publishing ffpr-export.exe (win-x64 self-contained single-file, sibling native DLLs without TEMP extraction)"
 "$DOTNET_BIN" publish "$ROOT/src/FfprExport/FfprExport.csproj" \
   -c Release \
   -r win-x64 \
@@ -69,11 +69,11 @@ echo "==> 发布 ffpr-export.exe（win-x64 self-contained single-file，原生�
   -o "$DOTNET_CLI_OUT"
 
 if [[ ! -f "$DOTNET_CLI_OUT/ffpr-export.exe" ]]; then
-  echo "错误：dotnet publish 未生成 $DOTNET_CLI_OUT/ffpr-export.exe" >&2
+  echo "Error: dotnet publish did not produce $DOTNET_CLI_OUT/ffpr-export.exe" >&2
   exit 2
 fi
 
-echo "==> 发布 ffpr-export-gui.exe（win-x64 WinForms self-contained single-file，原生库随目录分发不解压到 TEMP）"
+echo "==> Publishing ffpr-export-gui.exe (win-x64 WinForms self-contained single-file, sibling native DLLs without TEMP extraction)"
 "$DOTNET_BIN" publish "$ROOT/src/FfprExport.Gui/FfprExport.Gui.csproj" \
   -c Release \
   -r win-x64 \
@@ -89,13 +89,13 @@ echo "==> 发布 ffpr-export-gui.exe（win-x64 WinForms self-contained single-fi
   -o "$DOTNET_GUI_OUT"
 
 if [[ ! -f "$DOTNET_GUI_OUT/ffpr-export-gui.exe" ]]; then
-  echo "错误：dotnet publish 未生成 $DOTNET_GUI_OUT/ffpr-export-gui.exe" >&2
+  echo "Error: dotnet publish did not produce $DOTNET_GUI_OUT/ffpr-export-gui.exe" >&2
   exit 2
 fi
 
 for required in known-builds.json README.md LICENSE; do
   if [[ ! -f "$ROOT/$required" ]]; then
-    echo "错误：打包缺少必需文件：$ROOT/$required" >&2
+    echo "Error: Missing required packaging file: $ROOT/$required" >&2
     exit 2
   fi
 done
@@ -111,7 +111,7 @@ for pub_dir in "$DOTNET_CLI_OUT" "$DOTNET_GUI_OUT"; do
     dest_path="$PACKAGE_DIR/$dll_name"
     if [[ -f "$dest_path" ]]; then
       if ! cmp -s "$dll_path" "$dest_path"; then
-        echo "错误：CLI 与 GUI 发布目录中的原生库 $dll_name 内容不一致，拒绝覆盖" >&2
+        echo "Error: Native library $dll_name differs between CLI and GUI publish directories; refusing to overwrite" >&2
         exit 2
       fi
       continue
@@ -122,7 +122,7 @@ done
 shopt -u nullglob
 
 if [[ ! -f "$PACKAGE_DIR/e_sqlite3.dll" ]]; then
-  echo "错误：打包目录缺少原生库 e_sqlite3.dll（请确认 IncludeNativeLibrariesForSelfExtract=false 生效）" >&2
+  echo "Error: Packaging directory is missing native library e_sqlite3.dll (verify IncludeNativeLibrariesForSelfExtract=false)" >&2
   exit 2
 fi
 
@@ -132,7 +132,7 @@ cp "$ROOT/LICENSE" "$PACKAGE_DIR/LICENSE"
 
 case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
-    echo "==> 执行打包后窗口程序自检：ffpr-export-gui.exe --self-test --require-cli"
+    echo "==> Running post-package GUI self-test: ffpr-export-gui.exe --self-test --require-cli"
     (
       cd "$PACKAGE_DIR"
       if command -v cygpath >/dev/null 2>&1; then
@@ -143,7 +143,7 @@ case "$(uname -s)" in
       ./ffpr-export-gui.exe --self-test --require-cli
     )
 
-    echo "==> 执行模拟 TEMP 不可写自检（TEMP/TMP 指向阻塞文件）"
+    echo "==> Running unwritable TEMP simulation self-test (TEMP/TMP pointing to a regular file)"
     printf 'blocked-temp\n' > "$STAGE_DIR/blocked-temp-file"
     (
       cd "$PACKAGE_DIR"
@@ -161,21 +161,31 @@ case "$(uname -s)" in
     )
     ;;
   *)
-    echo "==> 跳过打包后窗口程序自检（当前为非 Windows 交叉打包环境，Windows 上将由 package-windows.ps1 与 CI 执行）"
+    echo "==> Skipping post-package GUI self-test (non-Windows cross-packaging host; verified natively on Windows by package-windows.ps1 and CI)"
     ;;
 esac
 
-# Generate short Chinese quick-start guide (<= 10 lines, CRLF for Windows Notepad).
+# Generate English quick-start guide with concise Chinese and Japanese appendices (UTF-8 without BOM, CRLF for Windows Notepad).
 printf '%s\r\n' \
-  'FFPR 导出工具（FINAL FANTASY I–VI Pixel Remaster）使用说明' \
+  'FFPR Export (FINAL FANTASY I-VI Pixel Remaster) - Windows Quick Start' \
   '' \
-  '1. 将整个压缩包完整解压到任意文件夹（不要在压缩包内直接双击运行）。' \
-  '2. 保持 ffpr-export-gui.exe、ffpr-export.exe、同目录原生库（如 e_sqlite3.dll）与 known-builds.json 在同一目录。' \
-  '3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。' \
-  '4. 确认已勾选的游戏后，点击「开始导出」即可依次生成 SQLite 数据库。' \
-  '5. 导出结果默认保存在「%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\」目录中。' \
-  '6. 高级命令行用法、AGP_HOME 与说明请查看同目录的 README.md。' \
-  > "$PACKAGE_DIR/使用说明.txt"
+  '1. Extract the entire zip archive to a regular folder (do not run directly from inside the zip).' \
+  '2. Keep ffpr-export-gui.exe, ffpr-export.exe, sibling native DLLs (e.g. e_sqlite3.dll), and known-builds.json in the same folder.' \
+  '3. Double-click ffpr-export-gui.exe. It auto-scans your Steam libraries for FF1-FF6 and selects them by default.' \
+  '4. Use the Language dropdown in the top-right corner to switch between English, Simplified Chinese, and Japanese.' \
+  '5. Click [Start Export] to build SQLite databases sequentially. Default output: %LOCALAPPDATA%\agp\ffpr-export\output\<game>-<buildid>\' \
+  '6. For CLI options (--lang, AGP_HOME, AGP_LANG) and full documentation, see README.md in this folder.' \
+  '' \
+  '--- 简体中文简明说明 ---' \
+  '1. 请将压缩包完整解压到任意文件夹，并保持所有文件（含 e_sqlite3.dll）在同一目录。' \
+  '2. 双击 ffpr-export-gui.exe，可在右上角切换语言，确认勾选的游戏后点击 [开始导出]。' \
+  '3. 默认输出目录：%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\。详见 README.md。' \
+  '' \
+  '--- 日本語クイックガイド ---' \
+  '1. zip 全体を任意のフォルダに展開し、すべてのファイル（e_sqlite3.dll を含む）を同じフォルダに置いてください。' \
+  '2. ffpr-export-gui.exe を起動し、右上で言語を切り替え、ゲームを確認して [エクスポート開始] を押します。' \
+  '3. 既定の出力先：%LOCALAPPDATA%\agp\ffpr-export\output\<ゲームID>-<ビルドID>\。詳細は README.md を参照してください。' \
+  > "$PACKAGE_DIR/README-Windows.txt"
 
 (
   cd "$PACKAGE_DIR"
@@ -186,8 +196,7 @@ printf '%s\r\n' \
 ZIP_PATH="$ROOT/dist/ffpr-export-${VERSION}-win-x64.zip"
 rm -f "$ZIP_PATH"
 
-echo "==> 生成压缩包：$ZIP_PATH"
-# Prefer python3 zipfile so non-ASCII entry names (使用说明.txt) always carry the UTF-8 flag bit on Windows.
+echo "==> Creating archive: $ZIP_PATH"
 if command -v python3 >/dev/null 2>&1; then
   python3 - "$PACKAGE_DIR" "$ZIP_PATH" <<'PY'
 import os
@@ -203,13 +212,16 @@ with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compressle
     for name in files:
         zf.write(os.path.join(pkg_dir, name), arcname=name)
 
-print("==> 列出压缩包内容：")
+print("==> Archive entries:")
 with zipfile.ZipFile(zip_path, "r") as zf:
     names = [info.filename for info in zf.infolist()]
     for info in zf.infolist():
         print(f"  {info.filename:32s}  {info.file_size:12d} bytes (compressed {info.compress_size:10d})")
     if "e_sqlite3.dll" not in names:
-        print("错误：生成的压缩包中缺少原生库 e_sqlite3.dll", file=sys.stderr)
+        print("Error: Generated archive is missing native library e_sqlite3.dll", file=sys.stderr)
+        sys.exit(2)
+    if "README-Windows.txt" not in names:
+        print("Error: Generated archive is missing README-Windows.txt", file=sys.stderr)
         sys.exit(2)
 PY
 elif command -v zip >/dev/null 2>&1; then
@@ -219,16 +231,16 @@ elif command -v zip >/dev/null 2>&1; then
     zip -q -9 "$ZIP_PATH" "${ZIP_FILES[@]}"
   )
   if command -v unzip >/dev/null 2>&1; then
-    echo "==> 列出压缩包内容："
+    echo "==> Archive entries:"
     unzip -l "$ZIP_PATH"
   fi
 else
-  echo "错误：缺少 python3 或 zip，无法生成 .zip 压缩包" >&2
+  echo "Error: Neither python3 nor zip is installed; cannot create .zip archive" >&2
   exit 2
 fi
 
-echo "==> 打包完成：$ZIP_PATH"
+echo "==> Packaging complete: $ZIP_PATH"
 ls -lh "$ZIP_PATH"
-echo "==> 压缩包内文件与校验："
+echo "==> Packaged files and checksums:"
 ls -lh "$PACKAGE_DIR"
 cat "$PACKAGE_DIR/SHA256SUMS"

@@ -45,7 +45,7 @@ function Invoke-ProcessCaptured {
 
     $proc = [System.Diagnostics.Process]::Start($psi)
     if ($null -eq $proc) {
-        throw "错误：无法启动进程：$FilePath"
+        throw "Error: Failed to start process: $FilePath"
     }
 
     try {
@@ -94,7 +94,7 @@ try {
         }
     }
     if (-not $dotnetBin) {
-        throw "错误：找不到 dotnet 可执行文件（请安装 .NET 10 SDK 或设置 DOTNET_ROOT）"
+        throw "Error: dotnet executable not found (install .NET 10 SDK or set DOTNET_ROOT)"
     }
 
     # Resolve package version: explicit -Version -> exact git tag on HEAD -> VERSION file.
@@ -122,13 +122,13 @@ try {
         } else {
             $versionFile = Join-Path $root "VERSION"
             if (-not (Test-Path -LiteralPath $versionFile -PathType Leaf)) {
-                throw "错误：找不到 git tag 且仓库根目录缺少 VERSION 文件：$versionFile"
+                throw "Error: No exact git tag found and VERSION file is missing: $versionFile"
             }
             $packageVersion = (Get-Content -LiteralPath $versionFile -Raw -Encoding UTF8).Trim()
         }
     }
     if ([string]::IsNullOrWhiteSpace($packageVersion)) {
-        throw "错误：解析到的版本号为空"
+        throw "Error: Resolved package version is empty"
     }
 
     # Resolve short git commit hash for embedding into assembly metadata.
@@ -164,8 +164,8 @@ try {
     New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
     New-Item -ItemType Directory -Path $distDir -Force | Out-Null
 
-    Write-Host "==> 打包版本：$packageVersion（git: $gitCommit）"
-    Write-Host "==> 发布 ffpr-export.exe（win-x64 self-contained single-file，原生库随目录分发不解压到 TEMP）"
+    Write-Host "==> Packaging version: $packageVersion (git: $gitCommit)"
+    Write-Host "==> Publishing ffpr-export.exe (win-x64 self-contained single-file, sibling native DLLs without TEMP extraction)"
 
     $cliCsprojPath = Join-Path $root "src\FfprExport\FfprExport.csproj"
     & $dotnetBin publish $cliCsprojPath `
@@ -182,15 +182,15 @@ try {
         "-p:FfprGitCommit=$gitCommit" `
         -o $dotnetCliOut
     if ($LASTEXITCODE -ne 0) {
-        throw "错误：dotnet publish 发布 $cliCsprojPath 失败（退出码 $LASTEXITCODE）"
+        throw "Error: dotnet publish failed for $cliCsprojPath (exit code $LASTEXITCODE)"
     }
 
     $ffprExportExe = Join-Path $dotnetCliOut "ffpr-export.exe"
     if (-not (Test-Path -LiteralPath $ffprExportExe -PathType Leaf)) {
-        throw "错误：dotnet publish 未生成 $ffprExportExe"
+        throw "Error: dotnet publish did not produce $ffprExportExe"
     }
 
-    Write-Host "==> 发布 ffpr-export-gui.exe（win-x64 WinForms self-contained single-file，原生库随目录分发不解压到 TEMP）"
+    Write-Host "==> Publishing ffpr-export-gui.exe (win-x64 WinForms self-contained single-file, sibling native DLLs without TEMP extraction)"
 
     $guiCsprojPath = Join-Path $root "src\FfprExport.Gui\FfprExport.Gui.csproj"
     & $dotnetBin publish $guiCsprojPath `
@@ -207,18 +207,18 @@ try {
         "-p:FfprGitCommit=$gitCommit" `
         -o $dotnetGuiOut
     if ($LASTEXITCODE -ne 0) {
-        throw "错误：dotnet publish 发布 $guiCsprojPath 失败（退出码 $LASTEXITCODE）"
+        throw "Error: dotnet publish failed for $guiCsprojPath (exit code $LASTEXITCODE)"
     }
 
     $ffprGuiExe = Join-Path $dotnetGuiOut "ffpr-export-gui.exe"
     if (-not (Test-Path -LiteralPath $ffprGuiExe -PathType Leaf)) {
-        throw "错误：dotnet publish 未生成 $ffprGuiExe"
+        throw "Error: dotnet publish did not produce $ffprGuiExe"
     }
 
     foreach ($required in @("known-builds.json", "README.md", "LICENSE")) {
         $reqPath = Join-Path $root $required
         if (-not (Test-Path -LiteralPath $reqPath -PathType Leaf)) {
-            throw "错误：打包缺少必需文件：$reqPath"
+            throw "Error: Missing required packaging file: $reqPath"
         }
     }
 
@@ -232,7 +232,7 @@ try {
             $dllHash = (Get-FileHash -LiteralPath $dll.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             if ($copiedDllHashes.ContainsKey($dll.Name)) {
                 if ($copiedDllHashes[$dll.Name] -ne $dllHash) {
-                    throw "错误：CLI 与 GUI 发布目录中的原生库 $($dll.Name) 内容不一致，拒绝覆盖"
+                    throw "Error: Native library $($dll.Name) differs between CLI and GUI publish directories; refusing to overwrite"
                 }
                 continue
             }
@@ -242,14 +242,14 @@ try {
     }
 
     if (-not (Test-Path -LiteralPath (Join-Path $packageDir "e_sqlite3.dll") -PathType Leaf)) {
-        throw "错误：打包目录缺少原生库 e_sqlite3.dll（请确认 IncludeNativeLibrariesForSelfExtract=false 生效）"
+        throw "Error: Packaging directory is missing native library e_sqlite3.dll (verify IncludeNativeLibrariesForSelfExtract=false)"
     }
 
     Copy-Item -LiteralPath (Join-Path $root "known-builds.json") -Destination (Join-Path $packageDir "known-builds.json") -Force
     Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination (Join-Path $packageDir "README.md") -Force
     Copy-Item -LiteralPath (Join-Path $root "LICENSE") -Destination (Join-Path $packageDir "LICENSE") -Force
 
-    Write-Host "==> 执行打包后窗口程序自检：ffpr-export-gui.exe --self-test --require-cli"
+    Write-Host "==> Running post-package GUI self-test: ffpr-export-gui.exe --self-test --require-cli"
     $packagedGuiExe = Join-Path $packageDir "ffpr-export-gui.exe"
     $packagedCliExe = Join-Path $packageDir "ffpr-export.exe"
     $selfTestOut = Join-Path $stageDir "gui-selftest.stdout.txt"
@@ -286,10 +286,10 @@ try {
         }
     }
     if ($selfTestProc.ExitCode -ne 0) {
-        throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($selfTestProc.ExitCode)）"
+        throw "Error: Packaged ffpr-export-gui.exe --self-test --require-cli failed (exit code $($selfTestProc.ExitCode))"
     }
 
-    Write-Host "==> 执行模拟 TEMP 不可写自检（TEMP/TMP 指向阻塞文件）"
+    Write-Host "==> Running unwritable TEMP simulation self-test (TEMP/TMP pointing to a regular file)"
     $blockedTempPath = Join-Path $stageDir "blocked-temp-file"
     [System.IO.File]::WriteAllText($blockedTempPath, "blocked-temp`n", $utf8NoBom)
     $noTempEnv = @{
@@ -310,7 +310,7 @@ try {
         [Console]::Error.WriteLine($guiNoTemp.Stderr)
     }
     if ($guiNoTemp.ExitCode -ne 0) {
-        throw "错误：TEMP 不可写模拟下 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($guiNoTemp.ExitCode)）"
+        throw "Error: Packaged ffpr-export-gui.exe --self-test --require-cli failed under blocked TEMP (exit code $($guiNoTemp.ExitCode))"
     }
 
     $cliHelpNoTemp = Invoke-ProcessCaptured `
@@ -322,21 +322,31 @@ try {
         if (-not [string]::IsNullOrWhiteSpace($cliHelpNoTemp.Stderr)) {
             [Console]::Error.WriteLine($cliHelpNoTemp.Stderr)
         }
-        throw "错误：TEMP 不可写模拟下 ffpr-export.exe --help 失败（退出码 $($cliHelpNoTemp.ExitCode)）"
+        throw "Error: Packaged ffpr-export.exe --help failed under blocked TEMP (exit code $($cliHelpNoTemp.ExitCode))"
     }
 
-    # Generate short Chinese quick-start guide (<= 10 lines, UTF-8 without BOM, CRLF endings).
+    # Generate English quick-start guide with concise Chinese and Japanese appendices (UTF-8 without BOM, CRLF endings).
     $guideLines = @(
-        "FFPR 导出工具（FINAL FANTASY I–VI Pixel Remaster）使用说明",
-        "",
-        "1. 将整个压缩包完整解压到任意文件夹（不要在压缩包内直接双击运行）。",
-        "2. 保持 ffpr-export-gui.exe、ffpr-export.exe、同目录原生库（如 e_sqlite3.dll）与 known-builds.json 在同一目录。",
-        "3. 双击运行 ffpr-export-gui.exe，程序会自动扫描本机 Steam 中的 FF1–FF6。",
-        "4. 确认已勾选的游戏后，点击「开始导出」即可依次生成 SQLite 数据库。",
-        "5. 导出结果默认保存在「%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\」目录中。",
-        "6. 高级命令行用法、AGP_HOME 与说明请查看同目录的 README.md。"
+        'FFPR Export (FINAL FANTASY I-VI Pixel Remaster) - Windows Quick Start',
+        '',
+        '1. Extract the entire zip archive to a regular folder (do not run directly from inside the zip).',
+        '2. Keep ffpr-export-gui.exe, ffpr-export.exe, sibling native DLLs (e.g. e_sqlite3.dll), and known-builds.json in the same folder.',
+        '3. Double-click ffpr-export-gui.exe. It auto-scans your Steam libraries for FF1-FF6 and selects them by default.',
+        '4. Use the Language dropdown in the top-right corner to switch between English, Simplified Chinese, and Japanese.',
+        '5. Click [Start Export] to build SQLite databases sequentially. Default output: %LOCALAPPDATA%\agp\ffpr-export\output\<game>-<buildid>\',
+        '6. For CLI options (--lang, AGP_HOME, AGP_LANG) and full documentation, see README.md in this folder.',
+        '',
+        '--- 简体中文简明说明 ---',
+        '1. 请将压缩包完整解压到任意文件夹，并保持所有文件（含 e_sqlite3.dll）在同一目录。',
+        '2. 双击 ffpr-export-gui.exe，可在右上角切换语言，确认勾选的游戏后点击 [开始导出]。',
+        '3. 默认输出目录：%LOCALAPPDATA%\agp\ffpr-export\output\<游戏代号>-<构建号>\。详见 README.md。',
+        '',
+        '--- 日本語クイックガイド ---',
+        '1. zip 全体を任意のフォルダに展開し、すべてのファイル（e_sqlite3.dll を含む）を同じフォルダに置いてください。',
+        '2. ffpr-export-gui.exe を起動し、右上で言語を切り替え、ゲームを確認して [エクスポート開始] を押します。',
+        '3. 既定の出力先：%LOCALAPPDATA%\agp\ffpr-export\output\<ゲームID>-<ビルドID>\。詳細は README.md を参照してください。'
     )
-    $guideName = "使用说明.txt"
+    $guideName = "README-Windows.txt"
     $guidePath = Join-Path $packageDir $guideName
     [System.IO.File]::WriteAllText($guidePath, (($guideLines -join "`r`n") + "`r`n"), $utf8NoBom)
 
@@ -362,7 +372,7 @@ try {
         Remove-Item -LiteralPath $zipPath -Force
     }
 
-    Write-Host "==> 生成压缩包：$zipPath"
+    Write-Host "==> Creating archive: $zipPath"
     $zipEntries = @(
         Get-ChildItem -LiteralPath $packageDir -File |
             Select-Object -ExpandProperty Name
@@ -389,13 +399,16 @@ try {
     }
 
     # Inspect generated zip entries and confirm native library presence.
-    Write-Host "==> 列出压缩包内容："
+    Write-Host "==> Archive entries:"
     $verifyArchive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
     try {
         $entryNames = @($verifyArchive.Entries | Select-Object -ExpandProperty FullName)
         $verifyArchive.Entries | Select-Object FullName, Length, CompressedLength | Format-Table -AutoSize
         if ($entryNames -notcontains "e_sqlite3.dll") {
-            throw "错误：生成的压缩包中缺少原生库 e_sqlite3.dll"
+            throw "Error: Generated archive is missing native library e_sqlite3.dll"
+        }
+        if ($entryNames -notcontains "README-Windows.txt") {
+            throw "Error: Generated archive is missing README-Windows.txt"
         }
     } finally {
         $verifyArchive.Dispose()
@@ -414,11 +427,11 @@ try {
     $distSumsPath = Join-Path $distDir "SHA256SUMS"
     [System.IO.File]::WriteAllText($distSumsPath, (($releaseLines -join "`n") + "`n"), $utf8NoBom)
 
-    Write-Host "==> 打包完成：$zipPath"
+    Write-Host "==> Packaging complete: $zipPath"
     Get-Item -LiteralPath $zipPath, $distSumsPath, $distKnownBuilds | Format-Table Name, Length -AutoSize
-    Write-Host "==> 压缩包内文件与校验（zip 内 SHA256SUMS）："
+    Write-Host "==> Packaged files and checksums (inner SHA256SUMS):"
     Write-Host ($innerLines -join "`n")
-    Write-Host "==> 发布产物校验（dist/SHA256SUMS）："
+    Write-Host "==> Release asset checksums (dist/SHA256SUMS):"
     Write-Host ($releaseLines -join "`n")
 } finally {
     Pop-Location
