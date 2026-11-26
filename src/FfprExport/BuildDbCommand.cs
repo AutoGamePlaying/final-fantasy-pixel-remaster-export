@@ -592,17 +592,11 @@ internal static class BuildDbCommand
 
     private static void WriteJsonAtomically(string targetPath, object value)
     {
-        var json = JsonSerializer.Serialize(value, FieldJsonWriter.SerializerOptions) + "\n";
-        var ioTarget = PathSupport.ToIoPath(targetPath);
-        var parent = Path.GetDirectoryName(ioTarget);
-        if (!string.IsNullOrEmpty(parent))
-        {
-            Directory.CreateDirectory(parent);
-        }
-
-        var tempPath = $"{ioTarget}.{Environment.ProcessId}.{Environment.CurrentManagedThreadId}.tmp";
-        File.WriteAllText(tempPath, json, OutputGuard.Utf8WithoutBom);
-        File.Move(tempPath, ioTarget, overwrite: true);
+        TextFileWriter.WriteJsonAtomic(
+            targetPath,
+            value,
+            FieldJsonWriter.SerializerOptions,
+            trailingNewLine: true);
     }
 
     private static void PrintHelp(TextWriter outWriter)

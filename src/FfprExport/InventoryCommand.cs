@@ -299,7 +299,7 @@ internal static class InventoryCommand
         allRows.AddRange(dataRows.OrderBy(r => r.SourceFile, StringComparer.Ordinal).ThenBy(r => r.PathId));
 
         var jsonlPath = Path.Combine(outputPath, "inventory.jsonl");
-        await using (var writer = new StreamWriter(jsonlPath, false, OutputGuard.Utf8WithoutBom))
+        await using (var writer = TextFileWriter.CreateStreamWriter(jsonlPath, append: false))
         {
             foreach (var row in allRows)
             {
@@ -446,9 +446,10 @@ internal static class InventoryCommand
             failures = orderedFailures,
         };
 
-        OutputGuard.WriteUtf8Atomic(
+        TextFileWriter.WriteJsonAtomic(
             Path.Combine(outputPath, "summary.json"),
-            JsonSerializer.Serialize(summary, FieldJsonWriter.SerializerOptions));
+            summary,
+            FieldJsonWriter.SerializerOptions);
 
         var manifest = new
         {
@@ -475,9 +476,10 @@ internal static class InventoryCommand
             failureCount = orderedFailures.Length,
         };
 
-        OutputGuard.WriteUtf8Atomic(
+        TextFileWriter.WriteJsonAtomic(
             Path.Combine(outputPath, "manifest.json"),
-            JsonSerializer.Serialize(manifest, FieldJsonWriter.SerializerOptions));
+            manifest,
+            FieldJsonWriter.SerializerOptions);
 
         Console.WriteLine(
             $"[{game.Spec.Id}] 盘点完成：Unity {game.UnityVersion}，Steam buildid {game.SteamBuildId ?? "未知"}，" +

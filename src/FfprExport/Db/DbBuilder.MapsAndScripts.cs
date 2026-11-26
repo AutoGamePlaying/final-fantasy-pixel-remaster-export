@@ -766,7 +766,7 @@ internal sealed partial class DbBuilder
         string propertiesJson;
         using (var ms = new MemoryStream())
         {
-            using (var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+            using (var writer = TextFileWriter.CreateUtf8JsonWriter(ms, DbParsers.CompactWriterOptions))
             {
                 writer.WriteStartObject();
                 foreach (var (k, v) in propsMap)
@@ -865,7 +865,7 @@ internal sealed partial class DbBuilder
     private static string BuildTilemapMetaDoc(JsonElement root)
     {
         using var ms = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(ms, DbParsers.CompactWriterOptions))
         {
             writer.WriteStartObject();
             foreach (var prop in root.EnumerateObject())
@@ -887,7 +887,7 @@ internal sealed partial class DbBuilder
     private static string BuildLayerMetaDoc(JsonElement node)
     {
         using var ms = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(ms, DbParsers.CompactWriterOptions))
         {
             writer.WriteStartObject();
             foreach (var prop in node.EnumerateObject())
@@ -909,7 +909,7 @@ internal sealed partial class DbBuilder
     private static string BuildEncountGridMetaDoc(JsonElement root)
     {
         using var ms = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(ms, DbParsers.CompactWriterOptions))
         {
             writer.WriteStartObject();
             foreach (var prop in root.EnumerateObject())
@@ -931,7 +931,7 @@ internal sealed partial class DbBuilder
     private static string BuildCompactPackageDoc(JsonElement root)
     {
         using var ms = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(ms, DbParsers.CompactWriterOptions))
         {
             writer.WriteStartObject();
             foreach (var prop in root.EnumerateObject())
@@ -962,7 +962,7 @@ internal sealed partial class DbBuilder
     private static string BuildCompactPackageSubmapDoc(JsonElement mEl)
     {
         using var ms = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(ms, new JsonWriterOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(ms, DbParsers.CompactWriterOptions))
         {
             WritePackageSubmapWithoutInline(writer, mEl);
         }

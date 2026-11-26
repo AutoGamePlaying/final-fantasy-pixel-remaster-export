@@ -6,23 +6,17 @@ namespace FfprExport;
 
 internal static class FieldJsonWriter
 {
-    public static readonly JsonWriterOptions IndentedOptions = new()
-    {
-        Indented = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
+    public static readonly JsonWriterOptions IndentedOptions = TextFileWriter.CreateJsonWriterOptions(
+        indented: true,
+        encoder: JavaScriptEncoder.UnsafeRelaxedJsonEscaping);
 
-    public static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        WriteIndented = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
+    public static readonly JsonSerializerOptions SerializerOptions = TextFileWriter.CreateJsonSerializerOptions(
+        writeIndented: true,
+        encoder: JavaScriptEncoder.UnsafeRelaxedJsonEscaping);
 
-    public static readonly JsonSerializerOptions CompactSerializerOptions = new()
-    {
-        WriteIndented = false,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
+    public static readonly JsonSerializerOptions CompactSerializerOptions = TextFileWriter.CreateJsonSerializerOptions(
+        writeIndented: false,
+        encoder: JavaScriptEncoder.UnsafeRelaxedJsonEscaping);
 
     public static void WriteFieldValue(Utf8JsonWriter writer, AssetTypeValueField field)
     {

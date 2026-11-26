@@ -144,8 +144,11 @@ internal sealed partial class DbBuilder
                 TotalIssues: totalIssues,
                 Hash: hashReport);
 
-            var manifestJson = JsonSerializer.Serialize(manifest, DbParsers.PrettyJsonOptions) + "\n";
-            OutputGuard.WriteUtf8Atomic(manifestPath, manifestJson);
+            TextFileWriter.WriteJsonAtomic(
+                manifestPath,
+                manifest,
+                DbParsers.PrettyJsonOptions,
+                trailingNewLine: true);
 
             return new DbBuildReport(
                 OutputPath: fullOutPath,

@@ -33,12 +33,8 @@ internal static class GuiSettingsStore
 {
     public const string MigratedSuffix = ".migrated";
 
-    private static readonly UTF8Encoding Utf8WithoutBom = new(encoderShouldEmitUTF8Identifier: false);
-
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        WriteIndented = true,
-    };
+    private static readonly JsonSerializerOptions SerializerOptions = TextFileWriter.CreateJsonSerializerOptions(
+        writeIndented: true);
 
     public static string GetDefaultSettingsPath(
         bool? isWindowsOverride = null,
@@ -315,13 +311,6 @@ internal static class GuiSettingsStore
             return;
         }
 
-        var ioTarget = PathSupport.ToIoPath(settingsPath);
-        var parent = Path.GetDirectoryName(ioTarget);
-        if (!string.IsNullOrEmpty(parent))
-        {
-            Directory.CreateDirectory(parent);
-        }
-
         var payload = new GuiSettings
         {
             Format = 1,
@@ -329,10 +318,7 @@ internal static class GuiSettingsStore
             CheckedGames = new Dictionary<string, bool>(settings.CheckedGames, StringComparer.Ordinal),
         };
 
-        var json = JsonSerializer.Serialize(payload, SerializerOptions) + "\n";
-        var tempPath = $"{ioTarget}.{Environment.ProcessId}.{Environment.CurrentManagedThreadId}.tmp";
-        File.WriteAllText(tempPath, json, Utf8WithoutBom);
-        File.Move(tempPath, ioTarget, overwrite: true);
+        TextFileWriter.WriteJsonAtomic(settingsPath, payload, SerializerOptions, trailingNewLine: true);
     }
 
     /// <summary>

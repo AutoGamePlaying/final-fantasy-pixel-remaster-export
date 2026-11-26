@@ -929,21 +929,13 @@ internal static class SyntheticDbFixture
     {
         var fullPath = Path.Combine(root, relativeUnixPath.Replace('/', Path.DirectorySeparatorChar));
         var existing = File.ReadAllText(fullPath, Encoding.UTF8);
-        var normalized = content.Replace("\r\n", "\n", StringComparison.Ordinal);
         var sep = existing.EndsWith('\n') ? string.Empty : "\n";
-        File.WriteAllText(fullPath, existing + sep + normalized, OutputGuard.Utf8WithoutBom);
+        TextFileWriter.WriteAllText(fullPath, existing + sep + content);
     }
 
     private static void WriteText(string root, string relativeUnixPath, string content)
     {
         var fullPath = Path.Combine(root, relativeUnixPath.Replace('/', Path.DirectorySeparatorChar));
-        var dir = Path.GetDirectoryName(fullPath);
-        if (!string.IsNullOrEmpty(dir))
-        {
-            Directory.CreateDirectory(dir);
-        }
-
-        var normalized = content.Replace("\r\n", "\n", StringComparison.Ordinal);
-        File.WriteAllText(fullPath, normalized, OutputGuard.Utf8WithoutBom);
+        TextFileWriter.WriteAllText(fullPath, content);
     }
 }

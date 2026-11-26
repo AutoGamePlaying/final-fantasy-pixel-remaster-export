@@ -9,7 +9,7 @@ internal static class OutputGuard
     public const string ToolName = "ffpr-export";
     public const string DepsEnvVar = "FFPR_DEPS";
     private const string DefaultDepsRelativePath = ".deps";
-    public static readonly UTF8Encoding Utf8WithoutBom = new(false);
+    public static readonly UTF8Encoding Utf8WithoutBom = TextFileWriter.Utf8WithoutBom;
 
     public static (string FullPath, string DisplayPath, bool FromEnv) ResolveDepsRoot()
     {
@@ -276,22 +276,12 @@ internal static class OutputGuard
 
     public static long WriteUtf8Atomic(string targetPath, string content)
     {
-        var bytes = Utf8WithoutBom.GetBytes(content);
-        WriteBytesAtomic(targetPath, bytes);
-        return bytes.LongLength;
+        return TextFileWriter.WriteAllTextAtomic(targetPath, content);
     }
 
     public static void WriteBytesAtomic(string targetPath, byte[] bytes)
     {
-        var parent = Path.GetDirectoryName(targetPath);
-        if (!string.IsNullOrEmpty(parent))
-        {
-            Directory.CreateDirectory(parent);
-        }
-
-        var tempPath = $"{targetPath}.{Environment.ProcessId}.{Environment.CurrentManagedThreadId}.tmp";
-        File.WriteAllBytes(tempPath, bytes);
-        File.Move(tempPath, targetPath, overwrite: true);
+        TextFileWriter.WriteBytesAtomic(targetPath, bytes);
     }
 
     public static string FormatUtc(DateTimeOffset dto)

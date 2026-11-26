@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
-using System.Text.Json;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 
@@ -535,9 +534,10 @@ internal static class ExportCommand
             failures = orderedFailures,
         };
 
-        OutputGuard.WriteUtf8Atomic(
+        TextFileWriter.WriteJsonAtomic(
             Path.Combine(outputPath, "manifest.json"),
-            JsonSerializer.Serialize(manifest, FieldJsonWriter.SerializerOptions));
+            manifest,
+            FieldJsonWriter.SerializerOptions);
 
         Console.WriteLine(
             $"[{game.Spec.Id}] 导出完成：资产成功 {totalExportedAssets}（新增 {totalNewlyExportedAssets}，续跑跳过 {totalResumedAssets}），" +
@@ -698,29 +698,28 @@ internal static class ExportCommand
             RecordTypeSource(typeSource, ref mbTypeTreeCount, ref mbCpp2IlCount, ref mbBaseOnlyCount);
 
             var name = field["m_Name"].AsString ?? string.Empty;
-            using var ms = new MemoryStream();
-            using (var writer = new Utf8JsonWriter(ms, FieldJsonWriter.IndentedOptions))
-            {
-                writer.WriteStartObject();
-                writer.WriteString("sourceFile", sourceFile);
-                writer.WriteString("containerPath", containerPath);
-                writer.WriteNumber("pathId", info.PathId);
-                writer.WriteString("name", name);
-                writer.WriteString("scriptAssembly", script?.AssemblyName);
-                writer.WriteString("scriptNamespace", script?.Namespace);
-                writer.WriteString("scriptClass", script?.ClassName);
-                writer.WriteString("typeSource", typeSource);
-                writer.WritePropertyName("data");
-                FieldJsonWriter.WriteFieldValue(writer, field);
-                writer.WriteEndObject();
-            }
-
-            var bytes = ms.ToArray();
-            OutputGuard.WriteBytesAtomic(targetPath, bytes);
+            var bytesWritten = TextFileWriter.WriteUtf8JsonAtomic(
+                targetPath,
+                FieldJsonWriter.IndentedOptions,
+                writer =>
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("sourceFile", sourceFile);
+                    writer.WriteString("containerPath", containerPath);
+                    writer.WriteNumber("pathId", info.PathId);
+                    writer.WriteString("name", name);
+                    writer.WriteString("scriptAssembly", script?.AssemblyName);
+                    writer.WriteString("scriptNamespace", script?.Namespace);
+                    writer.WriteString("scriptClass", script?.ClassName);
+                    writer.WriteString("typeSource", typeSource);
+                    writer.WritePropertyName("data");
+                    FieldJsonWriter.WriteFieldValue(writer, field);
+                    writer.WriteEndObject();
+                });
 
             Interlocked.Increment(ref tracker.ExportedCount);
             Interlocked.Increment(ref tracker.NewlyExportedCount);
-            Interlocked.Add(ref tracker.OutputBytes, bytes.LongLength);
+            Interlocked.Add(ref tracker.OutputBytes, bytesWritten);
             Interlocked.Increment(ref filesWritten);
         }
         catch (Exception ex)
@@ -741,39 +740,37 @@ internal static class ExportCommand
             .ThenBy(x => x.PathId)
             .ToArray();
 
-        using var ms = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(ms, FieldJsonWriter.IndentedOptions))
-        {
-            writer.WriteStartObject();
-            writer.WriteString("sourceFile", sourceFile);
-            writer.WriteNumber("count", ordered.Length);
-            writer.WritePropertyName("monoBehaviours");
-            writer.WriteStartArray();
-
-            foreach (var item in ordered)
+        return TextFileWriter.WriteUtf8JsonAtomic(
+            targetPath,
+            FieldJsonWriter.IndentedOptions,
+            writer =>
             {
                 writer.WriteStartObject();
-                writer.WriteString("assetsFile", item.AssetsFile);
-                writer.WriteNumber("pathId", item.PathId);
-                writer.WriteNumber("gameObjectPathId", item.GameObjectPathId);
-                writer.WriteString("gameObjectName", item.GameObjectName);
-                writer.WriteString("name", item.Name);
-                writer.WriteString("scriptAssembly", item.ScriptAssembly);
-                writer.WriteString("scriptNamespace", item.ScriptNamespace);
-                writer.WriteString("scriptClass", item.ScriptClass);
-                writer.WriteString("typeSource", item.TypeSource);
-                writer.WritePropertyName("data");
-                FieldJsonWriter.WriteFieldValue(writer, item.Field);
+                writer.WriteString("sourceFile", sourceFile);
+                writer.WriteNumber("count", ordered.Length);
+                writer.WritePropertyName("monoBehaviours");
+                writer.WriteStartArray();
+
+                foreach (var item in ordered)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("assetsFile", item.AssetsFile);
+                    writer.WriteNumber("pathId", item.PathId);
+                    writer.WriteNumber("gameObjectPathId", item.GameObjectPathId);
+                    writer.WriteString("gameObjectName", item.GameObjectName);
+                    writer.WriteString("name", item.Name);
+                    writer.WriteString("scriptAssembly", item.ScriptAssembly);
+                    writer.WriteString("scriptNamespace", item.ScriptNamespace);
+                    writer.WriteString("scriptClass", item.ScriptClass);
+                    writer.WriteString("typeSource", item.TypeSource);
+                    writer.WritePropertyName("data");
+                    FieldJsonWriter.WriteFieldValue(writer, item.Field);
+                    writer.WriteEndObject();
+                }
+
+                writer.WriteEndArray();
                 writer.WriteEndObject();
-            }
-
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        }
-
-        var bytes = ms.ToArray();
-        OutputGuard.WriteBytesAtomic(targetPath, bytes);
-        return bytes.LongLength;
+            });
     }
 
     private static void RecordTypeSource(
@@ -823,8 +820,9 @@ internal static class ExportCommand
             startedAt = OutputGuard.FormatUtc(startedAt),
         };
 
-        OutputGuard.WriteUtf8Atomic(
+        TextFileWriter.WriteJsonAtomic(
             Path.Combine(outputPath, "manifest.json"),
-            JsonSerializer.Serialize(sentinel, FieldJsonWriter.SerializerOptions));
+            sentinel,
+            FieldJsonWriter.SerializerOptions);
     }
 }

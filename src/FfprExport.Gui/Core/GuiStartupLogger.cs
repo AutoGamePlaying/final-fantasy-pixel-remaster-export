@@ -124,8 +124,6 @@ internal sealed partial class GuiStartupLogger
 {
     public const int DefaultMaxLogFiles = 10;
 
-    private static readonly UTF8Encoding Utf8WithoutBom = new(encoderShouldEmitUTF8Identifier: false);
-
     [GeneratedRegex(@"^gui-(\d{8}-\d{6})(?:-(\d+))?\.log$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex LogFileNameRegex();
 
@@ -635,7 +633,7 @@ internal sealed partial class GuiStartupLogger
                     FileMode.Append,
                     FileAccess.Write,
                     FileShare.ReadWrite);
-                using var writer = new StreamWriter(stream, Utf8WithoutBom);
+                using var writer = TextFileWriter.CreateStreamWriter(stream, leaveOpen: true);
                 writer.Write(text);
                 writer.Flush();
             }
@@ -668,7 +666,7 @@ internal sealed partial class GuiStartupLogger
             try
             {
                 using var stream = new FileStream(ioPath, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite);
-                using var writer = new StreamWriter(stream, Utf8WithoutBom);
+                using var writer = TextFileWriter.CreateStreamWriter(stream, leaveOpen: true);
                 writer.Write(payload);
                 writer.Flush();
                 return candidatePath;
@@ -681,7 +679,7 @@ internal sealed partial class GuiStartupLogger
 
         var fallbackPath = Path.Combine(logDirectory, $"gui-{baseStamp}-{Environment.ProcessId}.log");
         using (var stream = new FileStream(PathSupport.ToIoPath(fallbackPath), FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-        using (var writer = new StreamWriter(stream, Utf8WithoutBom))
+        using (var writer = TextFileWriter.CreateStreamWriter(stream, leaveOpen: true))
         {
             writer.Write(payload);
             writer.Flush();

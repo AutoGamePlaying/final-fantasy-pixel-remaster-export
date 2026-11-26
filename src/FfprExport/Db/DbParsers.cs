@@ -10,17 +10,17 @@ namespace FfprExport.Db;
 
 internal static partial class DbParsers
 {
-    public static readonly JsonSerializerOptions CompactJsonOptions = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented = false,
-    };
+    public static readonly JsonSerializerOptions CompactJsonOptions = TextFileWriter.CreateJsonSerializerOptions(
+        writeIndented: false,
+        encoder: JavaScriptEncoder.UnsafeRelaxedJsonEscaping);
 
-    public static readonly JsonSerializerOptions PrettyJsonOptions = new()
-    {
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented = true,
-    };
+    public static readonly JsonSerializerOptions PrettyJsonOptions = TextFileWriter.CreateJsonSerializerOptions(
+        writeIndented: true,
+        encoder: JavaScriptEncoder.UnsafeRelaxedJsonEscaping);
+
+    public static readonly JsonWriterOptions CompactWriterOptions = TextFileWriter.CreateJsonWriterOptions(
+        indented: false,
+        encoder: JavaScriptEncoder.UnsafeRelaxedJsonEscaping);
 
     // Strips FFPR control/icon/Korean-particle tags such as <IC_BAG>, <P>, <CT>, <WAIT00>, <josa(이,가)>.
     [GeneratedRegex(@"<[A-Za-z][^>]*>", RegexOptions.CultureInvariant)]
@@ -181,7 +181,7 @@ internal static partial class DbParsers
     public static string SerializeRowObject(IReadOnlyList<string> headers, string[] row)
     {
         using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(stream, CompactWriterOptions))
         {
             writer.WriteStartObject();
             for (var i = 0; i < headers.Count; i++)
@@ -204,7 +204,7 @@ internal static partial class DbParsers
     public static string NormalizeJson(JsonElement element)
     {
         using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(stream, CompactWriterOptions))
         {
             element.WriteTo(writer);
         }
@@ -215,7 +215,7 @@ internal static partial class DbParsers
     public static string SerializeRawTextAsJson(string rawText)
     {
         using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }))
+        using (var writer = TextFileWriter.CreateUtf8JsonWriter(stream, CompactWriterOptions))
         {
             writer.WriteStartObject();
             writer.WriteString("raw", rawText);

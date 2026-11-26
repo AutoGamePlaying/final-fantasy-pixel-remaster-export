@@ -18,6 +18,7 @@
     <Compile Include="..\FfprExport\AgpPaths.cs" Link="Shared\AgpPaths.cs" />
     <Compile Include="..\FfprExport\PathSupport.cs" Link="Shared\PathSupport.cs" />
     <Compile Include="..\FfprExport\SteamLocator.cs" Link="Shared\SteamLocator.cs" />
+    <Compile Include="..\FfprExport\TextFileWriter.cs" Link="Shared\TextFileWriter.cs" />
   </ItemGroup>
   <Target Name="EmbedGitCommitMetadata" BeforeTargets="GetAssemblyAttributes">
     <Exec Condition="'$(FfprGitCommit)' == ''"
