@@ -16,6 +16,11 @@ internal sealed class GuiSettings
     public Dictionary<string, bool> CheckedGames { get; set; } = new(StringComparer.Ordinal);
 }
 
+internal sealed record GuiSettingsLoadResult(
+    GuiSettings Settings,
+    string? WarningMessage,
+    Exception? Error);
+
 /// <summary>
 /// Persists last output root directory and per-game checkbox selections to
 /// %APPDATA%\ffpr-export\settings.json without touching the Windows Registry.
@@ -29,48 +34,147 @@ internal static class GuiSettingsStore
         WriteIndented = true,
     };
 
-    public static string GetDefaultSettingsPath(string? appDataOverride = null)
+    public static string GetDefaultSettingsPath(
+        string? appDataOverride = null,
+        Func<string?>? systemAppDataProvider = null,
+        string? fallbackBaseDirectory = null,
+        string? tempDirectoryOverride = null)
     {
-        var appData = !string.IsNullOrWhiteSpace(appDataOverride)
-            ? appDataOverride.Trim()
-            : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string? appData = null;
+        if (!string.IsNullOrWhiteSpace(appDataOverride))
+        {
+            appData = appDataOverride.Trim();
+        }
+        else
+        {
+            try
+            {
+                appData = systemAppDataProvider is not null
+                    ? systemAppDataProvider()
+                    : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            }
+            catch
+            {
+                appData = null;
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(appData))
         {
-            appData = AppContext.BaseDirectory;
+            appData = !string.IsNullOrWhiteSpace(fallbackBaseDirectory)
+                ? fallbackBaseDirectory.Trim()
+                : AppContext.BaseDirectory;
         }
 
-        return Path.Combine(appData, GuiOutputPlanner.ToolName, "settings.json");
-    }
-
-    public static GuiSettings Load(string settingsPath)
-    {
-        if (string.IsNullOrWhiteSpace(settingsPath))
+        if (string.IsNullOrWhiteSpace(appData))
         {
-            return new GuiSettings();
-        }
-
-        var ioPath = PathSupport.ToIoPath(settingsPath);
-        if (!File.Exists(ioPath))
-        {
-            return new GuiSettings();
+            try
+            {
+                appData = !string.IsNullOrWhiteSpace(tempDirectoryOverride)
+                    ? tempDirectoryOverride.Trim()
+                    : Path.GetTempPath();
+            }
+            catch
+            {
+                appData = ".";
+            }
         }
 
         try
         {
-            var json = File.ReadAllText(ioPath, Encoding.UTF8);
-            var parsed = JsonSerializer.Deserialize<GuiSettings>(json);
-            if (parsed is null)
-            {
-                return new GuiSettings();
-            }
-
-            parsed.CheckedGames ??= new Dictionary<string, bool>(StringComparer.Ordinal);
-            return parsed;
+            return Path.Combine(appData, GuiOutputPlanner.ToolName, "settings.json");
         }
         catch
         {
-            return new GuiSettings();
+            return Path.Combine(".", GuiOutputPlanner.ToolName, "settings.json");
+        }
+    }
+
+    public static GuiSettings Load(string settingsPath)
+    {
+        return LoadWithDiagnostics(settingsPath).Settings;
+    }
+
+    public static GuiSettingsLoadResult LoadWithDiagnostics(
+        string? settingsPath,
+        Func<string, string>? readAllText = null)
+    {
+        if (string.IsNullOrWhiteSpace(settingsPath))
+        {
+            return new GuiSettingsLoadResult(new GuiSettings(), WarningMessage: null, Error: null);
+        }
+
+        string ioPath;
+        try
+        {
+            var fullPath = Path.GetFullPath(settingsPath);
+            ioPath = PathSupport.ToIoPath(fullPath);
+        }
+        catch (Exception ex)
+        {
+            return new GuiSettingsLoadResult(
+                new GuiSettings(),
+                $"读取设置失败：设置文件路径无效（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                ex);
+        }
+
+        try
+        {
+            string json;
+            if (readAllText is not null)
+            {
+                json = readAllText(ioPath);
+            }
+            else
+            {
+                if (Directory.Exists(ioPath))
+                {
+                    return new GuiSettingsLoadResult(
+                        new GuiSettings(),
+                        $"读取设置失败：设置路径指向目录而非文件（{settingsPath}）；已改用默认设置。",
+                        null);
+                }
+
+                if (!File.Exists(ioPath))
+                {
+                    return new GuiSettingsLoadResult(new GuiSettings(), WarningMessage: null, Error: null);
+                }
+
+                json = File.ReadAllText(ioPath, Encoding.UTF8);
+            }
+
+            var parsed = JsonSerializer.Deserialize<GuiSettings>(json);
+            if (parsed is null)
+            {
+                return new GuiSettingsLoadResult(
+                    new GuiSettings(),
+                    $"读取设置失败：设置文件内容为空或格式无效（{settingsPath}）；已改用默认设置。",
+                    null);
+            }
+
+            parsed.CheckedGames ??= new Dictionary<string, bool>(StringComparer.Ordinal);
+            return new GuiSettingsLoadResult(parsed, WarningMessage: null, Error: null);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return new GuiSettingsLoadResult(
+                new GuiSettings(),
+                $"读取设置失败：没有读取权限（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                ex);
+        }
+        catch (JsonException ex)
+        {
+            return new GuiSettingsLoadResult(
+                new GuiSettings(),
+                $"读取设置失败：设置文件已损坏，JSON 解析出错（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                ex);
+        }
+        catch (Exception ex)
+        {
+            return new GuiSettingsLoadResult(
+                new GuiSettings(),
+                $"读取设置失败（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                ex);
         }
     }
 

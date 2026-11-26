@@ -3,6 +3,11 @@ using System.Text.Json;
 
 namespace FfprExport.Gui;
 
+internal sealed record GuiOutputRootResolution(
+    string OutputRoot,
+    bool UsedFallback,
+    string? WarningMessage);
+
 /// <summary>
 /// Computes default per-game output paths under Documents\FF-Export\&lt;ffN&gt;-&lt;buildid&gt;,
 /// inspects existing output directories, and plans safe exports.
@@ -29,25 +34,178 @@ internal static class GuiOutputPlanner
                 Path.Combine(userProfileDirectory.Trim(), "Documents", DefaultExportRootFolderName));
         }
 
-        var systemDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var resolved = ResolveDefaultOutputRoot(
+            getBaseDirectory: () => string.IsNullOrWhiteSpace(fallbackBaseDirectory)
+                ? AppContext.BaseDirectory
+                : fallbackBaseDirectory.Trim());
+        return resolved.OutputRoot;
+    }
+
+    /// <summary>
+    /// Resolves the default export root while guarding against redirected, missing, or inaccessible
+    /// Documents / UserProfile folders. Never throws; returns a Chinese diagnostic warning when a
+    /// fallback location is chosen so the GUI can inform the user and let them browse manually.
+    /// </summary>
+    public static GuiOutputRootResolution ResolveDefaultOutputRoot(
+        Func<string?>? getDocumentsDirectory = null,
+        Func<string?>? getUserProfileDirectory = null,
+        Func<string?>? getBaseDirectory = null,
+        Func<string?>? getTempDirectory = null,
+        Func<string, bool>? directoryExists = null)
+    {
+        var existsCheck = directoryExists ?? TryDirectoryExistsSafe;
+        var docsReason = string.Empty;
+
+        var systemDocs = TryInvokePathProvider(
+            getDocumentsDirectory ?? (() => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)),
+            out var docsError);
         if (!string.IsNullOrWhiteSpace(systemDocs))
         {
-            return PathSupport.TrimTrailingSeparators(
-                Path.Combine(systemDocs, DefaultExportRootFolderName));
-        }
+            if (TryCheckDirectoryExists(systemDocs, existsCheck, out var existsError))
+            {
+                if (TryCombineOutputRoot(systemDocs, DefaultExportRootFolderName, out var docsOutRoot))
+                {
+                    return new GuiOutputRootResolution(docsOutRoot, UsedFallback: false, WarningMessage: null);
+                }
 
-        var systemProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        if (!string.IsNullOrWhiteSpace(systemProfile))
+                docsReason = $"「文档」路径格式无效：{systemDocs}";
+            }
+            else
+            {
+                docsReason = string.IsNullOrWhiteSpace(existsError)
+                    ? $"「文档」目录不存在或被重定向到不可用位置：{systemDocs}"
+                    : $"检查「文档」目录失败（{systemDocs}）：{existsError}";
+            }
+        }
+        else
         {
-            return PathSupport.TrimTrailingSeparators(
-                Path.Combine(systemProfile, "Documents", DefaultExportRootFolderName));
+            docsReason = string.IsNullOrWhiteSpace(docsError)
+                ? "系统未返回「文档」目录路径"
+                : $"读取系统「文档」目录失败：{docsError}";
         }
 
-        var fallback = string.IsNullOrWhiteSpace(fallbackBaseDirectory)
-            ? AppContext.BaseDirectory
-            : fallbackBaseDirectory.Trim();
-        return PathSupport.TrimTrailingSeparators(
-            Path.Combine(fallback, DefaultExportRootFolderName));
+        var systemProfile = TryInvokePathProvider(
+            getUserProfileDirectory ?? (() => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            out _);
+        if (!string.IsNullOrWhiteSpace(systemProfile)
+            && TryCheckDirectoryExists(systemProfile, existsCheck, out _))
+        {
+            var profileDocs = TryCombine(systemProfile, "Documents");
+            if (!string.IsNullOrWhiteSpace(profileDocs)
+                && TryCheckDirectoryExists(profileDocs, existsCheck, out _)
+                && TryCombineOutputRoot(profileDocs, DefaultExportRootFolderName, out var profileDocsOut))
+            {
+                return new GuiOutputRootResolution(
+                    profileDocsOut,
+                    UsedFallback: true,
+                    WarningMessage: $"默认输出位置回退：{docsReason}；已改用 {profileDocsOut}，也可点击「浏览…」手动选择。");
+            }
+
+            if (TryCombineOutputRoot(systemProfile, DefaultExportRootFolderName, out var profileOut))
+            {
+                return new GuiOutputRootResolution(
+                    profileOut,
+                    UsedFallback: true,
+                    WarningMessage: $"默认输出位置回退：{docsReason}；已改用 {profileOut}，也可点击「浏览…」手动选择。");
+            }
+        }
+
+        var baseDir = TryInvokePathProvider(
+            getBaseDirectory ?? (() => AppContext.BaseDirectory),
+            out _);
+        if (!string.IsNullOrWhiteSpace(baseDir)
+            && TryCheckDirectoryExists(baseDir, existsCheck, out _)
+            && TryCombineOutputRoot(baseDir, DefaultExportRootFolderName, out var baseOut))
+        {
+            return new GuiOutputRootResolution(
+                baseOut,
+                UsedFallback: true,
+                WarningMessage: $"默认输出位置回退：{docsReason}；已改用程序目录 {baseOut}，也可点击「浏览…」手动选择。");
+        }
+
+        var tempDir = TryInvokePathProvider(
+            getTempDirectory ?? Path.GetTempPath,
+            out _);
+        if (!string.IsNullOrWhiteSpace(tempDir)
+            && TryCombineOutputRoot(tempDir, DefaultExportRootFolderName, out var tempOut))
+        {
+            return new GuiOutputRootResolution(
+                tempOut,
+                UsedFallback: true,
+                WarningMessage: $"默认输出位置回退：{docsReason}；已改用临时目录 {tempOut}，建议点击「浏览…」手动选择输出目录。");
+        }
+
+        return new GuiOutputRootResolution(
+            DefaultExportRootFolderName,
+            UsedFallback: true,
+            WarningMessage: $"默认输出位置回退：{docsReason}；未能确定默认绝对路径，请点击「浏览…」手动选择输出目录。");
+    }
+
+    private static string? TryInvokePathProvider(Func<string?> provider, out string? error)
+    {
+        error = null;
+        try
+        {
+            var value = provider();
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return null;
+        }
+    }
+
+    private static bool TryCheckDirectoryExists(string path, Func<string, bool> existsCheck, out string? error)
+    {
+        error = null;
+        try
+        {
+            return existsCheck(path);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
+    private static bool TryDirectoryExistsSafe(string path)
+    {
+        try
+        {
+            return Directory.Exists(PathSupport.ToIoPath(path));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string? TryCombine(string parent, string child)
+    {
+        try
+        {
+            return Path.Combine(parent, child);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static bool TryCombineOutputRoot(string parent, string child, out string combined)
+    {
+        combined = string.Empty;
+        try
+        {
+            combined = PathSupport.TrimTrailingSeparators(Path.Combine(parent, child));
+            return !string.IsNullOrWhiteSpace(combined);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public static string BuildGameFolderName(string gameId, string? steamBuildId)

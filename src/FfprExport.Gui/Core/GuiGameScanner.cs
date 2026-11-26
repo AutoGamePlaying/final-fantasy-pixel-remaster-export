@@ -2,6 +2,11 @@ using System.Text;
 
 namespace FfprExport.Gui;
 
+internal sealed record GuiSteamScanResult(
+    IReadOnlyList<GuiGameEntry> Games,
+    string? WarningMessage,
+    Exception? Error);
+
 /// <summary>
 /// Discovers FF1-FF6 Pixel Remaster installations via the shared SteamLocator and validates
 /// manually selected game directories without pulling AssetsTools.NET into the GUI binary.
@@ -14,6 +19,39 @@ internal static class GuiGameScanner
     public static IReadOnlyList<GuiGameEntry> DiscoverSteamGames()
     {
         return MapDiscoveredGames(SteamLocator.DiscoverGames());
+    }
+
+    public static GuiSteamScanResult DiscoverSteamGamesSafe(
+        Func<IReadOnlyList<GuiGameEntry>>? discoverOverride = null)
+    {
+        try
+        {
+            var games = discoverOverride is not null
+                ? discoverOverride()
+                : DiscoverSteamGames();
+            return new GuiSteamScanResult(games ?? [], WarningMessage: null, Error: null);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return new GuiSteamScanResult(
+                [],
+                $"扫描 Steam 游戏库时无权访问注册表或目录：{ex.Message}；请点击「手动选择游戏目录…」添加。",
+                ex);
+        }
+        catch (System.Security.SecurityException ex)
+        {
+            return new GuiSteamScanResult(
+                [],
+                $"扫描 Steam 游戏库时受安全策略限制：{ex.Message}；请点击「手动选择游戏目录…」添加。",
+                ex);
+        }
+        catch (Exception ex)
+        {
+            return new GuiSteamScanResult(
+                [],
+                $"扫描 Steam 游戏库失败：{ex.Message}；请点击「手动选择游戏目录…」添加。",
+                ex);
+        }
     }
 
     internal static IReadOnlyList<GuiGameEntry> DiscoverGamesInSteamRoots(IEnumerable<string> steamRoots)

@@ -5,6 +5,12 @@ using System.Text.RegularExpressions;
 
 namespace FfprExport.Gui;
 
+internal sealed record CliLookupResult(
+    string? ResolvedPath,
+    string ExpectedPath,
+    string? WarningMessage,
+    Exception? Error);
+
 /// <summary>
 /// Locates the sibling CLI executable, constructs build-db arguments, parses step progress lines,
 /// and configures UTF-8 ProcessStartInfo without invoking a shell.
@@ -44,6 +50,66 @@ internal static partial class CliCommandHelper
         }
 
         return (null, Path.GetFullPath(expectedPath));
+    }
+
+    public static CliLookupResult FindCliExecutableSafe(
+        string? baseDirectory,
+        string? processPath = null,
+        string cliFileName = CliExecutableFileName,
+        Func<string, bool>? fileExists = null)
+    {
+        var existsCheck = fileExists ?? (path => File.Exists(PathSupport.ToIoPath(path)));
+        var fallbackExpected = string.IsNullOrWhiteSpace(cliFileName) ? CliExecutableFileName : cliFileName;
+
+        try
+        {
+            var normalizedBase = string.IsNullOrWhiteSpace(baseDirectory)
+                ? AppContext.BaseDirectory
+                : baseDirectory;
+            var expectedPath = Path.Combine(normalizedBase, cliFileName);
+            string fullExpected;
+            try
+            {
+                fullExpected = Path.GetFullPath(expectedPath);
+            }
+            catch
+            {
+                fullExpected = expectedPath;
+            }
+
+            if (existsCheck(expectedPath))
+            {
+                return new CliLookupResult(fullExpected, fullExpected, WarningMessage: null, Error: null);
+            }
+
+            if (!string.IsNullOrWhiteSpace(processPath))
+            {
+                var processDir = Path.GetDirectoryName(processPath);
+                if (!string.IsNullOrWhiteSpace(processDir))
+                {
+                    var processCandidate = Path.Combine(processDir, cliFileName);
+                    if (existsCheck(processCandidate))
+                    {
+                        var fullCandidate = Path.GetFullPath(processCandidate);
+                        return new CliLookupResult(fullCandidate, fullExpected, WarningMessage: null, Error: null);
+                    }
+                }
+            }
+
+            return new CliLookupResult(
+                ResolvedPath: null,
+                ExpectedPath: fullExpected,
+                WarningMessage: $"未找到同目录命令行程序 {cliFileName}（预期位置：{fullExpected}），导出前请确认压缩包已完整解压。",
+                Error: null);
+        }
+        catch (Exception ex)
+        {
+            return new CliLookupResult(
+                ResolvedPath: null,
+                ExpectedPath: fallbackExpected,
+                WarningMessage: $"检查命令行程序 {cliFileName} 时出错：{ex.Message}。",
+                Error: ex);
+        }
     }
 
     public static string FormatMissingCliMessage(string expectedPath)

@@ -14,9 +14,12 @@ internal sealed class MainForm : Form
     private const int MaxLogCharacters = 500_000;
 
     private readonly bool _skipInitialLoad;
+    private readonly GuiStartupLogger? _startupLogger;
     private readonly string _settingsPath;
     private readonly List<GuiGameEntry> _games = [];
     private readonly List<GuiGameExportResult> _results = [];
+    private readonly List<Font> _ownedFonts = [];
+    private readonly List<string> _startupWarnings = [];
 
     private readonly Font _uiFont;
     private readonly Font _boldButtonFont;
@@ -49,24 +52,43 @@ internal sealed class MainForm : Form
     private Label _copyFeedbackLabel = null!;
 
     private GuiSettings _settings = new();
+    private bool _initialStateLoaded;
     private bool _suppressItemChecked;
+    private bool _suppressOutputWarningClear;
     private bool _isExporting;
     private bool _closeAfterCancel;
+    private string? _lastScanWarning;
+    private string? _outputRootFallbackWarning;
     private CancellationTokenSource? _exportCts;
 
-    public MainForm(bool skipInitialLoad = false, string? settingsPathOverride = null)
+    public MainForm(
+        bool skipInitialLoad = false,
+        string? settingsPathOverride = null,
+        GuiStartupLogger? startupLogger = null)
     {
         _skipInitialLoad = skipInitialLoad;
-        _settingsPath = string.IsNullOrWhiteSpace(settingsPathOverride)
-            ? GuiSettingsStore.GetDefaultSettingsPath()
-            : settingsPathOverride;
+        _startupLogger = startupLogger;
+        _settingsPath = ResolveSettingsPathSafely(settingsPathOverride);
 
-        _uiFont = new Font("Microsoft YaHei UI", 9.5f, FontStyle.Regular, GraphicsUnit.Point);
-        _boldButtonFont = new Font("Microsoft YaHei UI", 10.5f, FontStyle.Bold, GraphicsUnit.Point);
-        _logFont = new Font("Consolas", 9f, FontStyle.Regular, GraphicsUnit.Point);
-        _verdictFont = new Font("Microsoft YaHei UI", 9.5f, FontStyle.Bold, GraphicsUnit.Point);
+        _uiFont = CreateFontSafe("界面字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Regular);
+        _boldButtonFont = CreateFontSafe("主按钮字体", GuiFontFallbackPolicy.UiFontCandidates, 10.5f, FontStyle.Bold);
+        _logFont = CreateFontSafe("日志等宽字体", GuiFontFallbackPolicy.LogFontCandidates, 9f, FontStyle.Regular);
+        _verdictFont = CreateFontSafe("结论标题字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Bold);
 
         InitializeLayout();
+        FlushStartupWarningsToUi();
+    }
+
+    internal void RunSelfTestInitialization()
+    {
+        CreateControl();
+        EnsureNativeHandlesCreated(this);
+        if (!_skipInitialLoad)
+        {
+            EnsureInitialStateLoaded();
+        }
+
+        PerformLayout();
     }
 
     protected override void Dispose(bool disposing)
@@ -74,10 +96,19 @@ internal sealed class MainForm : Form
         if (disposing)
         {
             _exportCts?.Dispose();
-            _uiFont.Dispose();
-            _boldButtonFont.Dispose();
-            _logFont.Dispose();
-            _verdictFont.Dispose();
+            foreach (var font in _ownedFonts)
+            {
+                try
+                {
+                    font.Dispose();
+                }
+                catch
+                {
+                    // Ignore font disposal errors during teardown.
+                }
+            }
+
+            _ownedFonts.Clear();
         }
 
         base.Dispose(disposing);
@@ -91,7 +122,14 @@ internal sealed class MainForm : Form
             return;
         }
 
-        LoadInitialState();
+        try
+        {
+            EnsureInitialStateLoaded();
+        }
+        catch (Exception ex)
+        {
+            LogStartupDiagnosticWarning($"初始化主窗口状态时发生异常：{ex.Message}；您仍可手动选择目录。", ex, "MainForm.OnLoad");
+        }
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
@@ -294,7 +332,15 @@ internal sealed class MainForm : Form
             Dock = DockStyle.Fill,
             Margin = new Padding(0, 2, 8, 2),
         };
-        _outputRootTextBox.TextChanged += (_, _) => UpdateOutputPreview();
+        _outputRootTextBox.TextChanged += (_, _) =>
+        {
+            if (!_suppressOutputWarningClear)
+            {
+                _outputRootFallbackWarning = null;
+            }
+
+            UpdateOutputPreview();
+        };
 
         _browseOutputButton = new Button
         {
@@ -567,22 +613,79 @@ internal sealed class MainForm : Form
         panel.Controls.Add(valueControl, 1, rowIndex);
     }
 
+    private void EnsureInitialStateLoaded()
+    {
+        if (_initialStateLoaded)
+        {
+            return;
+        }
+
+        _initialStateLoaded = true;
+        LoadInitialState();
+    }
+
     private void LoadInitialState()
     {
-        _settings = GuiSettingsStore.Load(_settingsPath);
-        var defaultRoot = GuiOutputPlanner.GetDefaultOutputRoot();
-        _outputRootTextBox.Text = string.IsNullOrWhiteSpace(_settings.OutputRoot)
-            ? defaultRoot
-            : _settings.OutputRoot.Trim();
+        if (!string.IsNullOrWhiteSpace(_startupLogger?.InitializationWarning))
+        {
+            AppendLogLine($"提示：{_startupLogger.InitializationWarning}");
+        }
+
+        try
+        {
+            var settingsResult = GuiSettingsStore.LoadWithDiagnostics(_settingsPath);
+            _settings = settingsResult.Settings;
+            if (!string.IsNullOrWhiteSpace(settingsResult.WarningMessage))
+            {
+                LogStartupDiagnosticWarning(settingsResult.WarningMessage, settingsResult.Error, "LoadSettings");
+            }
+        }
+        catch (Exception ex)
+        {
+            _settings = new GuiSettings();
+            LogStartupDiagnosticWarning($"读取设置失败（{_settingsPath}）：{ex.Message}；已改用默认设置。", ex, "LoadSettings");
+        }
+
+        _outputRootFallbackWarning = null;
+        try
+        {
+            _suppressOutputWarningClear = true;
+            if (!string.IsNullOrWhiteSpace(_settings.OutputRoot))
+            {
+                _outputRootTextBox.Text = _settings.OutputRoot.Trim();
+            }
+            else
+            {
+                var resolution = GuiOutputPlanner.ResolveDefaultOutputRoot();
+                if (resolution.UsedFallback && !string.IsNullOrWhiteSpace(resolution.WarningMessage))
+                {
+                    _outputRootFallbackWarning = resolution.WarningMessage;
+                    LogStartupDiagnosticWarning(resolution.WarningMessage, error: null, "ResolveDefaultOutputRoot");
+                }
+
+                _outputRootTextBox.Text = resolution.OutputRoot;
+            }
+        }
+        catch (Exception ex)
+        {
+            _outputRootFallbackWarning = $"确定默认输出目录失败：{ex.Message}；请点击「浏览…」手动选择。";
+            _outputRootTextBox.Text = GuiOutputPlanner.DefaultExportRootFolderName;
+            LogStartupDiagnosticWarning(_outputRootFallbackWarning, ex, "ResolveDefaultOutputRoot");
+        }
+        finally
+        {
+            _suppressOutputWarningClear = false;
+        }
 
         ScanSteamGames(preserveManualEntries: false);
 
-        var (cliPath, expectedCliPath) = CliCommandHelper.FindCliExecutable(
+        var cliLookup = CliCommandHelper.FindCliExecutableSafe(
             AppContext.BaseDirectory,
             Environment.ProcessPath);
-        if (cliPath is null)
+        if (cliLookup.ResolvedPath is null && !string.IsNullOrWhiteSpace(cliLookup.WarningMessage))
         {
-            AppendLogLine($"警告：未找到同目录命令行程序 {CliCommandHelper.CliExecutableFileName}（预期位置：{expectedCliPath}）");
+            LogStartupDiagnosticWarning(cliLookup.WarningMessage, cliLookup.Error, "FindCliExecutable");
+            _progressLabel.Text = $"警告：{cliLookup.WarningMessage}";
         }
     }
 
@@ -593,16 +696,14 @@ internal sealed class MainForm : Form
             ? _games.Where(g => g.IsManual).ToList()
             : [];
 
-        IReadOnlyList<GuiGameEntry> discovered;
-        try
+        var scanResult = GuiGameScanner.DiscoverSteamGamesSafe();
+        _lastScanWarning = scanResult.WarningMessage;
+        if (!string.IsNullOrWhiteSpace(scanResult.WarningMessage))
         {
-            discovered = GuiGameScanner.DiscoverSteamGames();
+            LogStartupDiagnosticWarning(scanResult.WarningMessage, scanResult.Error, "ScanSteamGames");
         }
-        catch (Exception ex)
-        {
-            AppendLogLine($"提示：扫描 Steam 游戏库时出现异常：{ex.Message}");
-            discovered = [];
-        }
+
+        var discovered = scanResult.Games;
 
         _games.Clear();
         var seenKeys = new HashSet<string>(GuiGameScanner.PathComparer);
@@ -796,7 +897,7 @@ internal sealed class MainForm : Form
         };
 
         var currentRoot = GuiGameScanner.NormalizeUserPath(_outputRootTextBox.Text);
-        if (!string.IsNullOrWhiteSpace(currentRoot) && Directory.Exists(PathSupport.ToIoPath(currentRoot)))
+        if (TryDirectoryExists(currentRoot))
         {
             dialog.SelectedPath = currentRoot;
         }
@@ -814,19 +915,24 @@ internal sealed class MainForm : Form
             return;
         }
 
-        var (cliPath, expectedCliPath) = CliCommandHelper.FindCliExecutable(
+        var cliLookup = CliCommandHelper.FindCliExecutableSafe(
             AppContext.BaseDirectory,
             Environment.ProcessPath);
-        if (cliPath is null)
+        if (cliLookup.ResolvedPath is null)
         {
+            var missingText = cliLookup.Error is not null && !string.IsNullOrWhiteSpace(cliLookup.WarningMessage)
+                ? cliLookup.WarningMessage
+                : CliCommandHelper.FormatMissingCliMessage(cliLookup.ExpectedPath);
             MessageBox.Show(
                 this,
-                CliCommandHelper.FormatMissingCliMessage(expectedCliPath),
+                missingText,
                 "缺少命令行程序",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
             return;
         }
+
+        var cliPath = cliLookup.ResolvedPath;
 
         var selectedGames = GetCheckedGames();
         if (selectedGames.Count == 0)
@@ -1146,16 +1252,23 @@ internal sealed class MainForm : Form
         string? targetDir = null;
         if (_resultsListView.SelectedItems.Count > 0
             && _resultsListView.SelectedItems[0].Tag is GuiGameExportResult selected
-            && Directory.Exists(PathSupport.ToIoPath(selected.OutputDirectory)))
+            && TryDirectoryExists(selected.OutputDirectory))
         {
             targetDir = selected.OutputDirectory;
         }
         else
         {
             var root = GuiGameScanner.NormalizeUserPath(_outputRootTextBox.Text);
-            if (!string.IsNullOrWhiteSpace(root) && Directory.Exists(PathSupport.ToIoPath(root)))
+            if (TryDirectoryExists(root))
             {
-                targetDir = Path.GetFullPath(root);
+                try
+                {
+                    targetDir = Path.GetFullPath(root);
+                }
+                catch
+                {
+                    targetDir = root;
+                }
             }
         }
 
@@ -1246,7 +1359,16 @@ internal sealed class MainForm : Form
         {
             _selectAllCheckBox.CheckState = CheckState.Unchecked;
             _selectAllCheckBox.Enabled = !_isExporting && false;
-            _selectionSummaryLabel.Text = "未自动找到 FF1–FF6，请点击“手动选择游戏目录…”添加";
+            if (!string.IsNullOrWhiteSpace(_lastScanWarning))
+            {
+                _selectionSummaryLabel.Text = _lastScanWarning;
+                _selectionSummaryLabel.ForeColor = Color.FromArgb(196, 43, 28);
+            }
+            else
+            {
+                _selectionSummaryLabel.Text = "未自动找到 FF1–FF6，请点击“手动选择游戏目录…”添加";
+                _selectionSummaryLabel.ForeColor = SystemColors.GrayText;
+            }
         }
         else
         {
@@ -1256,6 +1378,7 @@ internal sealed class MainForm : Form
                 : checkedCount == total
                     ? CheckState.Checked
                     : CheckState.Indeterminate;
+            _selectionSummaryLabel.ForeColor = SystemColors.GrayText;
             _selectionSummaryLabel.Text = string.Create(
                 CultureInfo.InvariantCulture,
                 $"已选 {checkedCount} / {total} 个游戏");
@@ -1274,9 +1397,19 @@ internal sealed class MainForm : Form
 
     private void UpdateOutputPreview()
     {
-        _outputPreviewLabel.Text = GuiOutputPlanner.FormatOutputPreview(
+        var preview = GuiOutputPlanner.FormatOutputPreview(
             _outputRootTextBox.Text,
             GetCheckedGames());
+        if (!string.IsNullOrWhiteSpace(_outputRootFallbackWarning))
+        {
+            _outputPreviewLabel.Text = $"{preview}（提示：{_outputRootFallbackWarning}）";
+            _outputPreviewLabel.ForeColor = Color.FromArgb(180, 83, 9);
+        }
+        else
+        {
+            _outputPreviewLabel.Text = preview;
+            _outputPreviewLabel.ForeColor = SystemColors.GrayText;
+        }
     }
 
     private List<GuiGameEntry> GetCheckedGames()
@@ -1388,32 +1521,197 @@ internal sealed class MainForm : Form
         };
     }
 
-    private static void AdjustLastColumnWidth(ListView listView, int minLastColumnWidth)
+    private string ResolveSettingsPathSafely(string? settingsPathOverride)
     {
-        if (listView.Columns.Count < 2)
+        if (!string.IsNullOrWhiteSpace(settingsPathOverride))
+        {
+            return settingsPathOverride.Trim();
+        }
+
+        try
+        {
+            return GuiSettingsStore.GetDefaultSettingsPath();
+        }
+        catch (Exception ex)
+        {
+            RecordStartupWarning($"获取默认设置路径失败：{ex.Message}；已改用临时回退路径。");
+            _startupLogger?.WriteException("ResolveSettingsPathSafely", ex);
+            return Path.Combine(".", GuiOutputPlanner.ToolName, "settings.json");
+        }
+    }
+
+    private Font CreateFontSafe(string roleLabel, IReadOnlyList<string> preferredFamilies, float emSize, FontStyle style)
+    {
+        var selection = GuiFontFallbackPolicy.ResolveFont(
+            roleLabel,
+            preferredFamilies,
+            tryCreateFromFamily: familyName => TryCreateNamedFont(familyName, emSize, style),
+            tryCreateFromMessageBoxFont: () => TryCreateFallbackFromMessageBoxFont(emSize, style),
+            getUltimateFallback: () => (Control.DefaultFont, Owned: false, Name: Control.DefaultFont.Name));
+
+        if (selection.OwnedByCaller)
+        {
+            _ownedFonts.Add(selection.Font);
+        }
+
+        if (!string.IsNullOrWhiteSpace(selection.WarningMessage))
+        {
+            RecordStartupWarning(selection.WarningMessage);
+        }
+
+        return selection.Font;
+    }
+
+    private static Font? TryCreateNamedFont(string familyName, float emSize, FontStyle style)
+    {
+        using var family = new FontFamily(familyName);
+        if (!family.IsStyleAvailable(style))
+        {
+            return null;
+        }
+
+        return new Font(family.Name, emSize, style, GraphicsUnit.Point);
+    }
+
+    private static (Font Font, bool Owned, string Name)? TryCreateFallbackFromMessageBoxFont(float emSize, FontStyle style)
+    {
+        var messageBoxFont = SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
+        if (messageBoxFont is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (messageBoxFont.FontFamily.IsStyleAvailable(style))
+            {
+                var styled = new Font(messageBoxFont.FontFamily, emSize, style, GraphicsUnit.Point);
+                messageBoxFont.Dispose();
+                return (styled, Owned: true, Name: styled.Name);
+            }
+
+            if (style != FontStyle.Regular && messageBoxFont.FontFamily.IsStyleAvailable(FontStyle.Regular))
+            {
+                var regular = new Font(messageBoxFont.FontFamily, emSize, FontStyle.Regular, GraphicsUnit.Point);
+                messageBoxFont.Dispose();
+                return (regular, Owned: true, Name: regular.Name);
+            }
+        }
+        catch
+        {
+            // Fall through and return the raw SystemFonts.MessageBoxFont instance.
+        }
+
+        return (messageBoxFont, Owned: true, Name: messageBoxFont.Name);
+    }
+
+    private void RecordStartupWarning(string warning)
+    {
+        _startupWarnings.Add(warning);
+        _startupLogger?.WriteWarning(warning);
+    }
+
+    private void FlushStartupWarningsToUi()
+    {
+        if (_startupWarnings.Count == 0)
         {
             return;
         }
 
-        var fixedWidth = 0;
-        for (var i = 0; i < listView.Columns.Count - 1; i++)
+        foreach (var warning in _startupWarnings)
         {
-            fixedWidth += listView.Columns[i].Width;
+            AppendLogLine($"警告：{warning}");
+        }
+    }
+
+    private void LogStartupDiagnosticWarning(string warning, Exception? error, string context)
+    {
+        AppendLogLine($"警告：{warning}");
+        if (error is not null)
+        {
+            _startupLogger?.WriteException(context, error);
+        }
+        else
+        {
+            _startupLogger?.WriteWarning($"[{context}] {warning}");
+        }
+    }
+
+    private static void EnsureNativeHandlesCreated(Control control)
+    {
+        control.CreateControl();
+        if (!control.IsHandleCreated)
+        {
+            _ = control.Handle;
         }
 
-        var available = listView.ClientSize.Width - fixedWidth - 4;
-        listView.Columns[^1].Width = Math.Max(minLastColumnWidth, available);
+        foreach (Control child in control.Controls)
+        {
+            EnsureNativeHandlesCreated(child);
+        }
+    }
+
+    private static bool TryDirectoryExists(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            return Directory.Exists(PathSupport.ToIoPath(path));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void AdjustLastColumnWidth(ListView listView, int minLastColumnWidth)
+    {
+        if (listView.IsDisposed || listView.Columns.Count < 2)
+        {
+            return;
+        }
+
+        try
+        {
+            var fixedWidth = 0;
+            for (var i = 0; i < listView.Columns.Count - 1; i++)
+            {
+                fixedWidth += listView.Columns[i].Width;
+            }
+
+            var available = listView.ClientSize.Width - fixedWidth - 4;
+            listView.Columns[^1].Width = Math.Max(minLastColumnWidth, available);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Control disposed during resize/teardown.
+        }
+        catch (InvalidOperationException)
+        {
+            // Column sizing unavailable before native handle initialization.
+        }
     }
 
     private static string ReadDisplayVersion()
     {
-        var assembly = typeof(MainForm).Assembly;
-        var informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-        if (!string.IsNullOrWhiteSpace(informational))
+        try
         {
-            return informational.Split('+')[0];
-        }
+            var assembly = typeof(MainForm).Assembly;
+            var informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            if (!string.IsNullOrWhiteSpace(informational))
+            {
+                return informational.Split('+')[0];
+            }
 
-        return assembly.GetName().Version?.ToString(3) ?? "0.1.0";
+            return assembly.GetName().Version?.ToString(3) ?? "0.1.0";
+        }
+        catch
+        {
+            return "0.1.0";
+        }
     }
 }
