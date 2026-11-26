@@ -9,6 +9,7 @@ internal static class Program
 
     private static bool s_mainFormShown;
     private static int s_fatalDialogShown;
+    private static bool s_winFormsConfigured;
 
     [STAThread]
     private static int Main(string[] args)
@@ -18,11 +19,44 @@ internal static class Program
         var isSelfTest = args.Any(arg => string.Equals(arg, "--self-test", StringComparison.OrdinalIgnoreCase));
         var requireCli = args.Any(arg => string.Equals(arg, "--require-cli", StringComparison.OrdinalIgnoreCase));
 
+        var integrity = ProcessIntegrity.Detect();
+        var agpRoot = AgpPaths.ResolveAgpHome(integrityOverride: integrity);
+
+        if (!agpRoot.Succeeded)
+        {
+            if (isSelfTest)
+            {
+                Console.Error.WriteLine($"错误：GUI 自检失败：{AgpPaths.FormatCliAllFailedError(agpRoot)}");
+                return 1;
+            }
+
+            agpRoot = ResolveAgpRootInteractively(agpRoot, integrity);
+            if (agpRoot is null || !agpRoot.Succeeded)
+            {
+                return 1;
+            }
+        }
+
+        // Redirect process-local TEMP/TMP into <agpRoot>\tmp before WinForms initialization so
+        // framework internals (e.g. visual-styles activation context) never touch system %TEMP%.
+        var tmpConfigured = AgpPaths.TryConfigureProcessTempDirectory(agpRoot, out var configuredTmpDir, out var tmpError);
+
         var startupInfo = GuiStartupLogger.CollectStartupInfo(
             typeof(Program).Assembly,
             dpiSetting: ConfiguredHighDpiModeName,
-            args: args);
-        var logger = GuiStartupLogger.Start(startupInfo);
+            args: args,
+            integrity: integrity,
+            agpRoot: agpRoot);
+        var logger = GuiStartupLogger.Start(startupInfo, agpRoot: agpRoot);
+
+        if (tmpConfigured && !string.IsNullOrWhiteSpace(configuredTmpDir))
+        {
+            logger.WriteInfo($"进程临时目录已指向数据根目录子目录：{configuredTmpDir}");
+        }
+        else if (!string.IsNullOrWhiteSpace(tmpError))
+        {
+            logger.WriteWarning($"配置数据根目录 tmp 子目录失败：{tmpError}");
+        }
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
@@ -48,8 +82,8 @@ internal static class Program
         try
         {
             return isSelfTest
-                ? RunSelfTest(logger, requireCli)
-                : RunGui(logger);
+                ? RunSelfTest(logger, agpRoot, integrity, requireCli)
+                : RunGui(logger, agpRoot, integrity);
         }
         catch (Exception ex)
         {
@@ -74,7 +108,74 @@ internal static class Program
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static int RunGui(GuiStartupLogger logger)
+    private static AgpRootResolution? ResolveAgpRootInteractively(
+        AgpRootResolution initialFailure,
+        ProcessIntegrityInfo integrity)
+    {
+        EnsureWinFormsConfigured(logger: null);
+
+        if (initialFailure.ExplicitAgpHomeFailed)
+        {
+            var message = initialFailure.WarningMessage
+                ?? $"环境变量 {AgpPaths.AgpHomeEnvVar} 指定的目录不可写。请修改或清除后重试。";
+            MessageBox.Show(
+                message,
+                "数据目录不可写",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+            return null;
+        }
+
+        var promptText = AgpPaths.FormatGuiAllFailedDialogMessage(initialFailure, integrity);
+        var confirm = MessageBox.Show(
+            promptText,
+            "无法写入默认数据目录",
+            MessageBoxButtons.OKCancel,
+            MessageBoxIcon.Warning);
+        if (confirm != DialogResult.OK)
+        {
+            return null;
+        }
+
+        while (true)
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = "选择可写的数据根目录（用于保存日志、设置和默认导出结果）",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true,
+            };
+
+            if (dialog.ShowDialog() != DialogResult.OK || string.IsNullOrWhiteSpace(dialog.SelectedPath))
+            {
+                return null;
+            }
+
+            var chosen = dialog.SelectedPath.Trim();
+            if (AgpPaths.TryProbeWritableDirectory(chosen, out var probeError))
+            {
+                // Best-effort persistence beside the exe; ignore failure if the exe directory is read-only.
+                _ = AgpPaths.TrySaveCustomLocation(AppContext.BaseDirectory, chosen, out _);
+                return AgpPaths.CreateUserSelectedResolution(chosen, initialFailure, integrity);
+            }
+
+            var retry = MessageBox.Show(
+                $"所选目录仍无法写入（{chosen}）：{probeError ?? "没有写入权限"}。\n\n请换一个可写文件夹重试，或点击「取消」退出。",
+                "所选目录不可写",
+                MessageBoxButtons.RetryCancel,
+                MessageBoxIcon.Warning);
+            if (retry != DialogResult.Retry)
+            {
+                return null;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static int RunGui(
+        GuiStartupLogger logger,
+        AgpRootResolution agpRoot,
+        ProcessIntegrityInfo integrity)
     {
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 
@@ -100,16 +201,15 @@ internal static class Program
             }
         };
 
-        var dpiApplied = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-        logger.WriteInfo($"DPI 模式已配置：actual={Application.HighDpiMode}, setResult={dpiApplied}");
-
-        Application.EnableVisualStyles();
-        Application.SetCompatibleTextRenderingDefault(false);
+        EnsureWinFormsConfigured(logger);
 
         try
         {
             logger.WriteInfo("正在构造主窗口 MainForm...");
-            using var mainForm = new MainForm(startupLogger: logger);
+            using var mainForm = new MainForm(
+                startupLogger: logger,
+                agpRoot: agpRoot,
+                integrityInfo: integrity);
             mainForm.Shown += (_, _) =>
             {
                 Volatile.Write(ref s_mainFormShown, true);
@@ -140,7 +240,11 @@ internal static class Program
     /// the sibling ffpr-export.exe binary.
     /// </summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static int RunSelfTest(GuiStartupLogger logger, bool requireCli)
+    private static int RunSelfTest(
+        GuiStartupLogger logger,
+        AgpRootResolution agpRoot,
+        ProcessIntegrityInfo integrity,
+        bool requireCli)
     {
         Exception? uiThreadException = null;
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
@@ -152,14 +256,11 @@ internal static class Program
 
         try
         {
-            var dpiApplied = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            logger.WriteInfo($"[self-test] DPI 模式已配置：actual={Application.HighDpiMode}, setResult={dpiApplied}");
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            EnsureWinFormsConfigured(logger);
 
             // Verify core helpers and shared SteamLocator load cleanly.
-            var defaultRoot = GuiOutputPlanner.ResolveDefaultOutputRoot();
-            var settingsPath = GuiSettingsStore.GetDefaultSettingsPath();
+            var defaultRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(agpRoot);
+            var settingsPath = GuiSettingsStore.GetDefaultSettingsPath(agpRoot);
             var sampleArgs = CliCommandHelper.BuildBuildDbArguments(
                 @"C:\Game",
                 Path.Combine(defaultRoot.OutputRoot, "ff5-test"));
@@ -175,7 +276,10 @@ internal static class Program
             // Walk the real MainForm construction, native handle creation (without Show),
             // initial load (settings, output root, Steam scan, CLI check), and disposal.
             logger.WriteInfo("[self-test] 正在构造 MainForm 并执行 CreateControl() 与初始化流程...");
-            using (var form = new MainForm(startupLogger: logger))
+            using (var form = new MainForm(
+                startupLogger: logger,
+                agpRoot: agpRoot,
+                integrityInfo: integrity))
             {
                 form.CreateControl();
                 form.RunSelfTestInitialization();
@@ -220,8 +324,8 @@ internal static class Program
             var logStatus = string.IsNullOrWhiteSpace(logger.LogFilePath)
                 ? $"日志不可用（{logger.InitializationWarning ?? "未知原因"}）"
                 : $"日志：{logger.LogFilePath}";
-            logger.WriteInfo($"[self-test] 自检通过（{cliStatus}）。");
-            Console.WriteLine($"自检通过：WinForms 主窗口构造、CreateControl() 与核心依赖加载正常（{cliStatus}；{logStatus}）。");
+            logger.WriteInfo($"[self-test] 自检通过（{cliStatus}；完整性级别：{integrity.LogLabel}；数据根目录：{agpRoot.AgpHome}）。");
+            Console.WriteLine($"自检通过：WinForms 主窗口构造、CreateControl() 与核心依赖加载正常（{cliStatus}；完整性级别：{integrity.LogLabel}；数据目录：{agpRoot.AgpHome}；{logStatus}）。");
             return 0;
         }
         catch (Exception ex)
@@ -232,6 +336,30 @@ internal static class Program
                 logger.LogFilePath,
                 logger.InitializationWarning));
             return 1;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void EnsureWinFormsConfigured(GuiStartupLogger? logger)
+    {
+        if (!s_winFormsConfigured)
+        {
+            var dpiApplied = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            logger?.WriteInfo($"DPI 模式已配置：actual={Application.HighDpiMode}, setResult={dpiApplied}");
+            Application.SetCompatibleTextRenderingDefault(false);
+            s_winFormsConfigured = true;
+        }
+
+        // EnableVisualStyles can extract an activation-context manifest to TEMP in single-file apps;
+        // TEMP is already redirected to <agpRoot>\tmp when available, and app.manifest also enables
+        // Common-Controls v6 natively, so catch any failure instead of crashing startup.
+        try
+        {
+            Application.EnableVisualStyles();
+        }
+        catch (Exception ex)
+        {
+            logger?.WriteWarning($"Application.EnableVisualStyles 失败（将沿用应用清单中的视觉样式）：{ex.Message}");
         }
     }
 

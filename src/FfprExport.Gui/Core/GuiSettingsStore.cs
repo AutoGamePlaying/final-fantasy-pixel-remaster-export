@@ -36,20 +36,35 @@ internal static class GuiSettingsStore
     private static readonly JsonSerializerOptions SerializerOptions = TextFileWriter.CreateJsonSerializerOptions(
         writeIndented: true);
 
+    public static string GetDefaultSettingsPath(AgpRootResolution root)
+    {
+        return root.Succeeded && !string.IsNullOrWhiteSpace(root.AgpHome)
+            ? AgpPaths.GetSettingsPath(root)
+            : string.Empty;
+    }
+
     public static string GetDefaultSettingsPath(
         bool? isWindowsOverride = null,
         Func<string, string?>? getEnvironmentVariable = null,
         Func<Environment.SpecialFolder, string?>? getSpecialFolder = null,
         Func<string?>? getBaseDirectory = null,
-        Func<string?>? getTempDirectory = null)
+        Func<string?>? getLocalLowDirectory = null,
+        Func<string, (bool Writable, string? Error)>? probeWritable = null,
+        Func<string, string?>? readLocationFile = null,
+        ProcessIntegrityInfo? integrityOverride = null,
+        Func<ProcessIntegrityInfo>? detectIntegrity = null)
     {
         var root = AgpPaths.ResolveAgpHome(
             isWindowsOverride,
             getEnvironmentVariable,
             getSpecialFolder,
             getBaseDirectory,
-            getTempDirectory);
-        return AgpPaths.GetSettingsPath(root);
+            getLocalLowDirectory,
+            probeWritable,
+            readLocationFile,
+            integrityOverride,
+            detectIntegrity);
+        return GetDefaultSettingsPath(root);
     }
 
     /// <summary>
@@ -106,24 +121,40 @@ internal static class GuiSettingsStore
     /// or rename the host user's real %APPDATA% settings file.
     /// </summary>
     public static string? GetLegacySettingsPathForMigration(
+        AgpRootResolution root,
+        Func<string, string?>? getEnvironmentVariable = null,
+        Func<Environment.SpecialFolder, string?>? getSpecialFolder = null)
+    {
+        if (!root.Succeeded || root.Source == AgpRootSource.AgpHomeEnv)
+        {
+            return null;
+        }
+
+        return GetLegacySettingsPath(getSpecialFolder, getEnvironmentVariable);
+    }
+
+    public static string? GetLegacySettingsPathForMigration(
         bool? isWindowsOverride = null,
         Func<string, string?>? getEnvironmentVariable = null,
         Func<Environment.SpecialFolder, string?>? getSpecialFolder = null,
         Func<string?>? getBaseDirectory = null,
-        Func<string?>? getTempDirectory = null)
+        Func<string?>? getLocalLowDirectory = null,
+        Func<string, (bool Writable, string? Error)>? probeWritable = null,
+        Func<string, string?>? readLocationFile = null,
+        ProcessIntegrityInfo? integrityOverride = null,
+        Func<ProcessIntegrityInfo>? detectIntegrity = null)
     {
         var root = AgpPaths.ResolveAgpHome(
             isWindowsOverride,
             getEnvironmentVariable,
             getSpecialFolder,
             getBaseDirectory,
-            getTempDirectory);
-        if (root.Source == AgpRootSource.AgpHomeEnv)
-        {
-            return null;
-        }
-
-        return GetLegacySettingsPath(getSpecialFolder, getEnvironmentVariable);
+            getLocalLowDirectory,
+            probeWritable,
+            readLocationFile,
+            integrityOverride,
+            detectIntegrity);
+        return GetLegacySettingsPathForMigration(root, getEnvironmentVariable, getSpecialFolder);
     }
 
     /// <summary>

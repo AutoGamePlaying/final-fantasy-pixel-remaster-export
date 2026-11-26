@@ -15,6 +15,8 @@ internal sealed class MainForm : Form
 
     private readonly bool _skipInitialLoad;
     private readonly GuiStartupLogger? _startupLogger;
+    private readonly ProcessIntegrityInfo _integrityInfo;
+    private readonly AgpRootResolution _agpRoot;
     private readonly string? _settingsPathOverride;
     private readonly string _settingsPath;
     private readonly List<GuiGameEntry> _games = [];
@@ -26,6 +28,12 @@ internal sealed class MainForm : Form
     private readonly Font _boldButtonFont;
     private readonly Font _logFont;
     private readonly Font _verdictFont;
+
+    private Panel _rootNoticePanel = null!;
+    private Label _rootNoticeLabel = null!;
+    private StatusStrip _statusStrip = null!;
+    private ToolStripStatusLabel _statusDataDirLabel = null!;
+    private ToolStripStatusLabel _statusIntegrityLabel = null!;
 
     private CheckBox _selectAllCheckBox = null!;
     private Label _selectionSummaryLabel = null!;
@@ -65,12 +73,16 @@ internal sealed class MainForm : Form
     public MainForm(
         bool skipInitialLoad = false,
         string? settingsPathOverride = null,
-        GuiStartupLogger? startupLogger = null)
+        GuiStartupLogger? startupLogger = null,
+        AgpRootResolution? agpRoot = null,
+        ProcessIntegrityInfo? integrityInfo = null)
     {
         _skipInitialLoad = skipInitialLoad;
         _startupLogger = startupLogger;
+        _integrityInfo = integrityInfo ?? agpRoot?.Integrity ?? ProcessIntegrity.Detect();
+        _agpRoot = agpRoot ?? AgpPaths.ResolveAgpHome(integrityOverride: _integrityInfo);
         _settingsPathOverride = settingsPathOverride;
-        _settingsPath = ResolveSettingsPathSafely(settingsPathOverride);
+        _settingsPath = ResolveSettingsPathSafely(settingsPathOverride, _agpRoot);
 
         _uiFont = CreateFontSafe("界面字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Regular);
         _boldButtonFont = CreateFontSafe("主按钮字体", GuiFontFallbackPolicy.UiFontCandidates, 10.5f, FontStyle.Bold);
@@ -78,6 +90,7 @@ internal sealed class MainForm : Form
         _verdictFont = CreateFontSafe("结论标题字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Bold);
 
         InitializeLayout();
+        ApplyRootNoticeAndStatusBar();
         FlushStartupWarningsToUi();
     }
 
@@ -183,21 +196,121 @@ internal sealed class MainForm : Form
             Dock = DockStyle.Fill,
             Padding = new Padding(12),
             ColumnCount = 1,
-            RowCount = 4,
+            RowCount = 5,
         };
         rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 28f));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 37f));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 35f));
 
-        rootLayout.Controls.Add(BuildGamesGroup(), 0, 0);
-        rootLayout.Controls.Add(BuildOutputGroup(), 0, 1);
-        rootLayout.Controls.Add(BuildExportAndLogPanel(), 0, 2);
-        rootLayout.Controls.Add(BuildCompletionGroup(), 0, 3);
+        rootLayout.Controls.Add(BuildRootNoticeBanner(), 0, 0);
+        rootLayout.Controls.Add(BuildGamesGroup(), 0, 1);
+        rootLayout.Controls.Add(BuildOutputGroup(), 0, 2);
+        rootLayout.Controls.Add(BuildExportAndLogPanel(), 0, 3);
+        rootLayout.Controls.Add(BuildCompletionGroup(), 0, 4);
 
+        _statusStrip = BuildStatusStrip();
+
+        // Add Fill control before Bottom control so WinForms docks the StatusStrip along the bottom edge.
         Controls.Add(rootLayout);
+        Controls.Add(_statusStrip);
+        SizeChanged += (_, _) => UpdateRootNoticeWrapWidth();
         ResumeLayout(performLayout: true);
+    }
+
+    private Panel BuildRootNoticeBanner()
+    {
+        _rootNoticePanel = new Panel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Color.FromArgb(255, 248, 225),
+            BorderStyle = BorderStyle.FixedSingle,
+            Padding = new Padding(10, 7, 10, 7),
+            Margin = new Padding(0, 0, 0, 8),
+            Visible = false,
+        };
+
+        _rootNoticeLabel = new Label
+        {
+            AutoSize = true,
+            Dock = DockStyle.Fill,
+            ForeColor = Color.FromArgb(120, 53, 15),
+            MaximumSize = new Size(800, 0),
+            Text = string.Empty,
+        };
+
+        _rootNoticePanel.Controls.Add(_rootNoticeLabel);
+        return _rootNoticePanel;
+    }
+
+    private StatusStrip BuildStatusStrip()
+    {
+        var strip = new StatusStrip
+        {
+            SizingGrip = false,
+            Dock = DockStyle.Bottom,
+        };
+
+        _statusDataDirLabel = new ToolStripStatusLabel
+        {
+            Spring = true,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Text = "数据目录：",
+        };
+
+        _statusIntegrityLabel = new ToolStripStatusLabel
+        {
+            BorderSides = ToolStripStatusLabelBorderSides.Left,
+            Padding = new Padding(8, 0, 4, 0),
+            Text = "完整性级别：",
+        };
+
+        strip.Items.Add(_statusDataDirLabel);
+        strip.Items.Add(_statusIntegrityLabel);
+        return strip;
+    }
+
+    private void ApplyRootNoticeAndStatusBar()
+    {
+        var (dataDirText, integrityText) = GuiStartupLogger.FormatStatusBarSummary(_agpRoot, _integrityInfo);
+        _statusDataDirLabel.Text = dataDirText;
+        _statusDataDirLabel.ToolTipText = dataDirText;
+        _statusIntegrityLabel.Text = integrityText;
+        if (_integrityInfo.IsLowOrUntrusted)
+        {
+            _statusIntegrityLabel.ForeColor = Color.FromArgb(180, 83, 9);
+        }
+
+        var bannerText = AgpPaths.FormatUiNoticeBanner(_agpRoot, _integrityInfo);
+        if (!string.IsNullOrWhiteSpace(bannerText))
+        {
+            _rootNoticeLabel.Text = bannerText;
+            _rootNoticePanel.Visible = true;
+            UpdateRootNoticeWrapWidth();
+            RecordStartupWarning(bannerText);
+        }
+        else
+        {
+            _rootNoticePanel.Visible = false;
+        }
+    }
+
+    private void UpdateRootNoticeWrapWidth()
+    {
+        if (_rootNoticePanel is null || _rootNoticeLabel is null || !_rootNoticePanel.Visible)
+        {
+            return;
+        }
+
+        var available = Math.Max(360, ClientSize.Width - 52);
+        if (_rootNoticeLabel.MaximumSize.Width != available)
+        {
+            _rootNoticeLabel.MaximumSize = new Size(available, 0);
+        }
     }
 
     private GroupBox BuildGamesGroup()
@@ -636,7 +749,7 @@ internal sealed class MainForm : Form
         try
         {
             var legacySettingsPath = string.IsNullOrWhiteSpace(_settingsPathOverride)
-                ? GuiSettingsStore.GetLegacySettingsPathForMigration()
+                ? GuiSettingsStore.GetLegacySettingsPathForMigration(_agpRoot)
                 : null;
             var settingsResult = GuiSettingsStore.LoadWithMigration(_settingsPath, legacySettingsPath);
             _settings = settingsResult.Settings;
@@ -667,11 +780,14 @@ internal sealed class MainForm : Form
             }
             else
             {
-                var resolution = GuiOutputPlanner.ResolveDefaultOutputRoot();
+                var resolution = GuiOutputPlanner.ResolveDefaultOutputRoot(_agpRoot);
                 if (resolution.UsedFallback && !string.IsNullOrWhiteSpace(resolution.WarningMessage))
                 {
                     _outputRootFallbackWarning = resolution.WarningMessage;
-                    LogStartupDiagnosticWarning(resolution.WarningMessage, error: null, "ResolveDefaultOutputRoot");
+                    if (!_rootNoticePanel.Visible)
+                    {
+                        LogStartupDiagnosticWarning(resolution.WarningMessage, error: null, "ResolveDefaultOutputRoot");
+                    }
                 }
 
                 _outputRootTextBox.Text = resolution.OutputRoot;
@@ -680,7 +796,7 @@ internal sealed class MainForm : Form
         catch (Exception ex)
         {
             _outputRootFallbackWarning = $"确定默认输出目录失败：{ex.Message}；请点击「浏览…」手动选择。";
-            _outputRootTextBox.Text = Path.Combine(AgpPaths.AgpFolderName, AgpPaths.ToolName, AgpPaths.OutputFolderName);
+            _outputRootTextBox.Text = string.Empty;
             LogStartupDiagnosticWarning(_outputRootFallbackWarning, ex, "ResolveDefaultOutputRoot");
         }
         finally
@@ -1090,7 +1206,12 @@ internal sealed class MainForm : Form
                     item.Game.GameDirectory,
                     item.OutputDirectory,
                     force: item.UseForceFlag);
-                var startInfo = CliCommandHelper.CreateStartInfo(cliPath, cliArgs);
+                var agpTempDir = _agpRoot.Succeeded ? AgpPaths.GetTempDirectory(_agpRoot) : null;
+                var startInfo = CliCommandHelper.CreateStartInfo(
+                    cliPath,
+                    cliArgs,
+                    agpHome: _agpRoot.Succeeded ? _agpRoot.AgpHome : null,
+                    tempDirectory: agpTempDir);
 
                 int exitCode;
                 try
@@ -1520,7 +1641,7 @@ internal sealed class MainForm : Form
         };
     }
 
-    private string ResolveSettingsPathSafely(string? settingsPathOverride)
+    private string ResolveSettingsPathSafely(string? settingsPathOverride, AgpRootResolution agpRoot)
     {
         if (!string.IsNullOrWhiteSpace(settingsPathOverride))
         {
@@ -1529,13 +1650,13 @@ internal sealed class MainForm : Form
 
         try
         {
-            return GuiSettingsStore.GetDefaultSettingsPath();
+            return GuiSettingsStore.GetDefaultSettingsPath(agpRoot);
         }
         catch (Exception ex)
         {
-            RecordStartupWarning($"获取默认设置路径失败：{ex.Message}；已改用临时回退路径。");
+            RecordStartupWarning($"获取默认设置路径失败：{ex.Message}；本次将不保存设置。");
             _startupLogger?.WriteException("ResolveSettingsPathSafely", ex);
-            return Path.Combine(".", AgpPaths.AgpFolderName, AgpPaths.ToolName, AgpPaths.SettingsFileName);
+            return string.Empty;
         }
     }
 

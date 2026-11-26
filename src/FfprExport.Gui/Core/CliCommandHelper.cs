@@ -175,7 +175,9 @@ internal static partial class CliCommandHelper
     public static ProcessStartInfo CreateStartInfo(
         string cliExecutablePath,
         IReadOnlyList<string> arguments,
-        string? workingDirectory = null)
+        string? workingDirectory = null,
+        string? agpHome = null,
+        string? tempDirectory = null)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -190,6 +192,18 @@ internal static partial class CliCommandHelper
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
         };
+
+        if (!string.IsNullOrWhiteSpace(agpHome))
+        {
+            startInfo.Environment[AgpPaths.AgpHomeEnvVar] = agpHome.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(tempDirectory))
+        {
+            var trimmedTemp = tempDirectory.Trim();
+            startInfo.Environment["TEMP"] = trimmedTemp;
+            startInfo.Environment["TMP"] = trimmedTemp;
+        }
 
         foreach (var arg in arguments)
         {

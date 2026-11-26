@@ -6,7 +6,8 @@ namespace FfprExport.Gui;
 internal sealed record GuiOutputRootResolution(
     string OutputRoot,
     bool UsedFallback,
-    string? WarningMessage);
+    string? WarningMessage,
+    bool Succeeded = true);
 
 /// <summary>
 /// Computes default per-game output paths under &lt;AGP 根目录&gt;\ffpr-export\output\&lt;ffN&gt;-&lt;buildid&gt;,
@@ -21,14 +22,44 @@ internal static class GuiOutputPlanner
         Func<string, string?>? getEnvironmentVariable = null,
         Func<Environment.SpecialFolder, string?>? getSpecialFolder = null,
         Func<string?>? getBaseDirectory = null,
-        Func<string?>? getTempDirectory = null)
+        Func<string?>? getLocalLowDirectory = null,
+        Func<string, (bool Writable, string? Error)>? probeWritable = null,
+        Func<string, string?>? readLocationFile = null,
+        ProcessIntegrityInfo? integrityOverride = null,
+        Func<ProcessIntegrityInfo>? detectIntegrity = null)
     {
         return ResolveDefaultOutputRoot(
             isWindowsOverride,
             getEnvironmentVariable,
             getSpecialFolder,
             getBaseDirectory,
-            getTempDirectory).OutputRoot;
+            getLocalLowDirectory,
+            probeWritable,
+            readLocationFile,
+            integrityOverride,
+            detectIntegrity).OutputRoot;
+    }
+
+    /// <summary>
+    /// Resolves the default export root from an already-resolved AGP root.
+    /// Never throws; propagates any Chinese diagnostic warning when a fallback root is chosen.
+    /// </summary>
+    public static GuiOutputRootResolution ResolveDefaultOutputRoot(AgpRootResolution root)
+    {
+        if (!root.Succeeded || string.IsNullOrWhiteSpace(root.AgpHome))
+        {
+            return new GuiOutputRootResolution(
+                string.Empty,
+                UsedFallback: true,
+                WarningMessage: root.WarningMessage ?? "未能确定可写的数据根目录",
+                Succeeded: false);
+        }
+
+        return new GuiOutputRootResolution(
+            AgpPaths.GetOutputRoot(root),
+            root.UsedFallback,
+            root.WarningMessage,
+            Succeeded: true);
     }
 
     /// <summary>
@@ -40,18 +71,23 @@ internal static class GuiOutputPlanner
         Func<string, string?>? getEnvironmentVariable = null,
         Func<Environment.SpecialFolder, string?>? getSpecialFolder = null,
         Func<string?>? getBaseDirectory = null,
-        Func<string?>? getTempDirectory = null)
+        Func<string?>? getLocalLowDirectory = null,
+        Func<string, (bool Writable, string? Error)>? probeWritable = null,
+        Func<string, string?>? readLocationFile = null,
+        ProcessIntegrityInfo? integrityOverride = null,
+        Func<ProcessIntegrityInfo>? detectIntegrity = null)
     {
         var root = AgpPaths.ResolveAgpHome(
             isWindowsOverride,
             getEnvironmentVariable,
             getSpecialFolder,
             getBaseDirectory,
-            getTempDirectory);
-        return new GuiOutputRootResolution(
-            AgpPaths.GetOutputRoot(root),
-            root.UsedFallback,
-            root.WarningMessage);
+            getLocalLowDirectory,
+            probeWritable,
+            readLocationFile,
+            integrityOverride,
+            detectIntegrity);
+        return ResolveDefaultOutputRoot(root);
     }
 
     /// <summary>

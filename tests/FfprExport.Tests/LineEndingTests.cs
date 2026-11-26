@@ -200,8 +200,7 @@ public sealed class LineEndingTests
 
         var logger = GuiStartupLogger.Start(
             startupInfo,
-            agpHomeOverride: ws.AgpHomeDir,
-            tempDirectoryOverride: ws.Root);
+            agpHomeOverride: ws.AgpHomeDir);
         logger.WriteInfo("line one");
         logger.WriteException("TestContext", new InvalidOperationException("first\r\nsecond"));
 

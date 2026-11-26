@@ -57,6 +57,8 @@ public sealed class GuiCoreTests
         var activeAgpHome = Environment.GetEnvironmentVariable(AgpPaths.AgpHomeEnvVar);
         Assert.False(string.IsNullOrWhiteSpace(activeAgpHome), "测试进程必须通过 AGP_HOME 隔离");
 
+        static (bool Writable, string? Error) AlwaysWritable(string _) => (true, null);
+
         // 1. AGP_HOME takes top priority on both Windows and Linux/macOS and acts directly as the "agp" layer.
         var winFromEnv = AgpPaths.ResolveAgpHome(
             isWindowsOverride: true,
@@ -66,10 +68,13 @@ public sealed class GuiCoreTests
                 AgpPaths.LocalAppDataEnvVar => @"C:\Users\Alice\AppData\Local",
                 _ => null,
             },
-            getSpecialFolder: _ => @"C:\Users\Alice\AppData\Local");
+            getSpecialFolder: _ => @"C:\Users\Alice\AppData\Local",
+            probeWritable: AlwaysWritable);
+        Assert.True(winFromEnv.Succeeded);
         Assert.Equal(AgpRootSource.AgpHomeEnv, winFromEnv.Source);
         Assert.False(winFromEnv.UsedFallback);
         Assert.Equal(@"D:\CustomAgp", winFromEnv.AgpHome);
+        Assert.Equal(@"D:\CustomAgp\tmp", AgpPaths.GetTempDirectory(winFromEnv));
         Assert.Equal(@"D:\CustomAgp\ffpr-export\output", AgpPaths.GetOutputRoot(winFromEnv));
         Assert.Equal(@"D:\CustomAgp\ffpr-export\output\ff5-20265087", AgpPaths.GetGameOutputDirectory("ff5", "20265087", winFromEnv));
         Assert.Equal(@"D:\CustomAgp\ffpr-export\logs", AgpPaths.GetLogsDirectory(winFromEnv));
@@ -84,9 +89,12 @@ public sealed class GuiCoreTests
                 AgpPaths.HomeEnvVar => "/home/alice",
                 _ => null,
             },
-            getSpecialFolder: _ => "/home/alice");
+            getSpecialFolder: _ => "/home/alice",
+            probeWritable: AlwaysWritable);
+        Assert.True(unixFromEnv.Succeeded);
         Assert.Equal(AgpRootSource.AgpHomeEnv, unixFromEnv.Source);
         Assert.Equal("/tmp/custom-agp", unixFromEnv.AgpHome);
+        Assert.Equal("/tmp/custom-agp/tmp", AgpPaths.GetTempDirectory(unixFromEnv));
         Assert.Equal("/tmp/custom-agp/ffpr-export/output", AgpPaths.GetOutputRoot(unixFromEnv));
         Assert.Equal("/tmp/custom-agp/ffpr-export/logs", AgpPaths.GetLogsDirectory(unixFromEnv));
         Assert.Equal("/tmp/custom-agp/ffpr-export/settings.json", AgpPaths.GetSettingsPath(unixFromEnv));
@@ -97,7 +105,9 @@ public sealed class GuiCoreTests
             getEnvironmentVariable: _ => null,
             getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData
                 ? @"C:\Users\Alice\AppData\Local"
-                : null);
+                : null,
+            probeWritable: AlwaysWritable);
+        Assert.True(winDefault.Succeeded);
         Assert.Equal(AgpRootSource.WindowsLocalAppData, winDefault.Source);
         Assert.False(winDefault.UsedFallback);
         Assert.Equal(@"C:\Users\Alice\AppData\Local\agp", winDefault.AgpHome);
@@ -108,7 +118,9 @@ public sealed class GuiCoreTests
         var winEnvFallback = AgpPaths.ResolveAgpHome(
             isWindowsOverride: true,
             getEnvironmentVariable: key => key == AgpPaths.LocalAppDataEnvVar ? @"C:\Users\Bob\AppData\Local" : null,
-            getSpecialFolder: _ => throw new UnauthorizedAccessException("Shell folder unavailable"));
+            getSpecialFolder: _ => throw new UnauthorizedAccessException("Shell folder unavailable"),
+            probeWritable: AlwaysWritable);
+        Assert.True(winEnvFallback.Succeeded);
         Assert.Equal(AgpRootSource.WindowsLocalAppData, winEnvFallback.Source);
         Assert.Equal(@"C:\Users\Bob\AppData\Local\agp", winEnvFallback.AgpHome);
 
@@ -121,7 +133,9 @@ public sealed class GuiCoreTests
                 AgpPaths.HomeEnvVar => "/home/alice",
                 _ => null,
             },
-            getSpecialFolder: _ => "/home/alice");
+            getSpecialFolder: _ => "/home/alice",
+            probeWritable: AlwaysWritable);
+        Assert.True(unixXdg.Succeeded);
         Assert.Equal(AgpRootSource.XdgDataHome, unixXdg.Source);
         Assert.Equal("/var/data/xdg/agp", unixXdg.AgpHome);
         Assert.Equal("/var/data/xdg/agp/ffpr-export/output", AgpPaths.GetOutputRoot(unixXdg));
@@ -130,34 +144,271 @@ public sealed class GuiCoreTests
         var unixDefault = AgpPaths.ResolveAgpHome(
             isWindowsOverride: false,
             getEnvironmentVariable: key => key == AgpPaths.HomeEnvVar ? "/home/alice" : null,
-            getSpecialFolder: _ => null);
+            getSpecialFolder: _ => null,
+            probeWritable: AlwaysWritable);
+        Assert.True(unixDefault.Succeeded);
         Assert.Equal(AgpRootSource.UnixDefaultLocalShare, unixDefault.Source);
         Assert.Equal("/home/alice/.local/share/agp", unixDefault.AgpHome);
         Assert.Equal("/home/alice/.local/share/agp/ffpr-export/output", AgpPaths.GetOutputRoot(unixDefault));
         Assert.Equal("/home/alice/.local/share/agp/ffpr-export/logs", AgpPaths.GetLogsDirectory(unixDefault));
         Assert.Equal("/home/alice/.local/share/agp/ffpr-export/settings.json", AgpPaths.GetSettingsPath(unixDefault));
 
-        // 4. Safe fallbacks when all primary providers fail: base dir -> temp dir -> relative "agp".
-        var baseFallback = AgpPaths.ResolveAgpHome(
+        // 4. Fallback to portable <exeDir>\agp-data when LocalAppData & LocalLow fail.
+        var portableFallback = AgpPaths.ResolveAgpHome(
             isWindowsOverride: true,
             getEnvironmentVariable: _ => null,
             getSpecialFolder: _ => throw new UnauthorizedAccessException("无法读取 LocalAppData"),
             getBaseDirectory: () => @"D:\Tools\ffpr",
-            getTempDirectory: () => @"C:\Temp");
-        Assert.Equal(AgpRootSource.FallbackBaseDirectory, baseFallback.Source);
-        Assert.True(baseFallback.UsedFallback);
-        Assert.Equal(@"D:\Tools\ffpr\agp", baseFallback.AgpHome);
-        Assert.Contains("无法读取 LocalAppData", baseFallback.WarningMessage, StringComparison.Ordinal);
+            probeWritable: path => path == @"D:\Tools\ffpr\agp-data" ? (true, null) : (false, "拒绝访问"));
+        Assert.True(portableFallback.Succeeded);
+        Assert.Equal(AgpRootSource.PortableBaseDirectory, portableFallback.Source);
+        Assert.True(portableFallback.UsedFallback);
+        Assert.Equal(@"D:\Tools\ffpr\agp-data", portableFallback.AgpHome);
+        Assert.Contains("%LOCALAPPDATA% 不可写", portableFallback.WarningMessage, StringComparison.Ordinal);
+    }
 
-        var tempFallback = AgpPaths.ResolveAgpHome(
-            isWindowsOverride: false,
+    [Fact]
+    public void AgpPaths_CandidateOrderExplicitAgpHomeFailureAllFailedAndSavedLocation()
+    {
+        Func<string, string?> winEnv = key => key switch
+        {
+            AgpPaths.LocalAppDataEnvVar => @"C:\Users\Alice\AppData\Local",
+            AgpPaths.UserProfileEnvVar => @"C:\Users\Alice",
+            _ => null,
+        };
+        Func<Environment.SpecialFolder, string?> winFolders = folder => folder switch
+        {
+            Environment.SpecialFolder.LocalApplicationData => @"C:\Users\Alice\AppData\Local",
+            Environment.SpecialFolder.UserProfile => @"C:\Users\Alice",
+            _ => null,
+        };
+
+        // 1. Verify exact Windows candidate probing order when every candidate is rejected:
+        //    %LOCALAPPDATA%\agp -> %USERPROFILE%\AppData\LocalLow\agp -> <exeDir>\agp-data -> %USERPROFILE%\agp -> agp-location.txt
+        var probedAllFailed = new List<string>();
+        var allFailed = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: winEnv,
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: path =>
+            {
+                probedAllFailed.Add(path);
+                return (false, "Access denied");
+            },
+            readLocationFile: _ => @"E:\SavedAgp");
+
+        Assert.False(allFailed.Succeeded);
+        Assert.False(allFailed.ExplicitAgpHomeFailed);
+        Assert.Equal(AgpRootSource.None, allFailed.Source);
+        Assert.Equal(
+            [
+                @"C:\Users\Alice\AppData\Local\agp",
+                @"C:\Users\Alice\AppData\LocalLow\agp",
+                @"D:\Tools\ffpr\agp-data",
+                @"C:\Users\Alice\agp",
+                @"E:\SavedAgp",
+            ],
+            probedAllFailed);
+        Assert.Contains("AGP_HOME", allFailed.WarningMessage, StringComparison.Ordinal);
+        Assert.Throws<IOException>(() => AgpPaths.RequireWritableAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: winEnv,
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: _ => (false, "Access denied")));
+
+        // 2. When %LOCALAPPDATA% is unwritable, LocalLow is selected next.
+        var localLowHit = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: winEnv,
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: path => path == @"C:\Users\Alice\AppData\LocalLow\agp" ? (true, null) : (false, "拒绝访问"));
+        Assert.True(localLowHit.Succeeded);
+        Assert.Equal(AgpRootSource.WindowsLocalLowAppData, localLowHit.Source);
+        Assert.True(localLowHit.UsedFallback);
+        Assert.Equal(@"C:\Users\Alice\AppData\LocalLow\agp", localLowHit.AgpHome);
+
+        // 3. When LocalAppData + LocalLow fail, <exeDir>\agp-data is selected.
+        var portableHit = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: winEnv,
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: path => path == @"D:\Tools\ffpr\agp-data" ? (true, null) : (false, "拒绝访问"));
+        Assert.True(portableHit.Succeeded);
+        Assert.Equal(AgpRootSource.PortableBaseDirectory, portableHit.Source);
+        Assert.Equal(@"D:\Tools\ffpr\agp-data", portableHit.AgpHome);
+        Assert.Contains("数据目录：D:\\Tools\\ffpr\\agp-data", AgpPaths.FormatUiNoticeBanner(portableHit), StringComparison.Ordinal);
+        Assert.Contains("%LOCALAPPDATA% 不可写", AgpPaths.FormatUiNoticeBanner(portableHit), StringComparison.Ordinal);
+
+        // 4. When LocalAppData + LocalLow + agp-data fail, %USERPROFILE%\agp is selected.
+        var profileHit = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: winEnv,
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: path => path == @"C:\Users\Alice\agp" ? (true, null) : (false, "拒绝访问"));
+        Assert.True(profileHit.Succeeded);
+        Assert.Equal(AgpRootSource.UserProfileAgp, profileHit.Source);
+        Assert.Equal(@"C:\Users\Alice\agp", profileHit.AgpHome);
+        Assert.Contains("数据目录：C:\\Users\\Alice\\agp", AgpPaths.FormatUiNoticeBanner(profileHit), StringComparison.Ordinal);
+        Assert.Contains("%LOCALAPPDATA% 不可写", AgpPaths.FormatUiNoticeBanner(profileHit), StringComparison.Ordinal);
+
+        // 5. When all 4 defaults fail, saved agp-location.txt path is tried and used if writable.
+        var savedHit = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: winEnv,
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: path => path == @"E:\SavedAgp" ? (true, null) : (false, "拒绝访问"),
+            readLocationFile: path => path == @"D:\Tools\ffpr\agp-location.txt" ? "E:\\SavedAgp\n" : null);
+        Assert.True(savedHit.Succeeded);
+        Assert.Equal(AgpRootSource.SavedLocationFile, savedHit.Source);
+        Assert.Equal(@"E:\SavedAgp", savedHit.AgpHome);
+
+        // 6. Explicit AGP_HOME unwritable -> fails immediately without probing any fallback candidate!
+        var explicitProbed = new List<string>();
+        var explicitDenied = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? @"Z:\LockedAgp" : winEnv(key),
+            getSpecialFolder: winFolders,
+            getBaseDirectory: () => @"D:\Tools\ffpr",
+            probeWritable: path =>
+            {
+                explicitProbed.Add(path);
+                return path == @"Z:\LockedAgp" ? (false, "目录只读") : (true, null);
+            });
+        Assert.False(explicitDenied.Succeeded);
+        Assert.True(explicitDenied.ExplicitAgpHomeFailed);
+        Assert.Equal([@"Z:\LockedAgp"], explicitProbed);
+        Assert.Contains("AGP_HOME", explicitDenied.WarningMessage, StringComparison.Ordinal);
+        Assert.Contains(@"Z:\LockedAgp", explicitDenied.WarningMessage, StringComparison.Ordinal);
+        Assert.Contains("目录只读", explicitDenied.WarningMessage, StringComparison.Ordinal);
+
+        // 7. Real filesystem write probe writes & deletes probe file under <root>/tmp, and rejects file-blocked path.
+        using var ws = new TempWorkspace("ffpr-agp-probe");
+        var writableRoot = Path.Combine(ws.Root, "writable-agp");
+        Assert.True(AgpPaths.TryProbeWritableDirectory(writableRoot, out var okErr), $"预期可写失败：{okErr}");
+        Assert.Null(okErr);
+        Assert.True(Directory.Exists(writableRoot));
+        Assert.Empty(Directory.EnumerateFiles(writableRoot, "*", SearchOption.AllDirectories));
+
+        var blockedRoot = Path.Combine(ws.Root, "blocked-file");
+        File.WriteAllText(blockedRoot, "not a directory", OutputGuard.Utf8WithoutBom);
+        Assert.False(AgpPaths.TryProbeWritableDirectory(blockedRoot, out var blockedErr));
+        Assert.False(string.IsNullOrWhiteSpace(blockedErr));
+
+        // 8. Saving & reading agp-location.txt works cleanly.
+        var exeDir = Path.Combine(ws.Root, "app");
+        Directory.CreateDirectory(exeDir);
+        Assert.True(AgpPaths.TrySaveCustomLocation(exeDir, writableRoot, out var saveErr), $"保存 agp-location.txt 失败：{saveErr}");
+        Assert.Equal(writableRoot + "\n", File.ReadAllText(Path.Combine(exeDir, AgpPaths.LocationFileName), Encoding.UTF8));
+
+        var fromRealLocationFile = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: OperatingSystem.IsWindows(),
             getEnvironmentVariable: _ => null,
             getSpecialFolder: _ => null,
-            getBaseDirectory: () => string.Empty,
-            getTempDirectory: () => "/tmp/fallback");
-        Assert.Equal(AgpRootSource.FallbackTempDirectory, tempFallback.Source);
-        Assert.True(tempFallback.UsedFallback);
-        Assert.Equal("/tmp/fallback/agp", tempFallback.AgpHome);
+            getBaseDirectory: () => exeDir,
+            probeWritable: path => string.Equals(path, writableRoot, StringComparison.OrdinalIgnoreCase)
+                ? (true, null)
+                : (false, "模拟不可写"));
+        Assert.True(fromRealLocationFile.Succeeded);
+        Assert.Equal(AgpRootSource.SavedLocationFile, fromRealLocationFile.Source);
+        Assert.Equal(writableRoot, fromRealLocationFile.AgpHome);
+    }
+
+    [Fact]
+    public void ProcessIntegrity_ClassifiesRidsInjectsLowLevelSelectsLocalLowAndFormatsUiNotices()
+    {
+        // 1. RID classification and injectable detector.
+        Assert.Equal(ProcessIntegrityKind.Untrusted, ProcessIntegrity.ClassifyRid(0x0000));
+        Assert.Equal(ProcessIntegrityKind.Low, ProcessIntegrity.ClassifyRid(0x1000));
+        Assert.Equal(ProcessIntegrityKind.Low, ProcessIntegrity.ClassifyRid(0x1FFF));
+        Assert.Equal(ProcessIntegrityKind.Medium, ProcessIntegrity.ClassifyRid(0x2000));
+        Assert.Equal(ProcessIntegrityKind.Medium, ProcessIntegrity.ClassifyRid(0x2100));
+        Assert.Equal(ProcessIntegrityKind.High, ProcessIntegrity.ClassifyRid(0x3000));
+        Assert.Equal(ProcessIntegrityKind.System, ProcessIntegrity.ClassifyRid(0x4000));
+
+        var injectedLow = ProcessIntegrity.Detect(() => ProcessIntegrity.FromRid(ProcessIntegrity.SecurityMandatoryLowRid));
+        Assert.Equal(ProcessIntegrityKind.Low, injectedLow.Kind);
+        Assert.True(injectedLow.IsLowOrUntrusted);
+        Assert.Equal("Low (0x1000)", injectedLow.LogLabel);
+        Assert.Contains("Low", injectedLow.DisplayLabel, StringComparison.Ordinal);
+
+        // 2. Low-IL Windows resolution: %LOCALAPPDATA%\agp denied -> falls into %USERPROFILE%\AppData\LocalLow\agp.
+        var probedLow = new List<string>();
+        var lowResolution = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: key => key switch
+            {
+                AgpPaths.LocalAppDataEnvVar => @"C:\Users\Player\AppData\Local",
+                AgpPaths.UserProfileEnvVar => @"C:\Users\Player",
+                _ => null,
+            },
+            getSpecialFolder: folder => folder switch
+            {
+                Environment.SpecialFolder.LocalApplicationData => @"C:\Users\Player\AppData\Local",
+                Environment.SpecialFolder.UserProfile => @"C:\Users\Player",
+                _ => null,
+            },
+            getBaseDirectory: () => @"D:\Downloads\ffpr-export",
+            probeWritable: path =>
+            {
+                probedLow.Add(path);
+                return path == @"C:\Users\Player\AppData\LocalLow\agp"
+                    ? (true, null)
+                    : (false, "Access to the path is denied.");
+            },
+            detectIntegrity: () => ProcessIntegrityInfo.Low);
+
+        Assert.True(lowResolution.Succeeded);
+        Assert.Equal(AgpRootSource.WindowsLocalLowAppData, lowResolution.Source);
+        Assert.Equal(@"C:\Users\Player\AppData\LocalLow\agp", lowResolution.AgpHome);
+        Assert.Equal(
+            [
+                @"C:\Users\Player\AppData\Local\agp",
+                @"C:\Users\Player\AppData\LocalLow\agp",
+            ],
+            probedLow);
+
+        // 3. UI banner, status bar, and all-failed dialog guidance under Low IL.
+        var lowBanner = AgpPaths.FormatUiNoticeBanner(lowResolution, ProcessIntegrityInfo.Low);
+        Assert.NotNull(lowBanner);
+        Assert.Contains("低完整性级别", lowBanner, StringComparison.Ordinal);
+        Assert.Contains("解除锁定", lowBanner, StringComparison.Ordinal);
+        Assert.Contains("资源管理器重新解压", lowBanner, StringComparison.Ordinal);
+        Assert.Contains("LocalLow", lowBanner, StringComparison.Ordinal);
+        Assert.DoesNotContain("管理员", lowBanner, StringComparison.Ordinal);
+
+        var (dataDirStatus, integrityStatus) = GuiStartupLogger.FormatStatusBarSummary(lowResolution, ProcessIntegrityInfo.Low);
+        Assert.Contains(@"C:\Users\Player\AppData\LocalLow\agp", dataDirStatus, StringComparison.Ordinal);
+        Assert.Contains("低完整性", integrityStatus, StringComparison.Ordinal);
+
+        // Normal Medium IL + primary LocalAppData produces no warning banner.
+        var normalMedium = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData ? @"C:\Users\Player\AppData\Local" : null,
+            probeWritable: _ => (true, null),
+            detectIntegrity: () => ProcessIntegrityInfo.Medium);
+        Assert.Null(AgpPaths.FormatUiNoticeBanner(normalMedium, ProcessIntegrityInfo.Medium));
+
+        // All-failed GUI dialog mentions security software / whitelist / folder selection and admin only as last resort.
+        var allFailedMedium = AgpPaths.ResolveAgpHome(
+            isWindowsOverride: true,
+            getEnvironmentVariable: _ => null,
+            getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData ? @"C:\Users\Player\AppData\Local" : null,
+            getBaseDirectory: () => @"C:\Program Files\ffpr-export",
+            probeWritable: _ => (false, "拒绝访问"),
+            detectIntegrity: () => ProcessIntegrityInfo.Medium);
+        var guiFailDialog = AgpPaths.FormatGuiAllFailedDialogMessage(allFailedMedium, ProcessIntegrityInfo.Medium);
+        Assert.Contains("安全软件", guiFailDialog, StringComparison.Ordinal);
+        Assert.Contains("白名单", guiFailDialog, StringComparison.Ordinal);
+        Assert.Contains("选择文件夹", guiFailDialog, StringComparison.Ordinal);
+        Assert.Contains("agp-location.txt", guiFailDialog, StringComparison.Ordinal);
+        Assert.Contains("最后手段", guiFailDialog, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -223,7 +474,8 @@ public sealed class GuiCoreTests
             getEnvironmentVariable: _ => null,
             getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData
                 ? @"C:\Users\Alice\AppData\Local"
-                : null);
+                : null,
+            probeWritable: _ => (true, null));
         Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\output", defaultWin);
 
         Assert.Equal("ff5-20265087", GuiOutputPlanner.BuildGameFolderName("FF5", "20265087"));
@@ -475,8 +727,12 @@ public sealed class GuiCoreTests
             ["build-db", "--game", "/games/ff1", "--out", "/out/ff1-123", "--steam-buildid", "123", "--keep-json", "--jobs", "4", "--force"],
             argsWithForce);
 
-        // ProcessStartInfo enforces UTF-8 stdout/stderr and hidden window.
-        var startInfo = CliCommandHelper.CreateStartInfo(expectedPath, argsWithoutForce);
+        // ProcessStartInfo enforces UTF-8 stdout/stderr, hidden window, and AGP_HOME / TEMP propagation.
+        var startInfo = CliCommandHelper.CreateStartInfo(
+            expectedPath,
+            argsWithoutForce,
+            agpHome: @"C:\Users\Alice\AppData\LocalLow\agp",
+            tempDirectory: @"C:\Users\Alice\AppData\LocalLow\agp\tmp");
         Assert.False(startInfo.UseShellExecute);
         Assert.True(startInfo.CreateNoWindow);
         Assert.True(startInfo.RedirectStandardOutput);
@@ -484,6 +740,9 @@ public sealed class GuiCoreTests
         Assert.Equal(Encoding.UTF8, startInfo.StandardOutputEncoding);
         Assert.Equal(Encoding.UTF8, startInfo.StandardErrorEncoding);
         Assert.Equal(argsWithoutForce, startInfo.ArgumentList);
+        Assert.Equal(@"C:\Users\Alice\AppData\LocalLow\agp", startInfo.Environment[AgpPaths.AgpHomeEnvVar]);
+        Assert.Equal(@"C:\Users\Alice\AppData\LocalLow\agp\tmp", startInfo.Environment["TEMP"]);
+        Assert.Equal(@"C:\Users\Alice\AppData\LocalLow\agp\tmp", startInfo.Environment["TMP"]);
 
         // Progress parsing supports both `==> [ffN] 步骤 n/m：...` and `==> 步骤 n/m`.
         Assert.True(CliCommandHelper.TryParseProgressStep("==> [ff5] 步骤 2/6：进程内执行 inventory 与 export", out var step2));
@@ -586,7 +845,8 @@ public sealed class GuiCoreTests
                     Environment.SpecialFolder.LocalApplicationData => Path.Combine(ws.Root, "LocalAppData"),
                     Environment.SpecialFolder.ApplicationData => legacyAppData,
                     _ => null,
-                }));
+                },
+                probeWritable: _ => (true, null)));
 
         // 1. Old exists, new does not exist -> read old, write new, rename old to .migrated (not deleted).
         var ff5Dir = Path.Combine(ws.Root, "games", "FINAL FANTASY V PR");
@@ -717,12 +977,61 @@ public sealed class GuiCoreTests
     }
 
     [Fact]
-    public void GuiStartupLogger_ResolvesPrimaryLogPathWritesStartupLineAndFallsBackToTemp()
+    public async Task CliSubprocess_SucceedsWithBlockedTempAndRejectsUnwritableExplicitAgpHome()
+    {
+        using var ws = new TempWorkspace("ffpr-cli-notemp");
+        var blockedTemp = Path.Combine(ws.Root, "blocked-temp-file");
+        File.WriteAllText(blockedTemp, "blocked", OutputGuard.Utf8WithoutBom);
+
+        var blockedTempEnv = new Dictionary<string, string?>
+        {
+            ["TEMP"] = blockedTemp,
+            ["TMP"] = blockedTemp,
+            ["TMPDIR"] = blockedTemp,
+        };
+
+        // 1. --help succeeds even when TEMP/TMP/TMPDIR point to an unwritable regular file.
+        var helpRes = await TestHarness.RunCliAsync(["--help"], extraEnv: blockedTempEnv, agpHome: ws.AgpHomeDir);
+        Assert.Equal(0, helpRes.ExitCode);
+        Assert.Contains("ffpr-export", helpRes.Stdout, StringComparison.Ordinal);
+
+        // 2. db write-fixture + db build succeed with TEMP blocked (SQLite uses memory temp_store & sibling temp db).
+        var fixtureDir = Path.Combine(ws.Root, "fixture-export");
+        var dbPath = Path.Combine(ws.Root, "fixture.sqlite");
+        var writeRes = await TestHarness.RunCliAsync(
+            ["db", "write-fixture", "--out", fixtureDir],
+            extraEnv: blockedTempEnv,
+            agpHome: ws.AgpHomeDir);
+        Assert.True(writeRes.ExitCode == 0, $"stdout:\n{writeRes.Stdout}\nstderr:\n{writeRes.Stderr}");
+
+        var buildRes = await TestHarness.RunCliAsync(
+            ["db", "build", "--export", fixtureDir, "--out", dbPath],
+            extraEnv: blockedTempEnv,
+            agpHome: ws.AgpHomeDir);
+        Assert.True(buildRes.ExitCode == 0, $"stdout:\n{buildRes.Stdout}\nstderr:\n{buildRes.Stderr}");
+        Assert.True(File.Exists(dbPath));
+
+        // 3. build-db without --out fails immediately when explicit AGP_HOME is unwritable (blocked by a regular file).
+        var spec = GameDetector.KnownGames.Single(g => g.Id == "ff5");
+        var gameDir = SyntheticUnityFixtureBuilder.BuildSyntheticSteamGame(ws.Root, spec, steamBuildId: "20265087");
+        var blockedAgpHome = Path.Combine(ws.Root, "blocked-agp-home");
+        File.WriteAllText(blockedAgpHome, "not a directory", OutputGuard.Utf8WithoutBom);
+
+        var failRes = await TestHarness.RunCliAsync(
+            ["build-db", "--game", gameDir],
+            ffprDeps: ws.DepsDir,
+            extraEnv: blockedTempEnv,
+            agpHome: blockedAgpHome);
+        Assert.Equal(2, failRes.ExitCode);
+        Assert.Contains("AGP_HOME", failRes.Stderr, StringComparison.Ordinal);
+        Assert.Contains(blockedAgpHome, failRes.Stderr, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GuiStartupLogger_ResolvesPrimaryLogPathWritesIntegrityAndNeverFallsBackToTemp()
     {
         using var ws = new TempWorkspace("ffpr-gui-startup-log");
         var agpHome = ws.AgpHomeDir;
-        var tempRoot = Path.Combine(ws.Root, "TempRoot");
-        Directory.CreateDirectory(tempRoot);
 
         var primaryDir = GuiStartupLogger.GetPrimaryLogDirectory(
             getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? agpHome : null);
@@ -733,7 +1042,8 @@ public sealed class GuiCoreTests
             getEnvironmentVariable: _ => null,
             getSpecialFolder: f => f == Environment.SpecialFolder.LocalApplicationData
                 ? @"C:\Users\Alice\AppData\Local"
-                : null);
+                : null,
+            probeWritable: _ => (true, null));
         Assert.Equal(@"C:\Users\Alice\AppData\Local\agp\ffpr-export\logs", winPrimaryDir);
 
         var ts = new DateTimeOffset(2026, 11, 26, 10, 30, 45, TimeSpan.FromHours(9));
@@ -747,14 +1057,15 @@ public sealed class GuiCoreTests
             CurrentDirectory: ws.Root,
             ExecutablePath: Path.Combine(ws.Root, "ffpr-export-gui.exe"),
             DpiSetting: "PerMonitorV2",
-            CommandLineArgs: "--self-test");
+            CommandLineArgs: "--self-test",
+            IntegrityLevel: ProcessIntegrityInfo.Low.LogLabel,
+            AgpHome: agpHome,
+            AgpRootSource: nameof(AgpRootSource.AgpHomeEnv));
 
         var logger = GuiStartupLogger.Start(
             info,
-            agpHomeOverride: agpHome,
-            tempDirectoryOverride: tempRoot);
+            agpHomeOverride: agpHome);
 
-        Assert.False(logger.UsedTempFallback);
         Assert.Null(logger.InitializationWarning);
         Assert.Equal(Path.Combine(agpHome, "ffpr-export", "logs", "gui-20261126-103045.log"), logger.LogFilePath);
         Assert.True(File.Exists(logger.LogFilePath));
@@ -768,45 +1079,20 @@ public sealed class GuiCoreTests
         Assert.Contains("os=Microsoft Windows 10.0.22631", startLine, StringComparison.Ordinal);
         Assert.Contains("dotnet=.NET 10.0.0", startLine, StringComparison.Ordinal);
         Assert.Contains("bitness=64-bit (X64, OS=X64)", startLine, StringComparison.Ordinal);
+        Assert.Contains("integrity=Low (0x1000)", startLine, StringComparison.Ordinal);
         Assert.Contains($"cwd={ws.Root}", startLine, StringComparison.Ordinal);
         Assert.Contains("ffpr-export-gui.exe", startLine, StringComparison.Ordinal);
         Assert.Contains("dpi=PerMonitorV2", startLine, StringComparison.Ordinal);
         Assert.Contains("args=--self-test", startLine, StringComparison.Ordinal);
+        Assert.Contains($"agp_home={agpHome}", startLine, StringComparison.Ordinal);
 
-        // When primary log directory cannot be created (blocked by a regular file), fall back to %TEMP%.
+        // When primary AGP root is blocked, logger must NOT fall back to %TEMP%; degrades cleanly for MessageBox display.
         var blockedAgpHome = Path.Combine(ws.Root, "blocked-agp-home");
         File.WriteAllText(blockedAgpHome, "not a directory", OutputGuard.Utf8WithoutBom);
 
-        var fallbackLogger = GuiStartupLogger.Start(
-            info,
-            agpHomeOverride: blockedAgpHome,
-            tempDirectoryOverride: tempRoot);
-        Assert.True(fallbackLogger.UsedTempFallback);
-        Assert.NotNull(fallbackLogger.LogFilePath);
-        Assert.StartsWith(tempRoot, fallbackLogger.LogFilePath!, StringComparison.Ordinal);
-        Assert.True(File.Exists(fallbackLogger.LogFilePath));
-        Assert.NotNull(fallbackLogger.InitializationWarning);
-
-        // When %TEMP%\agp is also blocked by a regular file, fall back directly to %TEMP%.
-        var tempRootDirect = Path.Combine(ws.Root, "TempDirect");
-        Directory.CreateDirectory(tempRootDirect);
-        File.WriteAllText(Path.Combine(tempRootDirect, "agp"), "file blocks subdir", OutputGuard.Utf8WithoutBom);
-
-        var directTempLogger = GuiStartupLogger.Start(
-            info,
-            agpHomeOverride: blockedAgpHome,
-            tempDirectoryOverride: tempRootDirect);
-        Assert.True(directTempLogger.UsedTempFallback);
-        Assert.Equal(Path.Combine(tempRootDirect, "gui-20261126-103045.log"), directTempLogger.LogFilePath);
-        Assert.True(File.Exists(directTempLogger.LogFilePath));
-
-        // When both primary and temp locations fail, logger degrades gracefully without throwing.
-        var blockedTemp = Path.Combine(ws.Root, "blocked-temp");
-        File.WriteAllText(blockedTemp, "not a directory", OutputGuard.Utf8WithoutBom);
         var degradedLogger = GuiStartupLogger.Start(
             info,
-            agpHomeOverride: blockedAgpHome,
-            tempDirectoryOverride: blockedTemp);
+            agpHomeOverride: blockedAgpHome);
         Assert.Null(degradedLogger.LogFilePath);
         Assert.NotNull(degradedLogger.InitializationWarning);
         degradedLogger.WriteInfo("must not throw");
@@ -955,7 +1241,7 @@ public sealed class GuiCoreTests
             getEnvironmentVariable: _ => null,
             getSpecialFolder: _ => throw new UnauthorizedAccessException("LocalAppData 不可访问"),
             getBaseDirectory: () => ws.Root);
-        Assert.Equal(Path.Combine(ws.Root, "agp", "ffpr-export", "settings.json"), fallbackSettingsPath);
+        Assert.Equal(Path.Combine(ws.Root, AgpPaths.PortableAgpFolderName, "ffpr-export", "settings.json"), fallbackSettingsPath);
 
         var missingResult = GuiSettingsStore.LoadWithDiagnostics(Path.Combine(ws.Root, "missing-settings.json"));
         Assert.Null(missingResult.WarningMessage);
@@ -1028,14 +1314,12 @@ public sealed class GuiCoreTests
 
         // 3. Default output root fallbacks when primary AGP root providers fail or return empty.
         var existingBase = Path.Combine(ws.Root, "AppBase");
-        var existingTemp = Path.Combine(ws.Root, "TempDir");
         Directory.CreateDirectory(existingBase);
-        Directory.CreateDirectory(existingTemp);
 
         var normalRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
             getEnvironmentVariable: key => key == AgpPaths.AgpHomeEnvVar ? ws.AgpHomeDir : null,
-            getBaseDirectory: () => existingBase,
-            getTempDirectory: () => existingTemp);
+            getBaseDirectory: () => existingBase);
+        Assert.True(normalRoot.Succeeded);
         Assert.False(normalRoot.UsedFallback);
         Assert.Null(normalRoot.WarningMessage);
         Assert.Equal(Path.Combine(ws.AgpHomeDir, "ffpr-export", "output"), normalRoot.OutputRoot);
@@ -1045,17 +1329,22 @@ public sealed class GuiCoreTests
             getEnvironmentVariable: _ => null,
             getSpecialFolder: _ => throw new UnauthorizedAccessException("无法读取 LocalAppData 目录"),
             getBaseDirectory: () => existingBase,
-            getTempDirectory: () => existingTemp);
+            probeWritable: path => path == Path.Combine(existingBase, AgpPaths.PortableAgpFolderName) || path.EndsWith("\\agp-data", StringComparison.Ordinal)
+                ? (true, null)
+                : (false, "拒绝访问"));
+        Assert.True(throwingPrimaryRoot.Succeeded);
         Assert.True(throwingPrimaryRoot.UsedFallback);
-        Assert.Contains("无法读取 LocalAppData 目录", throwingPrimaryRoot.WarningMessage, StringComparison.Ordinal);
+        Assert.Contains("%LOCALAPPDATA% 不可写", throwingPrimaryRoot.WarningMessage, StringComparison.Ordinal);
 
-        var tempOnlyRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
+        var allBlockedRoot = GuiOutputPlanner.ResolveDefaultOutputRoot(
             getEnvironmentVariable: _ => null,
             getSpecialFolder: _ => string.Empty,
             getBaseDirectory: () => string.Empty,
-            getTempDirectory: () => existingTemp);
-        Assert.True(tempOnlyRoot.UsedFallback);
-        Assert.Equal(Path.Combine(existingTemp, "agp", "ffpr-export", "output"), tempOnlyRoot.OutputRoot);
+            probeWritable: _ => (false, "全部不可写"));
+        Assert.False(allBlockedRoot.Succeeded);
+        Assert.True(allBlockedRoot.UsedFallback);
+        Assert.Equal(string.Empty, allBlockedRoot.OutputRoot);
+        Assert.Contains("AGP_HOME", allBlockedRoot.WarningMessage, StringComparison.Ordinal);
 
         // 4. Steam scan safe wrapper catches permission & IO exceptions and prompts manual selection.
         var deniedScan = GuiGameScanner.DiscoverSteamGamesSafe(
@@ -1099,6 +1388,8 @@ public sealed class GuiCoreTests
         Assert.Contains("--self-test", ps1Content, StringComparison.Ordinal);
         Assert.Contains("-Wait", ps1Content, StringComparison.Ordinal);
         Assert.Contains("-PassThru", ps1Content, StringComparison.Ordinal);
+        Assert.Contains("IncludeNativeLibrariesForSelfExtract=false", ps1Content, StringComparison.Ordinal);
+        Assert.Contains("e_sqlite3.dll", ps1Content, StringComparison.Ordinal);
     }
 
     private static bool HasUtf8Bom(byte[] bytes)
