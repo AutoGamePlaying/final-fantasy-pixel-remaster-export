@@ -29,7 +29,7 @@ internal sealed record GuiGameEntry(
 
     public string DisplayLabel => $"{DisplayName} ({GameCode})";
 
-    public string BuildIdDisplay => string.IsNullOrWhiteSpace(SteamBuildId) ? "未知" : SteamBuildId.Trim();
+    public string BuildIdDisplay => string.IsNullOrWhiteSpace(SteamBuildId) ? L.Get("Common_Unknown") : SteamBuildId.Trim();
 }
 
 internal sealed record PlannedGameExport(
@@ -72,7 +72,8 @@ internal sealed record GuiGameExportResult(
     string VerdictSymbol,
     string VerdictShortText,
     string VerdictDetailText,
-    string? ErrorMessage)
+    string? ErrorMessage,
+    string? RawReadError = null)
 {
     public string SqlitePath => Report?.SqlitePath ?? Path.Combine(OutputDirectory, $"{Game.Spec.Id}.sqlite");
 

@@ -10,9 +10,9 @@ namespace FfprExport.Gui;
 /// </summary>
 internal static class BuildReportReader
 {
-    public const string ShortMatched = "与登记的版本一致";
-    public const string ShortNewVersion = "新版本，未登记";
-    public const string ShortHashMismatch = "哈希不同";
+    public static string ShortMatched => L.Get("Gui_VerdictShortMatched");
+    public static string ShortNewVersion => L.Get("Gui_VerdictShortNewVersion");
+    public static string ShortHashMismatch => L.Get("Gui_VerdictShortHashMismatch");
 
     public static string? FindBuildReportPath(string outputDirectory, string? preferredGameId = null)
     {
@@ -52,7 +52,7 @@ internal static class BuildReportReader
         var ioPath = PathSupport.ToIoPath(reportPath);
         if (!File.Exists(ioPath))
         {
-            throw new FileNotFoundException($"找不到构建报告文件：{reportPath}", reportPath);
+            throw new FileNotFoundException(L.Format("Gui_ReportNotFound", reportPath), reportPath);
         }
 
         string json;
@@ -62,7 +62,7 @@ internal static class BuildReportReader
         }
         catch (Exception ex)
         {
-            throw new IOException($"读取构建报告失败（{reportPath}）：{ex.Message}", ex);
+            throw new IOException(L.Format("Gui_ReportReadFailed", reportPath, ex.Message), ex);
         }
 
         try
@@ -71,7 +71,7 @@ internal static class BuildReportReader
             var root = doc.RootElement;
             if (root.ValueKind != JsonValueKind.Object)
             {
-                throw new InvalidDataException($"构建报告根节点必须是 JSON 对象：{reportPath}");
+                throw new InvalidDataException(L.Format("Gui_ReportRootNotObject", reportPath));
             }
 
             var status = TryGetString(root, "status");
@@ -169,7 +169,7 @@ internal static class BuildReportReader
         }
         catch (JsonException ex)
         {
-            throw new InvalidDataException($"解析构建报告 JSON 失败（{reportPath}）：{ex.Message}", ex);
+            throw new InvalidDataException(L.Format("Gui_ReportJsonParseFailed", reportPath, ex.Message), ex);
         }
     }
 
@@ -185,7 +185,7 @@ internal static class BuildReportReader
         var reportPath = FindBuildReportPath(outputDirectory, preferredGameId);
         if (reportPath is null)
         {
-            errorMessage = $"输出目录中未找到 *.build.json 构建报告：{outputDirectory}";
+            errorMessage = L.Format("Gui_ReportMissingInDir", outputDirectory);
             return false;
         }
 
@@ -199,6 +199,17 @@ internal static class BuildReportReader
             errorMessage = ex.Message;
             return false;
         }
+    }
+
+    public static GuiGameExportResult ReevaluateForCurrentLanguage(GuiGameExportResult existing)
+    {
+        return EvaluateOutcome(
+            existing.Game,
+            existing.OutputDirectory,
+            existing.ExitCode,
+            existing.Cancelled,
+            existing.Report,
+            existing.RawReadError);
     }
 
     public static GuiGameExportResult EvaluateOutcome(
@@ -219,16 +230,17 @@ internal static class BuildReportReader
                 report,
                 KnownBuildVerdictKind.Cancelled,
                 "✗",
-                "已取消",
-                "✗ 已取消：导出任务被用户中断",
-                "用户已取消导出");
+                L.Get("Gui_VerdictShortCancelled"),
+                L.Get("Gui_VerdictDetailCancelled"),
+                L.Get("Gui_VerdictErrorUserCancelled"),
+                RawReadError: readError);
         }
 
         if (exitCode >= 2)
         {
             var reason = string.IsNullOrWhiteSpace(readError)
-                ? string.Create(CultureInfo.InvariantCulture, $"命令行导出失败（退出码 {exitCode}），请查看上方日志")
-                : string.Create(CultureInfo.InvariantCulture, $"命令行导出失败（退出码 {exitCode}）：{readError}");
+                ? L.Format("Gui_VerdictCliFailed", exitCode)
+                : L.Format("Gui_VerdictCliFailedWithReason", exitCode, readError);
             return new GuiGameExportResult(
                 game,
                 outputDirectory,
@@ -237,15 +249,16 @@ internal static class BuildReportReader
                 report,
                 KnownBuildVerdictKind.Failed,
                 "✗",
-                "导出失败",
-                $"✗ 导出失败：{reason}",
-                reason);
+                L.Get("Gui_VerdictShortFailed"),
+                L.Format("Gui_VerdictDetailFailed", reason),
+                reason,
+                RawReadError: readError);
         }
 
         if (report is null)
         {
             var reason = string.IsNullOrWhiteSpace(readError)
-                ? $"未在输出目录读取到 *.build.json：{outputDirectory}"
+                ? L.Format("Gui_VerdictMissingReport", outputDirectory)
                 : readError;
             return new GuiGameExportResult(
                 game,
@@ -255,14 +268,15 @@ internal static class BuildReportReader
                 null,
                 KnownBuildVerdictKind.Failed,
                 "✗",
-                "导出失败",
-                $"✗ 导出失败：{reason}",
-                reason);
+                L.Get("Gui_VerdictShortFailed"),
+                L.Format("Gui_VerdictDetailFailed", reason),
+                reason,
+                RawReadError: readError);
         }
 
         if (!string.Equals(report.Status, "completed", StringComparison.OrdinalIgnoreCase))
         {
-            var reason = $"构建报告状态不是 completed（当前为 {report.Status ?? "空"}）：{report.ReportPath}";
+            var reason = L.Format("Gui_VerdictStatusNotCompleted", report.Status ?? L.Get("Common_Null"), report.ReportPath);
             return new GuiGameExportResult(
                 game,
                 outputDirectory,
@@ -271,15 +285,16 @@ internal static class BuildReportReader
                 report,
                 KnownBuildVerdictKind.Failed,
                 "✗",
-                "导出失败",
-                $"✗ 导出失败：{reason}",
-                reason);
+                L.Get("Gui_VerdictShortFailed"),
+                L.Format("Gui_VerdictDetailFailed", reason),
+                reason,
+                RawReadError: readError);
         }
 
-        var partialSuffix = exitCode == 1 ? "（存在部分资源告警）" : string.Empty;
-        var sourceSuffix = string.IsNullOrWhiteSpace(report.ComparisonSource)
-            ? string.Empty
-            : $"，来源：{report.ComparisonSource}";
+        var partialSuffix = exitCode == 1 ? L.Get("Gui_VerdictPartialSuffix") : string.Empty;
+        var sourceNote = string.IsNullOrWhiteSpace(report.ComparisonSource)
+            ? null
+            : L.Format("Gui_VerdictSourcePart", report.ComparisonSource);
 
         var normalizedStatus = (report.ComparisonStatus ?? string.Empty).Trim().ToLowerInvariant();
         return normalizedStatus switch
@@ -293,8 +308,9 @@ internal static class BuildReportReader
                 KnownBuildVerdictKind.Matched,
                 "✓",
                 ShortMatched + partialSuffix,
-                FormatMatchedDetail(report, partialSuffix, sourceSuffix),
-                null),
+                FormatMatchedDetail(report, partialSuffix, sourceNote),
+                null,
+                RawReadError: readError),
             "new_game_version" => new GuiGameExportResult(
                 game,
                 outputDirectory,
@@ -304,8 +320,11 @@ internal static class BuildReportReader
                 KnownBuildVerdictKind.NewGameVersion,
                 "✓",
                 ShortNewVersion + partialSuffix,
-                $"✓ {ShortNewVersion}{partialSuffix}" + (string.IsNullOrEmpty(sourceSuffix) ? string.Empty : $"（{sourceSuffix.TrimStart('，')}）"),
-                null),
+                sourceNote is null
+                    ? $"✓ {ShortNewVersion}{partialSuffix}"
+                    : L.Format("Gui_VerdictDetailWithNotes", "✓", ShortNewVersion, partialSuffix, sourceNote),
+                null,
+                RawReadError: readError),
             "hash_mismatch" => new GuiGameExportResult(
                 game,
                 outputDirectory,
@@ -315,8 +334,9 @@ internal static class BuildReportReader
                 KnownBuildVerdictKind.HashMismatch,
                 "✗",
                 ShortHashMismatch + partialSuffix,
-                FormatMismatchDetail(report, partialSuffix, sourceSuffix),
-                null),
+                FormatMismatchDetail(report, partialSuffix, sourceNote),
+                null,
+                RawReadError: readError),
             _ => new GuiGameExportResult(
                 game,
                 outputDirectory,
@@ -325,9 +345,10 @@ internal static class BuildReportReader
                 report,
                 KnownBuildVerdictKind.Unknown,
                 "✗",
-                "未知比对结论" + partialSuffix,
-                $"✗ 未知比对结论（status={report.ComparisonStatus ?? "null"}）{partialSuffix}",
-                null),
+                L.Get("Gui_VerdictShortUnknown") + partialSuffix,
+                L.Format("Gui_VerdictDetailUnknown", report.ComparisonStatus ?? "null", partialSuffix),
+                null,
+                RawReadError: readError),
         };
     }
 
@@ -344,59 +365,64 @@ internal static class BuildReportReader
             }
 
             var sb = new StringBuilder();
-            sb.AppendLine($"[{item.Game.GameCode}] {item.Game.DisplayName} | 构建号: {item.EffectiveBuildId} | 结论: {item.VerdictDisplay}");
-            sb.AppendLine($"数据库路径: {item.SqlitePath}");
-            sb.AppendLine($"file_sha256:    {item.Report?.FileSha256 ?? "(无)"}");
-            sb.Append($"content_sha256: {item.Report?.ContentSha256 ?? "(无)"}");
+            sb.AppendLine(L.Format(
+                "Gui_ClipboardHeader",
+                item.Game.GameCode,
+                item.Game.DisplayName,
+                item.EffectiveBuildId,
+                item.VerdictDisplay));
+            sb.AppendLine(L.Format("Gui_ClipboardDbPath", item.SqlitePath));
+            sb.AppendLine($"file_sha256:    {item.Report?.FileSha256 ?? L.Get("Common_NoneParen")}");
+            sb.Append($"content_sha256: {item.Report?.ContentSha256 ?? L.Get("Common_NoneParen")}");
             blocks.Add(sb.ToString());
         }
 
         return string.Join(Environment.NewLine + Environment.NewLine, blocks);
     }
 
-    private static string FormatMatchedDetail(GuiBuildReport report, string partialSuffix, string sourceSuffix)
+    private static string FormatMatchedDetail(GuiBuildReport report, string partialSuffix, string? sourceNote)
     {
         var notes = new List<string>();
         if (!string.IsNullOrWhiteSpace(report.MatchedRegisteredAt))
         {
-            notes.Add($"登记日期：{report.MatchedRegisteredAt}");
+            notes.Add(L.Format("Gui_VerdictRegisteredDatePart", report.MatchedRegisteredAt));
         }
 
-        if (!string.IsNullOrEmpty(sourceSuffix))
+        if (!string.IsNullOrEmpty(sourceNote))
         {
-            notes.Add(sourceSuffix.TrimStart('，'));
+            notes.Add(sourceNote);
         }
 
         return notes.Count == 0
             ? $"✓ {ShortMatched}{partialSuffix}"
-            : $"✓ {ShortMatched}{partialSuffix}（{string.Join("，", notes)}）";
+            : L.Format("Gui_VerdictDetailWithNotes", "✓", ShortMatched, partialSuffix, string.Join(L.Get("Gui_DetailListSeparator"), notes));
     }
 
-    private static string FormatMismatchDetail(GuiBuildReport report, string partialSuffix, string sourceSuffix)
+    private static string FormatMismatchDetail(GuiBuildReport report, string partialSuffix, string? sourceNote)
     {
         var notes = new List<string>();
         if (report.FileSha256MismatchOnly)
         {
-            notes.Add("仅文件哈希不同，内容哈希一致");
+            notes.Add(L.Get("Gui_VerdictFileHashOnlyNote"));
         }
         else if (report.TableDiffCount > 0)
         {
-            notes.Add(string.Create(CultureInfo.InvariantCulture, $"差异表 {report.TableDiffCount} 张"));
+            notes.Add(L.Format("Gui_VerdictTableDiffCountNote", report.TableDiffCount));
         }
 
         if (!string.IsNullOrWhiteSpace(report.MatchedRegisteredAt))
         {
-            notes.Add($"对照登记：{report.MatchedRegisteredAt}");
+            notes.Add(L.Format("Gui_VerdictReferenceDatePart", report.MatchedRegisteredAt));
         }
 
-        if (!string.IsNullOrEmpty(sourceSuffix))
+        if (!string.IsNullOrEmpty(sourceNote))
         {
-            notes.Add(sourceSuffix.TrimStart('，'));
+            notes.Add(sourceNote);
         }
 
         return notes.Count == 0
             ? $"✗ {ShortHashMismatch}{partialSuffix}"
-            : $"✗ {ShortHashMismatch}{partialSuffix}（{string.Join("，", notes)}）";
+            : L.Format("Gui_VerdictDetailWithNotes", "✗", ShortHashMismatch, partialSuffix, string.Join(L.Get("Gui_DetailListSeparator"), notes));
     }
 
     private static bool TryGetObject(JsonElement element, string propertyName, out JsonElement value)

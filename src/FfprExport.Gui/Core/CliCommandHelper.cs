@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace FfprExport.Gui;
 
@@ -12,15 +12,13 @@ internal sealed record CliLookupResult(
     Exception? Error);
 
 /// <summary>
-/// Locates the sibling CLI executable, constructs build-db arguments, parses step progress lines,
-/// and configures UTF-8 ProcessStartInfo without invoking a shell.
+/// Locates the sibling CLI executable, constructs build-db arguments, parses language-independent
+/// @@progress JSON lines, and configures UTF-8 ProcessStartInfo without invoking a shell.
 /// </summary>
-internal static partial class CliCommandHelper
+internal static class CliCommandHelper
 {
     public const string CliExecutableFileName = "ffpr-export.exe";
-
-    [GeneratedRegex(@"^\s*==>\s*(?:\[[^\]]+\]\s*)?步骤\s*(\d+)\s*/\s*(\d+)(?:\s*[：:]\s*(.*))?$", RegexOptions.CultureInvariant)]
-    private static partial Regex ProgressStepRegex();
+    public const string ProgressProtocolPrefix = "@@progress";
 
     public static (string? ResolvedPath, string ExpectedPath) FindCliExecutable(
         string baseDirectory,
@@ -99,7 +97,7 @@ internal static partial class CliCommandHelper
             return new CliLookupResult(
                 ResolvedPath: null,
                 ExpectedPath: fullExpected,
-                WarningMessage: $"未找到同目录命令行程序 {cliFileName}（预期位置：{fullExpected}），导出前请确认压缩包已完整解压。",
+                WarningMessage: L.Format("Gui_CliNotFoundWarning", cliFileName, fullExpected),
                 Error: null);
         }
         catch (Exception ex)
@@ -107,7 +105,7 @@ internal static partial class CliCommandHelper
             return new CliLookupResult(
                 ResolvedPath: null,
                 ExpectedPath: fallbackExpected,
-                WarningMessage: $"检查命令行程序 {cliFileName} 时出错：{ex.Message}。",
+                WarningMessage: L.Format("Gui_CliCheckErrorWarning", cliFileName, ex.Message),
                 Error: ex);
         }
     }
@@ -115,9 +113,7 @@ internal static partial class CliCommandHelper
     public static string FormatMissingCliMessage(string expectedPath)
     {
         var fileName = Path.GetFileName(expectedPath);
-        return $"找不到命令行导出程序：{fileName}。\n\n"
-            + $"预期位置：{expectedPath}\n\n"
-            + $"请确认压缩包已完整解压，并且 {fileName} 与 ffpr-export-gui.exe 位于同一文件夹。";
+        return L.Format("Gui_MissingCliMessage", fileName, expectedPath);
     }
 
     public static string[] BuildBuildDbArguments(
@@ -126,16 +122,18 @@ internal static partial class CliCommandHelper
         bool force = false,
         string? steamBuildId = null,
         bool keepJson = false,
-        int? jobs = null)
+        int? jobs = null,
+        string? language = null,
+        bool progressJson = false)
     {
         if (string.IsNullOrWhiteSpace(gameDirectory))
         {
-            throw new ArgumentException("游戏目录不能为空", nameof(gameDirectory));
+            throw new ArgumentException(L.Get("Gui_ArgGameDirEmpty"), nameof(gameDirectory));
         }
 
         if (string.IsNullOrWhiteSpace(outputDirectory))
         {
-            throw new ArgumentException("输出目录不能为空", nameof(outputDirectory));
+            throw new ArgumentException(L.Get("Gui_ArgOutputDirEmpty"), nameof(outputDirectory));
         }
 
         var args = new List<string>
@@ -167,6 +165,17 @@ internal static partial class CliCommandHelper
         if (force)
         {
             args.Add("--force");
+        }
+
+        if (!string.IsNullOrWhiteSpace(language))
+        {
+            args.Add(AppLocalization.CliOptionName);
+            args.Add(language.Trim());
+        }
+
+        if (progressJson)
+        {
+            args.Add("--progress-json");
         }
 
         return [.. args];
@@ -213,6 +222,23 @@ internal static partial class CliCommandHelper
         return startInfo;
     }
 
+    public static bool IsProgressProtocolLine(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return false;
+        }
+
+        var trimmed = line.TrimStart();
+        return trimmed.StartsWith(ProgressProtocolPrefix, StringComparison.Ordinal)
+            && (trimmed.Length == ProgressProtocolPrefix.Length || char.IsWhiteSpace(trimmed[ProgressProtocolPrefix.Length]));
+    }
+
+    /// <summary>
+    /// Parses machine-readable progress lines in the language-independent format:
+    /// <c>@@progress {"step":n,"total":m}</c> (with optional <c>"message"</c>).
+    /// Human-readable step lines (such as <c>==> Step n/m</c>) are intentionally ignored.
+    /// </summary>
     public static bool TryParseProgressStep(string? line, out ProgressStepUpdate update)
     {
         update = default!;
@@ -221,29 +247,59 @@ internal static partial class CliCommandHelper
             return false;
         }
 
-        var match = ProgressStepRegex().Match(line);
-        if (!match.Success)
+        var trimmed = line.Trim();
+        if (!trimmed.StartsWith(ProgressProtocolPrefix, StringComparison.Ordinal)
+            || trimmed.Length <= ProgressProtocolPrefix.Length
+            || !char.IsWhiteSpace(trimmed[ProgressProtocolPrefix.Length]))
         {
             return false;
         }
 
-        if (!int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var current)
-            || !int.TryParse(match.Groups[2].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var total)
-            || total <= 0
-            || current < 1
-            || current > total)
+        var payload = trimmed[ProgressProtocolPrefix.Length..].Trim();
+        if (payload.Length == 0 || payload[0] != '{')
         {
             return false;
         }
 
-        var description = match.Groups[3].Success ? match.Groups[3].Value.Trim() : null;
-        if (string.IsNullOrWhiteSpace(description))
+        try
         {
-            description = null;
-        }
+            using var doc = JsonDocument.Parse(payload);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
 
-        update = new ProgressStepUpdate(current, total, description);
-        return true;
+            if (!root.TryGetProperty("step", out var stepEl)
+                || stepEl.ValueKind != JsonValueKind.Number
+                || !stepEl.TryGetInt32(out var current)
+                || !root.TryGetProperty("total", out var totalEl)
+                || totalEl.ValueKind != JsonValueKind.Number
+                || !totalEl.TryGetInt32(out var total)
+                || total <= 0
+                || current < 1
+                || current > total)
+            {
+                return false;
+            }
+
+            string? description = null;
+            if (root.TryGetProperty("message", out var msgEl) && msgEl.ValueKind == JsonValueKind.String)
+            {
+                var rawMsg = msgEl.GetString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(rawMsg))
+                {
+                    description = rawMsg;
+                }
+            }
+
+            update = new ProgressStepUpdate(current, total, description);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     public static string FormatGameProgressHeader(
@@ -252,18 +308,16 @@ internal static partial class CliCommandHelper
         GuiGameEntry game,
         ProgressStepUpdate? step = null)
     {
-        var prefix = string.Create(
-            CultureInfo.InvariantCulture,
-            $"第 {currentIndexOneBased} / {totalCount} 个：{game.GameCode}");
+        var prefix = L.Format("Gui_ProgressGamePrefix", currentIndexOneBased, totalCount, game.GameCode);
         if (step is null)
         {
             return prefix;
         }
 
         var stepPart = string.IsNullOrWhiteSpace(step.Description)
-            ? string.Create(CultureInfo.InvariantCulture, $"步骤 {step.CurrentStep}/{step.TotalSteps}")
-            : string.Create(CultureInfo.InvariantCulture, $"步骤 {step.CurrentStep}/{step.TotalSteps}：{step.Description}");
-        return $"{prefix}（{stepPart}）";
+            ? L.Format("Gui_ProgressStepOnly", step.CurrentStep, step.TotalSteps)
+            : L.Format("Gui_ProgressStepWithDesc", step.CurrentStep, step.TotalSteps, step.Description);
+        return L.Format("Gui_ProgressGameWithStep", prefix, stepPart);
     }
 
     /// <summary>

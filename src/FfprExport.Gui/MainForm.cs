@@ -5,15 +5,31 @@ using System.Reflection;
 namespace FfprExport.Gui;
 
 /// <summary>
-/// Single-window Chinese WinForms GUI for scanning Steam FF1-FF6 Pixel Remaster installations,
-/// running ffpr-export.exe build-db sequentially, streaming UTF-8 logs/progress, and displaying
-/// structured verification results from *.build.json.
+/// Single-window localized WinForms GUI for scanning Steam FF1-FF6 Pixel Remaster installations,
+/// running ffpr-export.exe build-db sequentially, streaming UTF-8 logs and language-independent
+/// @@progress updates, and displaying structured verification results from *.build.json.
 /// </summary>
 internal sealed class MainForm : Form
 {
     private const int MaxLogCharacters = 500_000;
 
+    private enum UiProgressState
+    {
+        Ready,
+        MissingCli,
+        Exporting,
+        Cancelling,
+        Cancelled,
+        Finished,
+    }
+
+    private sealed record LanguageOption(AppLanguage Language)
+    {
+        public override string ToString() => AppLocalization.GetNativeDisplayName(Language);
+    }
+
     private readonly bool _skipInitialLoad;
+    private readonly bool _hasExternalLanguageOverride;
     private readonly GuiStartupLogger? _startupLogger;
     private readonly ProcessIntegrityInfo _integrityInfo;
     private readonly AgpRootResolution _agpRoot;
@@ -29,18 +45,23 @@ internal sealed class MainForm : Form
     private readonly Font _logFont;
     private readonly Font _verdictFont;
 
+    private Label _languageLabel = null!;
+    private ComboBox _languageComboBox = null!;
     private Panel _rootNoticePanel = null!;
     private Label _rootNoticeLabel = null!;
     private StatusStrip _statusStrip = null!;
     private ToolStripStatusLabel _statusDataDirLabel = null!;
     private ToolStripStatusLabel _statusIntegrityLabel = null!;
 
+    private GroupBox _gamesGroup = null!;
     private CheckBox _selectAllCheckBox = null!;
     private Label _selectionSummaryLabel = null!;
     private Button _rescanButton = null!;
     private Button _manualAddButton = null!;
     private ListView _gamesListView = null!;
 
+    private GroupBox _outputGroup = null!;
+    private Label _outputRootLabel = null!;
     private TextBox _outputRootTextBox = null!;
     private Button _browseOutputButton = null!;
     private Label _outputPreviewLabel = null!;
@@ -51,7 +72,12 @@ internal sealed class MainForm : Form
     private ProgressBar _progressBar = null!;
     private TextBox _logTextBox = null!;
 
+    private GroupBox _completionGroup = null!;
     private ListView _resultsListView = null!;
+    private Label _detailDbPathLabel = null!;
+    private Label _detailFileHashLabel = null!;
+    private Label _detailContentHashLabel = null!;
+    private Label _detailVerdictTitleLabel = null!;
     private TextBox _detailDbPathBox = null!;
     private TextBox _detailFileHashBox = null!;
     private TextBox _detailContentHashBox = null!;
@@ -64,8 +90,17 @@ internal sealed class MainForm : Form
     private bool _initialStateLoaded;
     private bool _suppressItemChecked;
     private bool _suppressOutputWarningClear;
+    private bool _suppressLanguageChanged;
+    private bool _userChangedLanguage;
     private bool _isExporting;
     private bool _closeAfterCancel;
+    private bool _isWaitingForResults;
+    private UiProgressState _progressState = UiProgressState.Ready;
+    private int _activeGameOneBased;
+    private int _activeTotalGames;
+    private GuiGameEntry? _activeGame;
+    private ProgressStepUpdate? _activeStep;
+    private int _lastCopiedHashCount;
     private string? _lastScanWarning;
     private string? _outputRootFallbackWarning;
     private CancellationTokenSource? _exportCts;
@@ -75,22 +110,25 @@ internal sealed class MainForm : Form
         string? settingsPathOverride = null,
         GuiStartupLogger? startupLogger = null,
         AgpRootResolution? agpRoot = null,
-        ProcessIntegrityInfo? integrityInfo = null)
+        ProcessIntegrityInfo? integrityInfo = null,
+        bool hasExternalLanguageOverride = false)
     {
         _skipInitialLoad = skipInitialLoad;
+        _hasExternalLanguageOverride = hasExternalLanguageOverride;
         _startupLogger = startupLogger;
         _integrityInfo = integrityInfo ?? agpRoot?.Integrity ?? ProcessIntegrity.Detect();
         _agpRoot = agpRoot ?? AgpPaths.ResolveAgpHome(integrityOverride: _integrityInfo);
         _settingsPathOverride = settingsPathOverride;
         _settingsPath = ResolveSettingsPathSafely(settingsPathOverride, _agpRoot);
 
-        _uiFont = CreateFontSafe("界面字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Regular);
-        _boldButtonFont = CreateFontSafe("主按钮字体", GuiFontFallbackPolicy.UiFontCandidates, 10.5f, FontStyle.Bold);
-        _logFont = CreateFontSafe("日志等宽字体", GuiFontFallbackPolicy.LogFontCandidates, 9f, FontStyle.Regular);
-        _verdictFont = CreateFontSafe("结论标题字体", GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Bold);
+        _uiFont = CreateFontSafe(L.Get("Gui_FontRoleUi"), GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Regular);
+        _boldButtonFont = CreateFontSafe(L.Get("Gui_FontRolePrimaryButton"), GuiFontFallbackPolicy.UiFontCandidates, 10.5f, FontStyle.Bold);
+        _logFont = CreateFontSafe(L.Get("Gui_FontRoleLog"), GuiFontFallbackPolicy.LogFontCandidates, 9f, FontStyle.Regular);
+        _verdictFont = CreateFontSafe(L.Get("Gui_FontRoleVerdict"), GuiFontFallbackPolicy.UiFontCandidates, 9.5f, FontStyle.Bold);
 
         InitializeLayout();
-        ApplyRootNoticeAndStatusBar();
+        ApplyRootNoticeAndStatusBar(recordStartupWarning: true);
+        SyncLanguageSelector();
         FlushStartupWarningsToUi();
     }
 
@@ -143,7 +181,7 @@ internal sealed class MainForm : Form
         }
         catch (Exception ex)
         {
-            LogStartupDiagnosticWarning($"初始化主窗口状态时发生异常：{ex.Message}；您仍可手动选择目录。", ex, "MainForm.OnLoad");
+            LogStartupDiagnosticWarning(L.Format("Gui_StartupLoadException", ex.Message), ex, "MainForm.OnLoad");
         }
     }
 
@@ -159,8 +197,8 @@ internal sealed class MainForm : Form
 
             var answer = MessageBox.Show(
                 this,
-                "当前正在导出游戏数据，确定要取消导出并关闭窗口吗？",
-                "确认关闭",
+                L.Get("Gui_ConfirmCloseMessage"),
+                L.Get("Gui_ConfirmCloseTitle"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
@@ -184,11 +222,11 @@ internal sealed class MainForm : Form
         SuspendLayout();
 
         var version = ReadDisplayVersion();
-        Text = $"FFPR 导出工具 v{version} — FINAL FANTASY I–VI Pixel Remaster";
+        Text = L.Format("Gui_WindowTitle", version);
         AutoScaleMode = AutoScaleMode.Dpi;
         Font = _uiFont;
         MinimumSize = new Size(720, 680);
-        ClientSize = new Size(860, 760);
+        ClientSize = new Size(860, 780);
         StartPosition = FormStartPosition.CenterScreen;
 
         var rootLayout = new TableLayoutPanel
@@ -196,20 +234,22 @@ internal sealed class MainForm : Form
             Dock = DockStyle.Fill,
             Padding = new Padding(12),
             ColumnCount = 1,
-            RowCount = 5,
+            RowCount = 6,
         };
         rootLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+        rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 28f));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 37f));
         rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 35f));
 
-        rootLayout.Controls.Add(BuildRootNoticeBanner(), 0, 0);
-        rootLayout.Controls.Add(BuildGamesGroup(), 0, 1);
-        rootLayout.Controls.Add(BuildOutputGroup(), 0, 2);
-        rootLayout.Controls.Add(BuildExportAndLogPanel(), 0, 3);
-        rootLayout.Controls.Add(BuildCompletionGroup(), 0, 4);
+        rootLayout.Controls.Add(BuildHeaderBar(), 0, 0);
+        rootLayout.Controls.Add(BuildRootNoticeBanner(), 0, 1);
+        rootLayout.Controls.Add(BuildGamesGroup(), 0, 2);
+        rootLayout.Controls.Add(BuildOutputGroup(), 0, 3);
+        rootLayout.Controls.Add(BuildExportAndLogPanel(), 0, 4);
+        rootLayout.Controls.Add(BuildCompletionGroup(), 0, 5);
 
         _statusStrip = BuildStatusStrip();
 
@@ -218,6 +258,45 @@ internal sealed class MainForm : Form
         Controls.Add(_statusStrip);
         SizeChanged += (_, _) => UpdateRootNoticeWrapWidth();
         ResumeLayout(performLayout: true);
+    }
+
+    private FlowLayoutPanel BuildHeaderBar()
+    {
+        var bar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.RightToLeft,
+            WrapContents = false,
+            Margin = new Padding(0, 0, 0, 4),
+            Padding = new Padding(0),
+        };
+
+        _languageComboBox = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 132,
+            Margin = new Padding(0),
+        };
+        foreach (var lang in AppLocalization.SupportedLanguages)
+        {
+            _languageComboBox.Items.Add(new LanguageOption(lang));
+        }
+
+        _languageComboBox.SelectedIndexChanged += OnLanguageSelectionChanged;
+
+        _languageLabel = new Label
+        {
+            Text = L.Get("Lang_Label"),
+            AutoSize = true,
+            Margin = new Padding(0, 4, 6, 0),
+        };
+
+        // FlowDirection.RightToLeft places the first added control on the far right.
+        bar.Controls.Add(_languageComboBox);
+        bar.Controls.Add(_languageLabel);
+        return bar;
     }
 
     private Panel BuildRootNoticeBanner()
@@ -259,14 +338,14 @@ internal sealed class MainForm : Form
         {
             Spring = true,
             TextAlign = ContentAlignment.MiddleLeft,
-            Text = "数据目录：",
+            Text = L.Get("Gui_StatusDataDirNotReady"),
         };
 
         _statusIntegrityLabel = new ToolStripStatusLabel
         {
             BorderSides = ToolStripStatusLabelBorderSides.Left,
             Padding = new Padding(8, 0, 4, 0),
-            Text = "完整性级别：",
+            Text = L.Format("Gui_StatusIntegrity", _integrityInfo.DisplayLabel),
         };
 
         strip.Items.Add(_statusDataDirLabel);
@@ -274,7 +353,7 @@ internal sealed class MainForm : Form
         return strip;
     }
 
-    private void ApplyRootNoticeAndStatusBar()
+    private void ApplyRootNoticeAndStatusBar(bool recordStartupWarning)
     {
         var (dataDirText, integrityText) = GuiStartupLogger.FormatStatusBarSummary(_agpRoot, _integrityInfo);
         _statusDataDirLabel.Text = dataDirText;
@@ -291,7 +370,10 @@ internal sealed class MainForm : Form
             _rootNoticeLabel.Text = bannerText;
             _rootNoticePanel.Visible = true;
             UpdateRootNoticeWrapWidth();
-            RecordStartupWarning(bannerText);
+            if (recordStartupWarning)
+            {
+                RecordStartupWarning(bannerText);
+            }
         }
         else
         {
@@ -315,9 +397,9 @@ internal sealed class MainForm : Form
 
     private GroupBox BuildGamesGroup()
     {
-        var group = new GroupBox
+        _gamesGroup = new GroupBox
         {
-            Text = "1. 游戏（自动扫描 Steam 库，默认全选）",
+            Text = L.Get("Gui_GamesGroupTitle"),
             Dock = DockStyle.Fill,
             Padding = new Padding(8),
             Margin = new Padding(0, 0, 0, 8),
@@ -348,7 +430,7 @@ internal sealed class MainForm : Form
 
         _selectAllCheckBox = new CheckBox
         {
-            Text = "全选",
+            Text = L.Get("Gui_SelectAll"),
             AutoSize = true,
             Anchor = AnchorStyles.Left,
             Margin = new Padding(0, 3, 12, 0),
@@ -357,7 +439,7 @@ internal sealed class MainForm : Form
 
         _selectionSummaryLabel = new Label
         {
-            Text = "正在扫描 Steam 游戏库……",
+            Text = L.Get("Gui_ScanningSteam"),
             AutoSize = true,
             Anchor = AnchorStyles.Left,
             ForeColor = SystemColors.GrayText,
@@ -366,7 +448,7 @@ internal sealed class MainForm : Form
 
         _rescanButton = new Button
         {
-            Text = "重新扫描",
+            Text = L.Get("Gui_Rescan"),
             AutoSize = true,
             MinimumSize = new Size(82, 28),
             Margin = new Padding(0, 0, 6, 0),
@@ -375,7 +457,7 @@ internal sealed class MainForm : Form
 
         _manualAddButton = new Button
         {
-            Text = "手动选择游戏目录…",
+            Text = L.Get("Gui_AddGameFolder"),
             AutoSize = true,
             MinimumSize = new Size(140, 28),
             Margin = new Padding(0),
@@ -398,23 +480,23 @@ internal sealed class MainForm : Form
             HeaderStyle = ColumnHeaderStyle.Nonclickable,
             MinimumSize = new Size(0, 96),
         };
-        _gamesListView.Columns.Add("游戏", 220);
-        _gamesListView.Columns.Add("构建号", 105);
-        _gamesListView.Columns.Add("目录", 460);
+        _gamesListView.Columns.Add(L.Get("Gui_ColGame"), 220);
+        _gamesListView.Columns.Add(L.Get("Gui_ColBuildId"), 105);
+        _gamesListView.Columns.Add(L.Get("Gui_ColDirectory"), 460);
         _gamesListView.ItemChecked += OnGameItemChecked;
         _gamesListView.SizeChanged += (_, _) => AdjustLastColumnWidth(_gamesListView, minLastColumnWidth: 260);
 
         layout.Controls.Add(toolbar, 0, 0);
         layout.Controls.Add(_gamesListView, 0, 1);
-        group.Controls.Add(layout);
-        return group;
+        _gamesGroup.Controls.Add(layout);
+        return _gamesGroup;
     }
 
     private GroupBox BuildOutputGroup()
     {
-        var group = new GroupBox
+        _outputGroup = new GroupBox
         {
-            Text = "2. 输出位置",
+            Text = L.Get("Gui_OutputGroupTitle"),
             Dock = DockStyle.Fill,
             AutoSize = true,
             Padding = new Padding(8),
@@ -434,9 +516,9 @@ internal sealed class MainForm : Form
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-        var rootLabel = new Label
+        _outputRootLabel = new Label
         {
-            Text = "输出根目录：",
+            Text = L.Get("Gui_OutputRootLabel"),
             AutoSize = true,
             Anchor = AnchorStyles.Left,
             Margin = new Padding(0, 5, 6, 0),
@@ -459,7 +541,7 @@ internal sealed class MainForm : Form
 
         _browseOutputButton = new Button
         {
-            Text = "浏览…",
+            Text = L.Get("Gui_Browse"),
             AutoSize = true,
             MinimumSize = new Size(80, 28),
             Margin = new Padding(0),
@@ -468,7 +550,7 @@ internal sealed class MainForm : Form
 
         _outputPreviewLabel = new Label
         {
-            Text = "子目录预览：",
+            Text = L.Get("Gui_OutputPreviewPrefix"),
             AutoSize = true,
             AutoEllipsis = true,
             Dock = DockStyle.Fill,
@@ -476,14 +558,14 @@ internal sealed class MainForm : Form
             Margin = new Padding(0, 6, 0, 0),
         };
 
-        layout.Controls.Add(rootLabel, 0, 0);
+        layout.Controls.Add(_outputRootLabel, 0, 0);
         layout.Controls.Add(_outputRootTextBox, 1, 0);
         layout.Controls.Add(_browseOutputButton, 2, 0);
         layout.Controls.Add(_outputPreviewLabel, 0, 1);
         layout.SetColumnSpan(_outputPreviewLabel, 3);
 
-        group.Controls.Add(layout);
-        return group;
+        _outputGroup.Controls.Add(layout);
+        return _outputGroup;
     }
 
     private Panel BuildExportAndLogPanel()
@@ -514,7 +596,7 @@ internal sealed class MainForm : Form
 
         _startButton = new Button
         {
-            Text = "开始导出",
+            Text = L.Get("Gui_StartExport"),
             Font = _boldButtonFont,
             Dock = DockStyle.Fill,
             Height = 40,
@@ -528,7 +610,7 @@ internal sealed class MainForm : Form
 
         _cancelButton = new Button
         {
-            Text = "取消",
+            Text = L.Get("Gui_Cancel"),
             Width = 100,
             Height = 40,
             Enabled = false,
@@ -541,7 +623,7 @@ internal sealed class MainForm : Form
 
         _progressLabel = new Label
         {
-            Text = "准备就绪",
+            Text = L.Get("Gui_Ready"),
             AutoSize = true,
             AutoEllipsis = true,
             Dock = DockStyle.Fill,
@@ -580,9 +662,9 @@ internal sealed class MainForm : Form
 
     private GroupBox BuildCompletionGroup()
     {
-        var group = new GroupBox
+        _completionGroup = new GroupBox
         {
-            Text = "3. 完成结果",
+            Text = L.Get("Gui_CompletionGroupTitle"),
             Dock = DockStyle.Fill,
             Padding = new Padding(8),
             Margin = new Padding(0),
@@ -610,10 +692,10 @@ internal sealed class MainForm : Form
             HeaderStyle = ColumnHeaderStyle.Nonclickable,
             MinimumSize = new Size(0, 88),
         };
-        _resultsListView.Columns.Add("游戏", 165);
-        _resultsListView.Columns.Add("构建号", 95);
-        _resultsListView.Columns.Add("结论", 175);
-        _resultsListView.Columns.Add("库文件路径", 340);
+        _resultsListView.Columns.Add(L.Get("Gui_ColGame"), 165);
+        _resultsListView.Columns.Add(L.Get("Gui_ColBuildId"), 95);
+        _resultsListView.Columns.Add(L.Get("Gui_ColVerdict"), 175);
+        _resultsListView.Columns.Add(L.Get("Gui_ColDbPath"), 340);
         _resultsListView.SelectedIndexChanged += OnResultSelectionChanged;
         _resultsListView.SizeChanged += (_, _) => AdjustLastColumnWidth(_resultsListView, minLastColumnWidth: 220);
 
@@ -637,7 +719,7 @@ internal sealed class MainForm : Form
         _detailContentHashBox = CreateReadOnlyDetailBox();
         _detailVerdictLabel = new Label
         {
-            Text = "（导出完成后在此显示比对结论）",
+            Text = L.Get("Gui_VerdictPlaceholderIdle"),
             AutoSize = true,
             Dock = DockStyle.Fill,
             Font = _verdictFont,
@@ -645,10 +727,10 @@ internal sealed class MainForm : Form
             Margin = new Padding(0, 2, 0, 2),
         };
 
-        AddDetailRow(detailPanel, 0, "数据库路径：", _detailDbPathBox);
-        AddDetailRow(detailPanel, 1, "文件哈希：", _detailFileHashBox);
-        AddDetailRow(detailPanel, 2, "内容哈希：", _detailContentHashBox);
-        AddDetailRow(detailPanel, 3, "比对结论：", _detailVerdictLabel);
+        _detailDbPathLabel = AddDetailRow(detailPanel, 0, L.Get("Gui_DetailDbPath"), _detailDbPathBox);
+        _detailFileHashLabel = AddDetailRow(detailPanel, 1, L.Get("Gui_DetailFileHash"), _detailFileHashBox);
+        _detailContentHashLabel = AddDetailRow(detailPanel, 2, L.Get("Gui_DetailContentHash"), _detailContentHashBox);
+        _detailVerdictTitleLabel = AddDetailRow(detailPanel, 3, L.Get("Gui_DetailVerdict"), _detailVerdictLabel);
 
         var actionRow = new TableLayoutPanel
         {
@@ -664,7 +746,7 @@ internal sealed class MainForm : Form
 
         _openOutputFolderButton = new Button
         {
-            Text = "打开输出文件夹",
+            Text = L.Get("Gui_OpenOutputFolder"),
             AutoSize = true,
             MinimumSize = new Size(124, 28),
             Margin = new Padding(0, 0, 8, 0),
@@ -673,7 +755,7 @@ internal sealed class MainForm : Form
 
         _copyHashesButton = new Button
         {
-            Text = "复制哈希",
+            Text = L.Get("Gui_CopyHashes"),
             AutoSize = true,
             MinimumSize = new Size(96, 28),
             Enabled = false,
@@ -698,8 +780,8 @@ internal sealed class MainForm : Form
         layout.Controls.Add(detailPanel, 0, 1);
         layout.Controls.Add(actionRow, 0, 2);
 
-        group.Controls.Add(layout);
-        return group;
+        _completionGroup.Controls.Add(layout);
+        return _completionGroup;
     }
 
     private TextBox CreateReadOnlyDetailBox()
@@ -715,7 +797,7 @@ internal sealed class MainForm : Form
         };
     }
 
-    private static void AddDetailRow(TableLayoutPanel panel, int rowIndex, string labelText, Control valueControl)
+    private static Label AddDetailRow(TableLayoutPanel panel, int rowIndex, string labelText, Control valueControl)
     {
         var label = new Label
         {
@@ -726,6 +808,201 @@ internal sealed class MainForm : Form
         };
         panel.Controls.Add(label, 0, rowIndex);
         panel.Controls.Add(valueControl, 1, rowIndex);
+        return label;
+    }
+
+    private void SyncLanguageSelector()
+    {
+        _suppressLanguageChanged = true;
+        try
+        {
+            var current = AppLocalization.CurrentLanguage;
+            for (var i = 0; i < _languageComboBox.Items.Count; i++)
+            {
+                if (_languageComboBox.Items[i] is LanguageOption option && option.Language == current)
+                {
+                    _languageComboBox.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            _suppressLanguageChanged = false;
+        }
+    }
+
+    private void OnLanguageSelectionChanged(object? sender, EventArgs e)
+    {
+        if (_suppressLanguageChanged || _isExporting || _languageComboBox.SelectedItem is not LanguageOption option)
+        {
+            return;
+        }
+
+        if (option.Language == AppLocalization.CurrentLanguage && _userChangedLanguage)
+        {
+            return;
+        }
+
+        AppLocalization.SetProcessLanguage(option.Language);
+        _userChangedLanguage = true;
+        _settings.Language = AppLocalization.ToCode(option.Language);
+        TrySaveSettings();
+        ApplyLocalization();
+    }
+
+    private void ApplyLocalization()
+    {
+        SuspendLayout();
+        try
+        {
+            Text = L.Format("Gui_WindowTitle", ReadDisplayVersion());
+            _languageLabel.Text = L.Get("Lang_Label");
+            SyncLanguageSelector();
+
+            ApplyRootNoticeAndStatusBar(recordStartupWarning: false);
+
+            _gamesGroup.Text = L.Get("Gui_GamesGroupTitle");
+            _selectAllCheckBox.Text = L.Get("Gui_SelectAll");
+            _rescanButton.Text = L.Get("Gui_Rescan");
+            _manualAddButton.Text = L.Get("Gui_AddGameFolder");
+            if (_gamesListView.Columns.Count >= 3)
+            {
+                _gamesListView.Columns[0].Text = L.Get("Gui_ColGame");
+                _gamesListView.Columns[1].Text = L.Get("Gui_ColBuildId");
+                _gamesListView.Columns[2].Text = L.Get("Gui_ColDirectory");
+            }
+
+            foreach (ListViewItem item in _gamesListView.Items)
+            {
+                if (item.Tag is GuiGameEntry game && item.SubItems.Count >= 2)
+                {
+                    item.SubItems[1].Text = game.BuildIdDisplay;
+                }
+            }
+
+            _outputGroup.Text = L.Get("Gui_OutputGroupTitle");
+            _outputRootLabel.Text = L.Get("Gui_OutputRootLabel");
+            _browseOutputButton.Text = L.Get("Gui_Browse");
+
+            _startButton.Text = L.Get("Gui_StartExport");
+            _cancelButton.Text = L.Get("Gui_Cancel");
+            RefreshProgressLabelText();
+
+            _completionGroup.Text = L.Get("Gui_CompletionGroupTitle");
+            if (_resultsListView.Columns.Count >= 4)
+            {
+                _resultsListView.Columns[0].Text = L.Get("Gui_ColGame");
+                _resultsListView.Columns[1].Text = L.Get("Gui_ColBuildId");
+                _resultsListView.Columns[2].Text = L.Get("Gui_ColVerdict");
+                _resultsListView.Columns[3].Text = L.Get("Gui_ColDbPath");
+            }
+
+            _detailDbPathLabel.Text = L.Get("Gui_DetailDbPath");
+            _detailFileHashLabel.Text = L.Get("Gui_DetailFileHash");
+            _detailContentHashLabel.Text = L.Get("Gui_DetailContentHash");
+            _detailVerdictTitleLabel.Text = L.Get("Gui_DetailVerdict");
+            _openOutputFolderButton.Text = L.Get("Gui_OpenOutputFolder");
+            _copyHashesButton.Text = L.Get("Gui_CopyHashes");
+
+            RefreshLocalizedResults();
+
+            if (_lastCopiedHashCount > 0)
+            {
+                _copyFeedbackLabel.Text = L.Format("Gui_CopiedHashesFeedback", _lastCopiedHashCount);
+            }
+
+            if (_initialStateLoaded)
+            {
+                SyncSelectionUi();
+            }
+            else
+            {
+                _selectionSummaryLabel.Text = L.Get("Gui_ScanningSteam");
+                UpdateOutputPreview();
+            }
+        }
+        finally
+        {
+            ResumeLayout(performLayout: true);
+        }
+    }
+
+    private void RefreshProgressLabelText()
+    {
+        switch (_progressState)
+        {
+            case UiProgressState.Ready:
+                _progressLabel.Text = L.Get("Gui_Ready");
+                break;
+            case UiProgressState.MissingCli:
+                var lookup = CliCommandHelper.FindCliExecutableSafe(AppContext.BaseDirectory, Environment.ProcessPath);
+                _progressLabel.Text = lookup.ResolvedPath is null && !string.IsNullOrWhiteSpace(lookup.WarningMessage)
+                    ? L.Format("Common_WarningPrefix", lookup.WarningMessage)
+                    : L.Get("Gui_Ready");
+                break;
+            case UiProgressState.Exporting:
+                if (_activeGame is not null)
+                {
+                    _progressLabel.Text = CliCommandHelper.FormatGameProgressHeader(
+                        _activeGameOneBased,
+                        _activeTotalGames,
+                        _activeGame,
+                        _activeStep);
+                }
+
+                break;
+            case UiProgressState.Cancelling:
+                _progressLabel.Text = L.Get("Gui_CancellingProgress");
+                break;
+            case UiProgressState.Cancelled:
+                _progressLabel.Text = L.Get("Gui_ExportCancelledProgress");
+                break;
+            case UiProgressState.Finished:
+                var passed = _results.Count(r => r.Verdict is KnownBuildVerdictKind.Matched or KnownBuildVerdictKind.NewGameVersion);
+                var mismatch = _results.Count(r => r.Verdict == KnownBuildVerdictKind.HashMismatch);
+                var failed = _results.Count - passed - mismatch;
+                _progressLabel.Text = L.Format("Gui_BatchFinishedSummary", _results.Count, passed, mismatch, failed);
+                break;
+        }
+    }
+
+    private void RefreshLocalizedResults()
+    {
+        if (_results.Count == 0)
+        {
+            _detailVerdictLabel.Text = _isWaitingForResults
+                ? L.Get("Gui_VerdictPlaceholderWaiting")
+                : L.Get("Gui_VerdictPlaceholderIdle");
+            return;
+        }
+
+        var selectedIndex = _resultsListView.SelectedIndices.Count > 0
+            ? _resultsListView.SelectedIndices[0]
+            : -1;
+
+        for (var i = 0; i < _results.Count; i++)
+        {
+            var updated = BuildReportReader.ReevaluateForCurrentLanguage(_results[i]);
+            _results[i] = updated;
+            if (i < _resultsListView.Items.Count)
+            {
+                var row = _resultsListView.Items[i];
+                row.Tag = updated;
+                row.ForeColor = GetVerdictColor(updated.Verdict);
+                if (row.SubItems.Count >= 4)
+                {
+                    row.SubItems[1].Text = updated.EffectiveBuildId;
+                    row.SubItems[2].Text = updated.VerdictDisplay;
+                    row.SubItems[3].Text = updated.SqlitePath;
+                }
+            }
+        }
+
+        if (selectedIndex >= 0 && selectedIndex < _results.Count)
+        {
+            DisplayResultDetail(_results[selectedIndex]);
+        }
     }
 
     private void EnsureInitialStateLoaded()
@@ -743,7 +1020,7 @@ internal sealed class MainForm : Form
     {
         if (!string.IsNullOrWhiteSpace(_startupLogger?.InitializationWarning))
         {
-            AppendLogLine($"提示：{_startupLogger.InitializationWarning}");
+            AppendLogLine(L.Format("Common_InfoPrefix", _startupLogger.InitializationWarning));
         }
 
         try
@@ -753,10 +1030,19 @@ internal sealed class MainForm : Form
                 : null;
             var settingsResult = GuiSettingsStore.LoadWithMigration(_settingsPath, legacySettingsPath);
             _settings = settingsResult.Settings;
+
+            if (!_hasExternalLanguageOverride
+                && AppLocalization.TryParseLanguage(_settings.Language, out var savedLang)
+                && savedLang != AppLocalization.CurrentLanguage)
+            {
+                AppLocalization.SetProcessLanguage(savedLang);
+                ApplyLocalization();
+            }
+
             if (!string.IsNullOrWhiteSpace(settingsResult.InfoMessage))
             {
                 _startupLogger?.WriteInfo(settingsResult.InfoMessage);
-                AppendLogLine($"提示：{settingsResult.InfoMessage}");
+                AppendLogLine(L.Format("Common_InfoPrefix", settingsResult.InfoMessage));
             }
 
             if (!string.IsNullOrWhiteSpace(settingsResult.WarningMessage))
@@ -767,7 +1053,7 @@ internal sealed class MainForm : Form
         catch (Exception ex)
         {
             _settings = new GuiSettings();
-            LogStartupDiagnosticWarning($"读取设置失败（{_settingsPath}）：{ex.Message}；已改用默认设置。", ex, "LoadSettings");
+            LogStartupDiagnosticWarning(L.Format("Gui_LoadSettingsFailed", _settingsPath, ex.Message), ex, "LoadSettings");
         }
 
         _outputRootFallbackWarning = null;
@@ -795,7 +1081,7 @@ internal sealed class MainForm : Form
         }
         catch (Exception ex)
         {
-            _outputRootFallbackWarning = $"确定默认输出目录失败：{ex.Message}；请点击「浏览…」手动选择。";
+            _outputRootFallbackWarning = L.Format("Gui_DefaultOutputRootFailed", ex.Message);
             _outputRootTextBox.Text = string.Empty;
             LogStartupDiagnosticWarning(_outputRootFallbackWarning, ex, "ResolveDefaultOutputRoot");
         }
@@ -812,7 +1098,8 @@ internal sealed class MainForm : Form
         if (cliLookup.ResolvedPath is null && !string.IsNullOrWhiteSpace(cliLookup.WarningMessage))
         {
             LogStartupDiagnosticWarning(cliLookup.WarningMessage, cliLookup.Error, "FindCliExecutable");
-            _progressLabel.Text = $"警告：{cliLookup.WarningMessage}";
+            _progressState = UiProgressState.MissingCli;
+            _progressLabel.Text = L.Format("Common_WarningPrefix", cliLookup.WarningMessage);
         }
     }
 
@@ -944,7 +1231,7 @@ internal sealed class MainForm : Form
 
         using var dialog = new FolderBrowserDialog
         {
-            Description = "请选择 FINAL FANTASY I–VI Pixel Remaster 游戏安装根目录（含 *_Data 文件夹）",
+            Description = L.Get("Gui_ManualGameDialogDesc"),
             UseDescriptionForTitle = true,
             ShowNewFolderButton = false,
         };
@@ -963,8 +1250,8 @@ internal sealed class MainForm : Form
         {
             MessageBox.Show(
                 this,
-                $"{ex.Message}\n\n请选择 FINAL FANTASY I–VI Pixel Remaster 的游戏安装根目录（包含对应 *_Data 文件夹）。",
-                "不支持的游戏目录",
+                L.Format("Gui_ManualGameDialogInvalidHint", ex.Message),
+                L.Get("Gui_ManualGameDialogInvalidTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
             return;
@@ -1018,7 +1305,7 @@ internal sealed class MainForm : Form
 
         using var dialog = new FolderBrowserDialog
         {
-            Description = "选择导出输出根目录（每个游戏会在其下创建 <ffN>-<构建号> 子目录）",
+            Description = L.Get("Gui_BrowseOutputDialogDesc"),
             UseDescriptionForTitle = true,
             ShowNewFolderButton = true,
         };
@@ -1053,7 +1340,7 @@ internal sealed class MainForm : Form
             MessageBox.Show(
                 this,
                 missingText,
-                "缺少命令行程序",
+                L.Get("Gui_MissingCliDialogTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
             return;
@@ -1066,8 +1353,8 @@ internal sealed class MainForm : Form
         {
             MessageBox.Show(
                 this,
-                "请至少勾选一个要导出的游戏。",
-                "未选择游戏",
+                L.Get("Gui_NoGameSelectedMessage"),
+                L.Get("Gui_NoGameSelectedTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
@@ -1082,8 +1369,8 @@ internal sealed class MainForm : Form
         {
             MessageBox.Show(
                 this,
-                $"输出位置检查未通过：{ex.Message}",
-                "输出目录无效",
+                L.Format("Gui_InvalidOutputMessage", ex.Message),
+                L.Get("Gui_InvalidOutputTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
             return;
@@ -1097,10 +1384,8 @@ internal sealed class MainForm : Form
             var pathLines = string.Join(Environment.NewLine, foreignTargets.Select(p => $"• {p.OutputDirectory}"));
             var confirm = MessageBox.Show(
                 this,
-                "以下输出目录已存在且非空，但不是由 ffpr-export 创建的建库目录：\n\n"
-                + pathLines
-                + "\n\n继续将清空上述目录中的现有文件并写入新的导出结果。是否确认覆盖？",
-                "确认覆盖非空目录",
+                L.Format("Gui_ConfirmOverwriteMessage", pathLines),
+                L.Get("Gui_ConfirmOverwriteTitle"),
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
@@ -1127,8 +1412,9 @@ internal sealed class MainForm : Form
         }
 
         _cancelButton.Enabled = false;
-        _progressLabel.Text = "正在取消导出并结束子进程……";
-        AppendLogLine("==> 收到取消请求，正在终止导出子进程树……");
+        _progressState = UiProgressState.Cancelling;
+        _progressLabel.Text = L.Get("Gui_CancellingProgress");
+        AppendLogLine(L.Get("Gui_CancellingLog"));
         _exportCts.Cancel();
     }
 
@@ -1144,6 +1430,7 @@ internal sealed class MainForm : Form
         _resultsListView.Items.Clear();
         ClearResultDetail();
         _logTextBox.Clear();
+        _lastCopiedHashCount = 0;
         _copyFeedbackLabel.Text = string.Empty;
         _progressBar.Value = 0;
 
@@ -1167,31 +1454,36 @@ internal sealed class MainForm : Form
                 var oneBased = i + 1;
                 var currentGameIndex = i;
 
+                _progressState = UiProgressState.Exporting;
+                _activeGameOneBased = oneBased;
+                _activeTotalGames = total;
+                _activeGame = item.Game;
+                _activeStep = null;
                 _progressLabel.Text = CliCommandHelper.FormatGameProgressHeader(oneBased, total, item.Game);
                 _progressBar.Value = CliCommandHelper.CalculateProgressPermille(currentGameIndex, total);
 
                 AppendLogLine("============================================================");
-                AppendLogLine($"[{oneBased}/{total}] 开始导出：{item.Game.DisplayLabel}（构建号：{item.Game.BuildIdDisplay}）");
-                AppendLogLine($"游戏目录：{item.Game.GameDirectory}");
-                AppendLogLine($"输出目录：{item.OutputDirectory}");
+                AppendLogLine(L.Format("Gui_BatchItemStartLog", oneBased, total, item.Game.DisplayLabel, item.Game.BuildIdDisplay));
+                AppendLogLine(L.Format("Gui_BatchItemGameDirLog", item.Game.GameDirectory));
+                AppendLogLine(L.Format("Gui_BatchItemOutputDirLog", item.OutputDirectory));
 
                 if (item.DirectoryState == OutputDirectoryState.ForeignNonEmptyDirectory)
                 {
                     try
                     {
-                        AppendLogLine($"正在清空已确认覆盖的目录：{item.OutputDirectory}");
+                        AppendLogLine(L.Format("Gui_BatchClearingForeignLog", item.OutputDirectory));
                         GuiOutputPlanner.ClearConfirmedForeignDirectory(item.OutputDirectory, protectedGameDirs);
                     }
                     catch (Exception ex)
                     {
-                        AppendLogLine($"错误：清理目录失败（{item.OutputDirectory}）：{ex.Message}");
+                        AppendLogLine(L.Format("Gui_BatchClearForeignErrorLog", item.OutputDirectory, ex.Message));
                         var clearFail = BuildReportReader.EvaluateOutcome(
                             item.Game,
                             item.OutputDirectory,
                             exitCode: 2,
                             cancelled: false,
                             report: null,
-                            readError: $"清理已有目录失败：{ex.Message}");
+                            readError: L.Format("Gui_BatchClearForeignReadError", ex.Message));
                         AddExportResult(clearFail);
                         _progressBar.Value = CliCommandHelper.CalculateProgressPermille(oneBased, total);
                         continue;
@@ -1199,13 +1491,15 @@ internal sealed class MainForm : Form
                 }
                 else if (item.UseForceFlag)
                 {
-                    AppendLogLine("提示：输出目录包含上次建库结果，将附加 --force 自动覆盖重建。");
+                    AppendLogLine(L.Get("Gui_BatchForceHintLog"));
                 }
 
                 var cliArgs = CliCommandHelper.BuildBuildDbArguments(
                     item.Game.GameDirectory,
                     item.OutputDirectory,
-                    force: item.UseForceFlag);
+                    force: item.UseForceFlag,
+                    language: AppLocalization.CurrentLanguageCode,
+                    progressJson: true);
                 var agpTempDir = _agpRoot.Succeeded ? AgpPaths.GetTempDirectory(_agpRoot) : null;
                 var startInfo = CliCommandHelper.CreateStartInfo(
                     cliPath,
@@ -1225,7 +1519,7 @@ internal sealed class MainForm : Form
                 catch (OperationCanceledException)
                 {
                     cancelled = true;
-                    AppendLogLine($"[{item.Game.GameCode}] 已取消。");
+                    AppendLogLine(L.Format("Gui_BatchItemCancelledLog", item.Game.GameCode));
                     var cancelResult = BuildReportReader.EvaluateOutcome(
                         item.Game,
                         item.OutputDirectory,
@@ -1237,7 +1531,7 @@ internal sealed class MainForm : Form
                 }
                 catch (Exception ex)
                 {
-                    AppendLogLine($"错误：启动或运行 {Path.GetFileName(cliPath)} 失败：{ex.Message}");
+                    AppendLogLine(L.Format("Gui_BatchLaunchCliErrorLog", Path.GetFileName(cliPath), ex.Message));
                     var launchFail = BuildReportReader.EvaluateOutcome(
                         item.Game,
                         item.OutputDirectory,
@@ -1291,12 +1585,15 @@ internal sealed class MainForm : Form
         GuiGameEntry game,
         string line)
     {
-        var parsedStep = CliCommandHelper.TryParseProgressStep(line, out var step) ? step : null;
-        PostToUi(() =>
+        if (CliCommandHelper.TryParseProgressStep(line, out var parsedStep))
         {
-            AppendLogLine(line);
-            if (parsedStep is not null)
+            PostToUi(() =>
             {
+                _progressState = UiProgressState.Exporting;
+                _activeGameOneBased = currentIndexOneBased;
+                _activeTotalGames = totalGames;
+                _activeGame = game;
+                _activeStep = parsedStep;
                 _progressLabel.Text = CliCommandHelper.FormatGameProgressHeader(
                     currentIndexOneBased,
                     totalGames,
@@ -1306,12 +1603,21 @@ internal sealed class MainForm : Form
                     completedGames,
                     totalGames,
                     parsedStep);
-            }
-        });
+            });
+            return;
+        }
+
+        if (CliCommandHelper.IsProgressProtocolLine(line))
+        {
+            return;
+        }
+
+        PostToUi(() => AppendLogLine(line));
     }
 
     private void AddExportResult(GuiGameExportResult result)
     {
+        _isWaitingForResults = false;
         _results.Add(result);
 
         var row = new ListViewItem(result.Game.DisplayLabel)
@@ -1336,8 +1642,9 @@ internal sealed class MainForm : Form
     {
         if (cancelled)
         {
-            _progressLabel.Text = "导出已取消";
-            AppendLogLine("==> 导出任务已取消。");
+            _progressState = UiProgressState.Cancelled;
+            _progressLabel.Text = L.Get("Gui_ExportCancelledProgress");
+            AppendLogLine(L.Get("Gui_ExportCancelledLog"));
             return;
         }
 
@@ -1346,9 +1653,8 @@ internal sealed class MainForm : Form
         var failed = _results.Count - passed - mismatch;
 
         _progressBar.Value = 1000;
-        _progressLabel.Text = string.Create(
-            CultureInfo.InvariantCulture,
-            $"全部导出结束（共 {_results.Count} 个：通过 {passed}，哈希不同 {mismatch}，失败 {failed}）");
+        _progressState = UiProgressState.Finished;
+        _progressLabel.Text = L.Format("Gui_BatchFinishedSummary", _results.Count, passed, mismatch, failed);
         AppendLogLine($"==> {_progressLabel.Text}");
     }
 
@@ -1364,18 +1670,19 @@ internal sealed class MainForm : Form
     private void DisplayResultDetail(GuiGameExportResult result)
     {
         _detailDbPathBox.Text = result.SqlitePath;
-        _detailFileHashBox.Text = result.Report?.FileSha256 ?? "（无）";
-        _detailContentHashBox.Text = result.Report?.ContentSha256 ?? "（无）";
+        _detailFileHashBox.Text = result.Report?.FileSha256 ?? L.Get("Common_NoneParen");
+        _detailContentHashBox.Text = result.Report?.ContentSha256 ?? L.Get("Common_NoneParen");
         _detailVerdictLabel.Text = result.VerdictDetailText;
         _detailVerdictLabel.ForeColor = GetVerdictColor(result.Verdict);
     }
 
     private void ClearResultDetail()
     {
+        _isWaitingForResults = true;
         _detailDbPathBox.Text = string.Empty;
         _detailFileHashBox.Text = string.Empty;
         _detailContentHashBox.Text = string.Empty;
-        _detailVerdictLabel.Text = "（等待导出结果……）";
+        _detailVerdictLabel.Text = L.Get("Gui_VerdictPlaceholderWaiting");
         _detailVerdictLabel.ForeColor = SystemColors.GrayText;
     }
 
@@ -1396,8 +1703,8 @@ internal sealed class MainForm : Form
         {
             MessageBox.Show(
                 this,
-                "输出文件夹尚未创建，请先执行导出或确认输出根目录是否存在。",
-                "无法打开文件夹",
+                L.Get("Gui_OpenFolderNotCreatedMessage"),
+                L.Get("Gui_OpenFolderNotCreatedTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
@@ -1415,8 +1722,8 @@ internal sealed class MainForm : Form
         {
             MessageBox.Show(
                 this,
-                $"打开输出文件夹失败（{targetDir}）：{ex.Message}",
-                "打开失败",
+                L.Format("Gui_OpenFolderFailedMessage", targetDir, ex.Message),
+                L.Get("Gui_OpenFolderFailedTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
         }
@@ -1429,8 +1736,8 @@ internal sealed class MainForm : Form
         {
             MessageBox.Show(
                 this,
-                "当前没有可复制的哈希记录。",
-                "复制哈希",
+                L.Get("Gui_CopyHashesEmptyMessage"),
+                L.Get("Gui_CopyHashes"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
@@ -1440,16 +1747,15 @@ internal sealed class MainForm : Form
         {
             Clipboard.SetText(text);
             var count = _results.Count(r => r.Report is not null);
-            _copyFeedbackLabel.Text = string.Create(
-                CultureInfo.InvariantCulture,
-                $"已复制 {count} 个游戏的哈希到剪贴板");
+            _lastCopiedHashCount = count;
+            _copyFeedbackLabel.Text = L.Format("Gui_CopiedHashesFeedback", count);
         }
         catch (Exception ex)
         {
             MessageBox.Show(
                 this,
-                $"写入剪贴板失败：{ex.Message}",
-                "复制失败",
+                L.Format("Gui_CopyHashesFailedMessage", ex.Message),
+                L.Get("Gui_CopyHashesFailedTitle"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
         }
@@ -1457,6 +1763,7 @@ internal sealed class MainForm : Form
 
     private void SetInputsLocked(bool locked)
     {
+        _languageComboBox.Enabled = !locked;
         _gamesListView.Enabled = !locked;
         _selectAllCheckBox.Enabled = !locked;
         _rescanButton.Enabled = !locked;
@@ -1486,7 +1793,7 @@ internal sealed class MainForm : Form
             }
             else
             {
-                _selectionSummaryLabel.Text = "未自动找到 FF1–FF6，请点击“手动选择游戏目录…”添加";
+                _selectionSummaryLabel.Text = L.Get("Gui_NoGamesFoundHint");
                 _selectionSummaryLabel.ForeColor = SystemColors.GrayText;
             }
         }
@@ -1499,9 +1806,7 @@ internal sealed class MainForm : Form
                     ? CheckState.Checked
                     : CheckState.Indeterminate;
             _selectionSummaryLabel.ForeColor = SystemColors.GrayText;
-            _selectionSummaryLabel.Text = string.Create(
-                CultureInfo.InvariantCulture,
-                $"已选 {checkedCount} / {total} 个游戏");
+            _selectionSummaryLabel.Text = L.Format("Gui_SelectionSummary", checkedCount, total);
         }
 
         if (!_isExporting)
@@ -1522,7 +1827,7 @@ internal sealed class MainForm : Form
             GetCheckedGames());
         if (!string.IsNullOrWhiteSpace(_outputRootFallbackWarning))
         {
-            _outputPreviewLabel.Text = $"{preview}（提示：{_outputRootFallbackWarning}）";
+            _outputPreviewLabel.Text = L.Format("Gui_OutputPreviewWithHint", preview, _outputRootFallbackWarning);
             _outputPreviewLabel.ForeColor = Color.FromArgb(180, 83, 9);
         }
         else
@@ -1575,6 +1880,7 @@ internal sealed class MainForm : Form
             {
                 Format = 1,
                 OutputRoot = GuiGameScanner.NormalizeUserPath(_outputRootTextBox.Text),
+                Language = _userChangedLanguage ? AppLocalization.CurrentLanguageCode : _settings.Language,
                 CheckedGames = new Dictionary<string, bool>(mergedChecked, StringComparer.Ordinal),
             };
             GuiSettingsStore.Save(_settingsPath, toSave);
@@ -1654,7 +1960,7 @@ internal sealed class MainForm : Form
         }
         catch (Exception ex)
         {
-            RecordStartupWarning($"获取默认设置路径失败：{ex.Message}；本次将不保存设置。");
+            RecordStartupWarning(L.Format("Gui_DefaultSettingsPathFailed", ex.Message));
             _startupLogger?.WriteException("ResolveSettingsPathSafely", ex);
             return string.Empty;
         }
@@ -1740,13 +2046,13 @@ internal sealed class MainForm : Form
 
         foreach (var warning in _startupWarnings)
         {
-            AppendLogLine($"警告：{warning}");
+            AppendLogLine(L.Format("Common_WarningPrefix", warning));
         }
     }
 
     private void LogStartupDiagnosticWarning(string warning, Exception? error, string context)
     {
-        AppendLogLine($"警告：{warning}");
+        AppendLogLine(L.Format("Common_WarningPrefix", warning));
         if (error is not null)
         {
             _startupLogger?.WriteException(context, error);

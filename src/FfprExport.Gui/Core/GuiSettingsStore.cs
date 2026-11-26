@@ -12,6 +12,9 @@ internal sealed class GuiSettings
     [JsonPropertyName("output_root")]
     public string? OutputRoot { get; set; }
 
+    [JsonPropertyName("language")]
+    public string? Language { get; set; }
+
     [JsonPropertyName("checked_games")]
     public Dictionary<string, bool> CheckedGames { get; set; } = new(StringComparer.Ordinal);
 }
@@ -25,8 +28,8 @@ internal sealed record GuiSettingsLoadResult(
     string? MigratedBackupPath = null);
 
 /// <summary>
-/// Persists last output root directory and per-game checkbox selections to
-/// &lt;AGP 根目录&gt;\ffpr-export\settings.json without touching the Windows Registry,
+/// Persists last output root directory, UI language, and per-game checkbox selections to
+/// &lt;AGP root&gt;\ffpr-export\settings.json without touching the Windows Registry,
 /// and migrates legacy %APPDATA%\ffpr-export\settings.json on first launch.
 /// </summary>
 internal static class GuiSettingsStore
@@ -208,7 +211,7 @@ internal static class GuiSettingsStore
         {
             return new GuiSettingsLoadResult(
                 new GuiSettings(),
-                $"检测到旧设置文件但读取失败，未能迁移（{legacyFull}）：{legacyResult.WarningMessage}",
+                L.Format("Gui_SettingsMigrateReadFailed", legacyFull, legacyResult.WarningMessage),
                 legacyResult.Error);
         }
 
@@ -220,7 +223,7 @@ internal static class GuiSettingsStore
         {
             return new GuiSettingsLoadResult(
                 legacyResult.Settings,
-                $"已读取旧设置（{legacyFull}），但写入新位置失败（{newFull}）：{ex.Message}；旧文件已保留。",
+                L.Format("Gui_SettingsMigrateWriteFailed", legacyFull, newFull, ex.Message),
                 ex);
         }
 
@@ -233,7 +236,7 @@ internal static class GuiSettingsStore
         {
             return new GuiSettingsLoadResult(
                 legacyResult.Settings,
-                $"已将旧设置写入新位置（{newFull}），但将旧文件改名为 {migratedPath} 失败：{ex.Message}。",
+                L.Format("Gui_SettingsMigrateRenameFailed", newFull, migratedPath, ex.Message),
                 ex,
                 MigratedFromPath: legacyFull);
         }
@@ -242,7 +245,7 @@ internal static class GuiSettingsStore
             legacyResult.Settings,
             WarningMessage: null,
             Error: null,
-            InfoMessage: $"已将旧设置从 {legacyFull} 迁移至 {newFull}（旧文件已改名为 {migratedPath}）。",
+            InfoMessage: L.Format("Gui_SettingsMigratedInfo", legacyFull, newFull, migratedPath),
             MigratedFromPath: legacyFull,
             MigratedBackupPath: migratedPath);
     }
@@ -250,6 +253,37 @@ internal static class GuiSettingsStore
     public static GuiSettings Load(string settingsPath)
     {
         return LoadWithDiagnostics(settingsPath).Settings;
+    }
+
+    /// <summary>
+    /// Best-effort read-only peek of the saved UI language before MainForm runs full settings
+    /// loading/migration so startup logs and early UI controls start in the persisted language.
+    /// </summary>
+    public static string? TryPeekSavedLanguage(
+        string? settingsPath,
+        string? legacySettingsPath = null,
+        Func<string, string>? readAllText = null)
+    {
+        var primary = TryPeekLanguageFromFile(settingsPath, readAllText);
+        if (!string.IsNullOrWhiteSpace(primary))
+        {
+            return primary;
+        }
+
+        return TryPeekLanguageFromFile(legacySettingsPath, readAllText);
+    }
+
+    private static string? TryPeekLanguageFromFile(string? path, Func<string, string>? readAllText)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        var result = LoadWithDiagnostics(path, readAllText);
+        return AppLocalization.TryParseLanguage(result.Settings.Language, out var parsed)
+            ? AppLocalization.ToCode(parsed)
+            : null;
     }
 
     public static GuiSettingsLoadResult LoadWithDiagnostics(
@@ -271,7 +305,7 @@ internal static class GuiSettingsStore
         {
             return new GuiSettingsLoadResult(
                 new GuiSettings(),
-                $"读取设置失败：设置文件路径无效（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                L.Format("Gui_SettingsPathInvalid", settingsPath, ex.Message),
                 ex);
         }
 
@@ -288,7 +322,7 @@ internal static class GuiSettingsStore
                 {
                     return new GuiSettingsLoadResult(
                         new GuiSettings(),
-                        $"读取设置失败：设置路径指向目录而非文件（{settingsPath}）；已改用默认设置。",
+                        L.Format("Gui_SettingsPathIsDir", settingsPath),
                         null);
                 }
 
@@ -305,7 +339,7 @@ internal static class GuiSettingsStore
             {
                 return new GuiSettingsLoadResult(
                     new GuiSettings(),
-                    $"读取设置失败：设置文件内容为空或格式无效（{settingsPath}）；已改用默认设置。",
+                    L.Format("Gui_SettingsEmptyOrInvalid", settingsPath),
                     null);
             }
 
@@ -316,21 +350,21 @@ internal static class GuiSettingsStore
         {
             return new GuiSettingsLoadResult(
                 new GuiSettings(),
-                $"读取设置失败：没有读取权限（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                L.Format("Gui_SettingsUnauthorized", settingsPath, ex.Message),
                 ex);
         }
         catch (JsonException ex)
         {
             return new GuiSettingsLoadResult(
                 new GuiSettings(),
-                $"读取设置失败：设置文件已损坏，JSON 解析出错（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                L.Format("Gui_SettingsCorruptJson", settingsPath, ex.Message),
                 ex);
         }
         catch (Exception ex)
         {
             return new GuiSettingsLoadResult(
                 new GuiSettings(),
-                $"读取设置失败（{settingsPath}）：{ex.Message}；已改用默认设置。",
+                L.Format("Gui_LoadSettingsFailed", settingsPath, ex.Message),
                 ex);
         }
     }
@@ -342,10 +376,15 @@ internal static class GuiSettingsStore
             return;
         }
 
+        string? normalizedLanguage = AppLocalization.TryParseLanguage(settings.Language, out var parsedLanguage)
+            ? AppLocalization.ToCode(parsedLanguage)
+            : null;
+
         var payload = new GuiSettings
         {
             Format = 1,
             OutputRoot = string.IsNullOrWhiteSpace(settings.OutputRoot) ? null : settings.OutputRoot.Trim(),
+            Language = normalizedLanguage,
             CheckedGames = new Dictionary<string, bool>(settings.CheckedGames, StringComparer.Ordinal),
         };
 

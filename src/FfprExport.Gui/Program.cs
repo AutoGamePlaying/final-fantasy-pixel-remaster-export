@@ -16,8 +16,55 @@ internal static class Program
     {
         ConfigureRedirectedConsoleEncoding();
 
-        var isSelfTest = args.Any(arg => string.Equals(arg, "--self-test", StringComparison.OrdinalIgnoreCase));
-        var requireCli = args.Any(arg => string.Equals(arg, "--require-cli", StringComparison.OrdinalIgnoreCase));
+        var extractedLang = AppLocalization.ExtractCliLanguageArgument(args);
+        var effectiveArgs = extractedLang.RemainingArgs;
+        var isSelfTest = effectiveArgs.Any(arg => string.Equals(arg, "--self-test", StringComparison.OrdinalIgnoreCase));
+        var requireCli = effectiveArgs.Any(arg => string.Equals(arg, "--require-cli", StringComparison.OrdinalIgnoreCase));
+
+        var rawEnvLanguage = Environment.GetEnvironmentVariable(AppLocalization.EnvVarName);
+        var hasValidEnvLanguage = AppLocalization.TryParseLanguage(rawEnvLanguage, out var envLanguage);
+        AppLocalization.SetProcessLanguage(hasValidEnvLanguage ? envLanguage : AppLanguage.En);
+
+        if (extractedLang.MissingValue)
+        {
+            var errMsg = L.Format("Cli_OptionRequiresValue", AppLocalization.CliOptionName);
+            if (isSelfTest)
+            {
+                Console.Error.WriteLine(L.Format("Common_ErrorPrefix", errMsg));
+            }
+            else
+            {
+                EnsureWinFormsConfigured(logger: null);
+                MessageBox.Show(errMsg, L.Get("Gui_FatalTitleStartup"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return 2;
+        }
+
+        var hasCliLanguageOverride = false;
+        if (extractedLang.RawLanguage is not null)
+        {
+            if (!AppLocalization.TryParseLanguage(extractedLang.RawLanguage, out var cliLanguage))
+            {
+                var errMsg = L.Format("Lang_InvalidValue", extractedLang.RawLanguage);
+                if (isSelfTest)
+                {
+                    Console.Error.WriteLine(L.Format("Common_ErrorPrefix", errMsg));
+                }
+                else
+                {
+                    EnsureWinFormsConfigured(logger: null);
+                    MessageBox.Show(errMsg, L.Get("Gui_FatalTitleStartup"), MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                return 2;
+            }
+
+            AppLocalization.SetProcessLanguage(cliLanguage);
+            hasCliLanguageOverride = true;
+        }
+
+        var hasExternalLanguageOverride = hasCliLanguageOverride || hasValidEnvLanguage;
 
         var integrity = ProcessIntegrity.Detect();
         var agpRoot = AgpPaths.ResolveAgpHome(integrityOverride: integrity);
@@ -26,7 +73,7 @@ internal static class Program
         {
             if (isSelfTest)
             {
-                Console.Error.WriteLine($"错误：GUI 自检失败：{AgpPaths.FormatCliAllFailedError(agpRoot)}");
+                Console.Error.WriteLine(L.Format("Gui_SelfTestAgpFailed", AgpPaths.FormatCliAllFailedError(agpRoot)));
                 return 1;
             }
 
@@ -35,6 +82,17 @@ internal static class Program
             {
                 return 1;
             }
+        }
+
+        if (!hasExternalLanguageOverride)
+        {
+            var settingsPath = GuiSettingsStore.GetDefaultSettingsPath(agpRoot);
+            var legacySettingsPath = GuiSettingsStore.GetLegacySettingsPathForMigration(agpRoot);
+            var savedLang = GuiSettingsStore.TryPeekSavedLanguage(settingsPath, legacySettingsPath);
+            AppLocalization.SetProcessLanguage(AppLocalization.ResolveLanguage(
+                cliLanguage: null,
+                envLanguage: null,
+                savedSettingLanguage: savedLang));
         }
 
         // Redirect process-local TEMP/TMP into <agpRoot>\tmp before WinForms initialization so
@@ -51,11 +109,11 @@ internal static class Program
 
         if (tmpConfigured && !string.IsNullOrWhiteSpace(configuredTmpDir))
         {
-            logger.WriteInfo($"进程临时目录已指向数据根目录子目录：{configuredTmpDir}");
+            logger.WriteInfo(L.Format("Gui_TempRedirectedLog", configuredTmpDir));
         }
         else if (!string.IsNullOrWhiteSpace(tmpError))
         {
-            logger.WriteWarning($"配置数据根目录 tmp 子目录失败：{tmpError}");
+            logger.WriteWarning(L.Format("Gui_TempRedirectFailedLog", tmpError));
         }
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
@@ -82,8 +140,8 @@ internal static class Program
         try
         {
             return isSelfTest
-                ? RunSelfTest(logger, agpRoot, integrity, requireCli)
-                : RunGui(logger, agpRoot, integrity);
+                ? RunSelfTest(logger, agpRoot, integrity, requireCli, hasExternalLanguageOverride)
+                : RunGui(logger, agpRoot, integrity, hasExternalLanguageOverride);
         }
         catch (Exception ex)
         {
@@ -117,10 +175,10 @@ internal static class Program
         if (initialFailure.ExplicitAgpHomeFailed)
         {
             var message = initialFailure.WarningMessage
-                ?? $"环境变量 {AgpPaths.AgpHomeEnvVar} 指定的目录不可写。请修改或清除后重试。";
+                ?? L.Format("Gui_AgpExplicitEnvFailedFallback", AgpPaths.AgpHomeEnvVar);
             MessageBox.Show(
                 message,
-                "数据目录不可写",
+                L.Get("Gui_DialogTitleDataDirUnwritable"),
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
             return null;
@@ -129,7 +187,7 @@ internal static class Program
         var promptText = AgpPaths.FormatGuiAllFailedDialogMessage(initialFailure, integrity);
         var confirm = MessageBox.Show(
             promptText,
-            "无法写入默认数据目录",
+            L.Get("Gui_DialogTitleDefaultDataDirFailed"),
             MessageBoxButtons.OKCancel,
             MessageBoxIcon.Warning);
         if (confirm != DialogResult.OK)
@@ -141,7 +199,7 @@ internal static class Program
         {
             using var dialog = new FolderBrowserDialog
             {
-                Description = "选择可写的数据根目录（用于保存日志、设置和默认导出结果）",
+                Description = L.Get("Gui_FolderDialogDataRoot"),
                 UseDescriptionForTitle = true,
                 ShowNewFolderButton = true,
             };
@@ -160,8 +218,8 @@ internal static class Program
             }
 
             var retry = MessageBox.Show(
-                $"所选目录仍无法写入（{chosen}）：{probeError ?? "没有写入权限"}。\n\n请换一个可写文件夹重试，或点击「取消」退出。",
-                "所选目录不可写",
+                L.Format("Gui_SelectedDirStillUnwritable", chosen, probeError ?? L.Get("Gui_NoWritePermission")),
+                L.Get("Gui_DialogTitleSelectedDirUnwritable"),
                 MessageBoxButtons.RetryCancel,
                 MessageBoxIcon.Warning);
             if (retry != DialogResult.Retry)
@@ -175,7 +233,8 @@ internal static class Program
     private static int RunGui(
         GuiStartupLogger logger,
         AgpRootResolution agpRoot,
-        ProcessIntegrityInfo integrity)
+        ProcessIntegrityInfo integrity,
+        bool hasExternalLanguageOverride)
     {
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
 
@@ -205,20 +264,21 @@ internal static class Program
 
         try
         {
-            logger.WriteInfo("正在构造主窗口 MainForm...");
+            logger.WriteInfo(L.Get("Gui_LogConstructingMainForm"));
             using var mainForm = new MainForm(
                 startupLogger: logger,
                 agpRoot: agpRoot,
-                integrityInfo: integrity);
+                integrityInfo: integrity,
+                hasExternalLanguageOverride: hasExternalLanguageOverride);
             mainForm.Shown += (_, _) =>
             {
                 Volatile.Write(ref s_mainFormShown, true);
-                logger.WriteInfo("主窗口已显示（Shown）。");
+                logger.WriteInfo(L.Get("Gui_LogMainFormShown"));
             };
 
-            logger.WriteInfo("主窗口构造完成，正在进入消息循环 Application.Run...");
+            logger.WriteInfo(L.Get("Gui_LogEnteringMessageLoop"));
             Application.Run(mainForm);
-            logger.WriteInfo($"窗口程序退出（退出码：{exitCode}）。");
+            logger.WriteInfo(L.Format("Gui_LogExiting", exitCode));
             return exitCode;
         }
         catch (Exception ex)
@@ -244,7 +304,8 @@ internal static class Program
         GuiStartupLogger logger,
         AgpRootResolution agpRoot,
         ProcessIntegrityInfo integrity,
-        bool requireCli)
+        bool requireCli,
+        bool hasExternalLanguageOverride)
     {
         Exception? uiThreadException = null;
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
@@ -263,38 +324,41 @@ internal static class Program
             var settingsPath = GuiSettingsStore.GetDefaultSettingsPath(agpRoot);
             var sampleArgs = CliCommandHelper.BuildBuildDbArguments(
                 @"C:\Game",
-                Path.Combine(defaultRoot.OutputRoot, "ff5-test"));
+                Path.Combine(defaultRoot.OutputRoot, "ff5-test"),
+                language: AppLocalization.CurrentLanguageCode,
+                progressJson: true);
             _ = SteamLocator.ParseLibraryFoldersVdf(string.Empty);
 
             if (sampleArgs.Length < 5
                 || string.IsNullOrWhiteSpace(settingsPath)
                 || string.IsNullOrWhiteSpace(defaultRoot.OutputRoot))
             {
-                throw new InvalidOperationException("GUI 核心自检失败：参数、默认输出目录或设置路径初始化为空");
+                throw new InvalidOperationException(L.Get("Gui_SelfTestCoreFailed"));
             }
 
             // Walk the real MainForm construction, native handle creation (without Show),
             // initial load (settings, output root, Steam scan, CLI check), and disposal.
-            logger.WriteInfo("[self-test] 正在构造 MainForm 并执行 CreateControl() 与初始化流程...");
+            logger.WriteInfo(L.Get("Gui_SelfTestConstructingLog"));
             using (var form = new MainForm(
                 startupLogger: logger,
                 agpRoot: agpRoot,
-                integrityInfo: integrity))
+                integrityInfo: integrity,
+                hasExternalLanguageOverride: hasExternalLanguageOverride))
             {
                 form.CreateControl();
                 form.RunSelfTestInitialization();
 
                 if (form.MinimumSize.Width < 720)
                 {
-                    throw new InvalidOperationException($"主窗口最小宽度不满足要求：{form.MinimumSize.Width}");
+                    throw new InvalidOperationException(L.Format("Gui_SelfTestMinWidthFailed", form.MinimumSize.Width));
                 }
 
                 if (!form.IsHandleCreated)
                 {
-                    throw new InvalidOperationException("主窗口句柄未能成功创建（IsHandleCreated=false）");
+                    throw new InvalidOperationException(L.Get("Gui_SelfTestHandleFailed"));
                 }
 
-                logger.WriteInfo($"[self-test] MainForm 构造、CreateControl() 与初始化完成（MinimumSize={form.MinimumSize}）。");
+                logger.WriteInfo(L.Format("Gui_SelfTestConstructedLog", form.MinimumSize));
             }
 
             if (uiThreadException is not null)
@@ -308,7 +372,7 @@ internal static class Program
             if (requireCli && cliLookup.ResolvedPath is null)
             {
                 var detail = cliLookup.WarningMessage
-                    ?? $"同目录缺少 {CliCommandHelper.CliExecutableFileName}：{cliLookup.ExpectedPath}";
+                    ?? L.Format("Gui_SelfTestMissingCliFallback", CliCommandHelper.CliExecutableFileName, cliLookup.ExpectedPath);
                 var missingCliEx = new FileNotFoundException(detail, cliLookup.ExpectedPath);
                 logger.WriteException("RunSelfTest.RequireCli", missingCliEx);
                 Console.Error.WriteLine(GuiStartupLogger.FormatSelfTestFailureMessage(
@@ -319,13 +383,13 @@ internal static class Program
             }
 
             var cliStatus = cliLookup.ResolvedPath is null
-                ? "未检测到同目录 ffpr-export.exe（非打包目录）"
-                : $"已找到 {cliLookup.ResolvedPath}";
+                ? L.Get("Gui_SelfTestCliNotFound")
+                : L.Format("Gui_SelfTestCliFound", cliLookup.ResolvedPath);
             var logStatus = string.IsNullOrWhiteSpace(logger.LogFilePath)
-                ? $"日志不可用（{logger.InitializationWarning ?? "未知原因"}）"
-                : $"日志：{logger.LogFilePath}";
-            logger.WriteInfo($"[self-test] 自检通过（{cliStatus}；完整性级别：{integrity.LogLabel}；数据根目录：{agpRoot.AgpHome}）。");
-            Console.WriteLine($"自检通过：WinForms 主窗口构造、CreateControl() 与核心依赖加载正常（{cliStatus}；完整性级别：{integrity.LogLabel}；数据目录：{agpRoot.AgpHome}；{logStatus}）。");
+                ? L.Format("Gui_SelfTestLogUnavailable", logger.InitializationWarning ?? L.Get("Common_Unknown"))
+                : L.Format("Gui_SelfTestLogPath", logger.LogFilePath);
+            logger.WriteInfo(L.Format("Gui_SelfTestPassedLog", cliStatus, integrity.LogLabel, agpRoot.AgpHome));
+            Console.WriteLine(L.Format("Gui_SelfTestPassedStdout", cliStatus, integrity.LogLabel, agpRoot.AgpHome, logStatus));
             return 0;
         }
         catch (Exception ex)
@@ -345,7 +409,7 @@ internal static class Program
         if (!s_winFormsConfigured)
         {
             var dpiApplied = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-            logger?.WriteInfo($"DPI 模式已配置：actual={Application.HighDpiMode}, setResult={dpiApplied}");
+            logger?.WriteInfo(L.Format("Gui_DpiConfiguredLog", Application.HighDpiMode, dpiApplied));
             Application.SetCompatibleTextRenderingDefault(false);
             s_winFormsConfigured = true;
         }
@@ -359,7 +423,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            logger?.WriteWarning($"Application.EnableVisualStyles 失败（将沿用应用清单中的视觉样式）：{ex.Message}");
+            logger?.WriteWarning(L.Format("Gui_EnableVisualStylesFailedLog", ex.Message));
         }
     }
 
@@ -391,7 +455,7 @@ internal static class Program
 
         try
         {
-            var title = isStartupFailure ? "窗口程序启动失败" : "窗口程序运行出错";
+            var title = isStartupFailure ? L.Get("Gui_FatalTitleStartup") : L.Get("Gui_FatalTitleRuntime");
             var text = GuiStartupLogger.FormatFatalDialogMessage(
                 exception,
                 logger.LogFilePath,
@@ -421,10 +485,10 @@ internal static class Program
                 return;
             }
 
-            Console.Error.WriteLine("错误：GUI 自检遇到非 Exception 未处理错误。");
+            Console.Error.WriteLine(L.Get("Gui_SelfTestUnhandledNonException"));
             if (!string.IsNullOrWhiteSpace(logger.LogFilePath))
             {
-                Console.Error.WriteLine($"日志文件：{logger.LogFilePath}");
+                Console.Error.WriteLine(L.Format("Gui_SelfTestLogFileLine", logger.LogFilePath));
             }
 
             Console.Error.WriteLine(rawObject?.ToString() ?? "(null)");

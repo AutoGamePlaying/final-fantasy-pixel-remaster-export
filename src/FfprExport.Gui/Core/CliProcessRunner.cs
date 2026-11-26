@@ -24,7 +24,7 @@ internal static class CliProcessRunner
 
         if (!process.Start())
         {
-            throw new InvalidOperationException($"无法启动子进程：{startInfo.FileName}");
+            throw new InvalidOperationException(L.Format("Gui_ProcessStartFailed", startInfo.FileName));
         }
 
         using var killRegistration = cancellationToken.Register(() => TryKillProcessTree(process));

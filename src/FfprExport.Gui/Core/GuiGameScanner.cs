@@ -35,21 +35,21 @@ internal static class GuiGameScanner
         {
             return new GuiSteamScanResult(
                 [],
-                $"扫描 Steam 游戏库时无权访问注册表或目录：{ex.Message}；请点击「手动选择游戏目录…」添加。",
+                L.Format("Gui_ScanSteamUnauthorized", ex.Message),
                 ex);
         }
         catch (System.Security.SecurityException ex)
         {
             return new GuiSteamScanResult(
                 [],
-                $"扫描 Steam 游戏库时受安全策略限制：{ex.Message}；请点击「手动选择游戏目录…」添加。",
+                L.Format("Gui_ScanSteamSecurity", ex.Message),
                 ex);
         }
         catch (Exception ex)
         {
             return new GuiSteamScanResult(
                 [],
-                $"扫描 Steam 游戏库失败：{ex.Message}；请点击「手动选择游戏目录…」添加。",
+                L.Format("Gui_ScanSteamFailed", ex.Message),
                 ex);
         }
     }
@@ -86,7 +86,7 @@ internal static class GuiGameScanner
         var normalizedInput = NormalizeUserPath(rawDirectoryPath);
         if (string.IsNullOrWhiteSpace(normalizedInput))
         {
-            throw new ArgumentException("请选择游戏目录");
+            throw new ArgumentException(L.Get("Gui_ManualGamePathEmpty"));
         }
 
         string fullGameDir;
@@ -96,13 +96,13 @@ internal static class GuiGameScanner
         }
         catch (Exception ex)
         {
-            throw new ArgumentException($"游戏目录路径格式无效：{normalizedInput}（{ex.Message}）", ex);
+            throw new ArgumentException(L.Format("Gui_ManualGamePathInvalid", normalizedInput, ex.Message), ex);
         }
 
         var ioGameDir = PathSupport.ToIoPath(fullGameDir);
         if (!Directory.Exists(ioGameDir))
         {
-            throw new DirectoryNotFoundException($"游戏目录不存在：{fullGameDir}");
+            throw new DirectoryNotFoundException(L.Format("GameDetector_DirNotFound", fullGameDir));
         }
 
         var spec = IdentifyGameSpec(fullGameDir, ioGameDir);
@@ -189,12 +189,12 @@ internal static class GuiGameScanner
             {
                 var expectedDataDir = Path.Combine(fullGameDir, spec.DataDirName);
                 throw new DirectoryNotFoundException(
-                    $"识别到 {spec.Title}（{spec.ExeName}），但缺少数据目录：{expectedDataDir}");
+                    L.Format("GameDetector_MissingDataDir", spec.Title, spec.ExeName, expectedDataDir));
             }
         }
 
         throw new InvalidDataException(
-            $"无法从目录识别 FF1–FF6 Pixel Remaster 游戏（未找到已知 exe 或 *_Data 目录）：{fullGameDir}");
+            L.Format("GameDetector_UnrecognizedDir", fullGameDir));
     }
 
     private static (string? Name, string? BuildId, string? ManifestPath) TryReadAppManifestNearGame(

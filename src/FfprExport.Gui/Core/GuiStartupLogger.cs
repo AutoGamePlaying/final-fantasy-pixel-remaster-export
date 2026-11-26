@@ -50,7 +50,7 @@ internal static class GuiFontFallbackPolicy
         Func<(TFont Font, bool Owned, string Name)?> tryCreateFromMessageBoxFont,
         Func<(TFont Font, bool Owned, string Name)> getUltimateFallback)
     {
-        var primaryName = preferredFamilies.Count > 0 ? preferredFamilies[0] : "默认字体";
+        var primaryName = preferredFamilies.Count > 0 ? preferredFamilies[0] : L.Get("Gui_FontDefaultName");
         var failures = new List<string>();
 
         for (var i = 0; i < preferredFamilies.Count; i++)
@@ -68,7 +68,7 @@ internal static class GuiFontFallbackPolicy
                 {
                     var usedFallback = i > 0;
                     var warning = usedFallback
-                        ? $"创建{roleLabel}时首选字体「{primaryName}」不可用，已回退到「{family}」。"
+                        ? L.Format("Gui_FontFallbackToFamily", roleLabel, primaryName, family)
                         : null;
                     return new FontSelectionResult<TFont>(
                         created,
@@ -78,7 +78,7 @@ internal static class GuiFontFallbackPolicy
                         WarningMessage: warning);
                 }
 
-                failures.Add($"{family}: 字体未安装或不支持所需字重");
+                failures.Add(L.Format("Gui_FontNotInstalled", family));
             }
             catch (Exception ex)
             {
@@ -91,16 +91,18 @@ internal static class GuiFontFallbackPolicy
             var messageBoxFallback = tryCreateFromMessageBoxFont();
             if (messageBoxFallback is { } mb)
             {
-                var reason = failures.Count > 0 ? $"（原因：{string.Join("；", failures)}）" : string.Empty;
+                var reason = failures.Count > 0
+                    ? L.Format("Gui_FontReasonClause", string.Join(L.Get("Agp_ListSeparator"), failures))
+                    : string.Empty;
                 return new FontSelectionResult<TFont>(
                     mb.Font,
                     OwnedByCaller: mb.Owned,
                     ResolvedName: mb.Name,
                     UsedFallback: true,
-                    WarningMessage: $"创建{roleLabel}失败，已回退到系统字体 SystemFonts.MessageBoxFont（{mb.Name}）{reason}。");
+                    WarningMessage: L.Format("Gui_FontFallbackToMessageBox", roleLabel, mb.Name, reason));
             }
 
-            failures.Add("SystemFonts.MessageBoxFont: 不可用");
+            failures.Add(L.Get("Gui_FontMessageBoxUnavailable"));
         }
         catch (Exception ex)
         {
@@ -108,18 +110,20 @@ internal static class GuiFontFallbackPolicy
         }
 
         var ultimate = getUltimateFallback();
-        var ultimateReason = failures.Count > 0 ? $"（原因：{string.Join("；", failures)}）" : string.Empty;
+        var ultimateReason = failures.Count > 0
+            ? L.Format("Gui_FontReasonClause", string.Join(L.Get("Agp_ListSeparator"), failures))
+            : string.Empty;
         return new FontSelectionResult<TFont>(
             ultimate.Font,
             OwnedByCaller: ultimate.Owned,
             ResolvedName: ultimate.Name,
             UsedFallback: true,
-            WarningMessage: $"创建{roleLabel}失败，已回退到兜底字体「{ultimate.Name}」{ultimateReason}。");
+            WarningMessage: L.Format("Gui_FontFallbackToUltimate", roleLabel, ultimate.Name, ultimateReason));
     }
 }
 
 /// <summary>
-/// Writes per-launch diagnostic logs under &lt;AGP 根目录&gt;\ffpr-export\logs\gui-yyyyMMdd-HHmmss.log
+/// Writes per-launch diagnostic logs under &lt;AGP root&gt;\ffpr-export\logs\gui-yyyyMMdd-HHmmss.log
 /// (never falling back to %TEMP%), retains only the latest 10 log files, and formats complete
 /// crash diagnostics for logs, MessageBox, status bar, and stderr.
 /// </summary>
@@ -154,9 +158,9 @@ internal sealed partial class GuiStartupLogger
     {
         var effectiveIntegrity = integrity ?? agpRoot?.Integrity ?? ProcessIntegrityInfo.Unknown;
         var dataDirText = agpRoot is { Succeeded: true } && !string.IsNullOrWhiteSpace(agpRoot.AgpHome)
-            ? $"数据目录：{agpRoot.AgpHome}"
-            : "数据目录：（未就绪）";
-        var integrityText = $"完整性级别：{effectiveIntegrity.DisplayLabel}";
+            ? L.Format("Gui_StatusDataDir", agpRoot.AgpHome)
+            : L.Get("Gui_StatusDataDirNotReady");
+        var integrityText = L.Format("Gui_StatusIntegrity", effectiveIntegrity.DisplayLabel);
         return (dataDirText, integrityText);
     }
 
@@ -289,8 +293,8 @@ internal sealed partial class GuiStartupLogger
         if (!rootResolution.Succeeded || string.IsNullOrWhiteSpace(rootResolution.AgpHome))
         {
             var initWarning = !string.IsNullOrWhiteSpace(rootResolution.WarningMessage)
-                ? $"未找到可写的数据根目录，已跳过写入日志文件：{rootResolution.WarningMessage}"
-                : "未找到可写的数据根目录，已跳过写入日志文件";
+                ? L.Format("Gui_LogSkipNoRootWithReason", rootResolution.WarningMessage)
+                : L.Get("Gui_LogSkipNoRoot");
             return new GuiStartupLogger(
                 logDirectory: null,
                 logFilePath: null,
@@ -318,7 +322,7 @@ internal sealed partial class GuiStartupLogger
             return new GuiStartupLogger(
                 logDirectory: null,
                 logFilePath: null,
-                initializationWarning: $"无法写入启动日志文件（{logsDirectory}）：{ex.Message}");
+                initializationWarning: L.Format("Gui_LogWriteFailed", logsDirectory, ex.Message));
         }
     }
 
@@ -463,18 +467,18 @@ internal sealed partial class GuiStartupLogger
         var description = exceptionObject?.ToString() ?? "(null)";
         WriteBlock(
             "ERROR",
-            $"上下文: {fullContext}\n非 Exception 未处理对象 ({typeName}): {description}");
+            L.Format("Gui_LogUnhandledNonException", fullContext, typeName, description));
     }
 
     public static string FormatExceptionDetails(Exception? exception, string context)
     {
         var sb = new StringBuilder();
         var normalizedContext = string.IsNullOrWhiteSpace(context) ? "Unknown" : context.Trim();
-        sb.AppendLine($"上下文: {normalizedContext}");
+        sb.AppendLine(L.Format("Gui_LogContext", normalizedContext));
 
         if (exception is null)
         {
-            sb.Append("异常对象为空（null）。");
+            sb.Append(L.Get("Gui_LogNullException"));
             return sb.ToString();
         }
 
@@ -490,39 +494,39 @@ internal sealed partial class GuiStartupLogger
         bool isStartupFailure = true)
     {
         var sb = new StringBuilder();
-        sb.AppendLine(isStartupFailure ? "窗口程序启动失败。" : "窗口程序运行过程中发生未处理的错误。");
+        sb.AppendLine(isStartupFailure ? L.Get("Gui_FatalStartupLine") : L.Get("Gui_FatalRuntimeLine"));
         sb.AppendLine();
 
         if (exception is not null)
         {
-            sb.AppendLine($"错误类型：{exception.GetType().FullName}");
-            sb.AppendLine($"错误信息：{exception.Message}");
+            sb.AppendLine(L.Format("Gui_FatalErrorType", exception.GetType().FullName));
+            sb.AppendLine(L.Format("Gui_FatalErrorMessage", exception.Message));
 
             var innermost = GetInnermostException(exception);
             if (!ReferenceEquals(innermost, exception)
                 && !string.IsNullOrWhiteSpace(innermost.Message)
                 && !string.Equals(innermost.Message, exception.Message, StringComparison.Ordinal))
             {
-                sb.AppendLine($"根本原因：{innermost.GetType().Name}: {innermost.Message}");
+                sb.AppendLine(L.Format("Gui_FatalRootCause", innermost.GetType().Name, innermost.Message));
             }
         }
         else
         {
-            sb.AppendLine("错误信息：发生未知的未处理错误。");
+            sb.AppendLine(L.Get("Gui_FatalUnknownError"));
         }
 
         sb.AppendLine();
         if (!string.IsNullOrWhiteSpace(logFilePath))
         {
-            sb.AppendLine("完整错误日志已写入：");
+            sb.AppendLine(L.Get("Gui_FatalLogWrittenHeader"));
             sb.AppendLine(logFilePath);
             sb.AppendLine();
-            sb.Append("请将该日志文件发送给开发者，以便定位问题原因。");
+            sb.Append(L.Get("Gui_FatalSendLogHint"));
         }
         else
         {
-            sb.AppendLine($"未能写入日志文件（{logInitWarning ?? "日志目录不可写"}）。");
-            sb.Append("请将本提示窗口截图发送给开发者，以便定位问题原因。");
+            sb.AppendLine(L.Format("Gui_FatalLogNotWritten", logInitWarning ?? L.Get("Gui_FatalLogDirUnwritable")));
+            sb.Append(L.Get("Gui_FatalScreenshotHint"));
         }
 
         return sb.ToString();
@@ -534,14 +538,14 @@ internal sealed partial class GuiStartupLogger
         string? logInitWarning = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("错误：GUI 自检失败。");
+        sb.AppendLine(L.Get("Gui_SelfTestFailureHeader"));
         if (!string.IsNullOrWhiteSpace(logFilePath))
         {
-            sb.AppendLine($"日志文件：{logFilePath}");
+            sb.AppendLine(L.Format("Gui_SelfTestLogFileLine", logFilePath));
         }
         else
         {
-            sb.AppendLine($"日志文件：不可用（{logInitWarning ?? "未能创建日志"}）");
+            sb.AppendLine(L.Format("Gui_SelfTestLogUnavailableLine", logInitWarning ?? L.Get("Gui_SelfTestLogCreateFailed")));
         }
 
         sb.AppendLine(FormatExceptionDetails(exception, "RunSelfTest"));
@@ -653,7 +657,7 @@ internal sealed partial class GuiStartupLogger
     {
         if (depth > 16 || !visited.Add(ex))
         {
-            sb.AppendLine($"--- {label} (已省略重复或过深嵌套) ---");
+            sb.AppendLine(L.Format("Gui_ExceptionOmitted", label));
             return;
         }
 
@@ -672,7 +676,7 @@ internal sealed partial class GuiStartupLogger
         }
 
         sb.AppendLine("StackTrace:");
-        sb.AppendLine(string.IsNullOrWhiteSpace(ex.StackTrace) ? "  (无堆栈信息)" : ex.StackTrace);
+        sb.AppendLine(string.IsNullOrWhiteSpace(ex.StackTrace) ? L.Get("Gui_NoStackTrace") : ex.StackTrace);
 
         if (ex is AggregateException agg && agg.InnerExceptions.Count > 0)
         {
@@ -804,7 +808,7 @@ internal sealed partial class GuiStartupLogger
         }
         catch (Exception ex)
         {
-            return $"<读取失败: {ex.Message}>";
+            return L.Format("Common_ReadFailed", ex.Message);
         }
     }
 

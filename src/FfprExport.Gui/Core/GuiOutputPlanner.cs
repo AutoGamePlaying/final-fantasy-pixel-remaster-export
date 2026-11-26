@@ -10,7 +10,7 @@ internal sealed record GuiOutputRootResolution(
     bool Succeeded = true);
 
 /// <summary>
-/// Computes default per-game output paths under &lt;AGP 根目录&gt;\ffpr-export\output\&lt;ffN&gt;-&lt;buildid&gt;,
+/// Computes default per-game output paths under &lt;AGP root&gt;\ffpr-export\output\&lt;ffN&gt;-&lt;buildid&gt;,
 /// inspects existing output directories, resolves the folder to open, and plans safe exports.
 /// </summary>
 internal static class GuiOutputPlanner
@@ -42,7 +42,7 @@ internal static class GuiOutputPlanner
 
     /// <summary>
     /// Resolves the default export root from an already-resolved AGP root.
-    /// Never throws; propagates any Chinese diagnostic warning when a fallback root is chosen.
+    /// Never throws; propagates any localized diagnostic warning when a fallback root is chosen.
     /// </summary>
     public static GuiOutputRootResolution ResolveDefaultOutputRoot(AgpRootResolution root)
     {
@@ -51,7 +51,7 @@ internal static class GuiOutputPlanner
             return new GuiOutputRootResolution(
                 string.Empty,
                 UsedFallback: true,
-                WarningMessage: root.WarningMessage ?? "未能确定可写的数据根目录",
+                WarningMessage: root.WarningMessage ?? L.Get("Gui_OutputRootNotDetermined"),
                 Succeeded: false);
         }
 
@@ -64,7 +64,7 @@ internal static class GuiOutputPlanner
 
     /// <summary>
     /// Resolves the default export root via the shared AgpPaths root resolver.
-    /// Never throws; propagates any Chinese diagnostic warning when a fallback root is chosen.
+    /// Never throws; propagates any localized diagnostic warning when a fallback root is chosen.
     /// </summary>
     public static GuiOutputRootResolution ResolveDefaultOutputRoot(
         bool? isWindowsOverride = null,
@@ -91,7 +91,7 @@ internal static class GuiOutputPlanner
     }
 
     /// <summary>
-    /// Resolves the actual directory that the GUI "打开输出文件夹" button should open:
+    /// Resolves the actual directory that the GUI "Open Output Folder" button should open:
     /// prefers the selected export result directory, then the sole completed result directory,
     /// then the current output root text box value, and finally the parent of a failed result path.
     /// </summary>
@@ -197,7 +197,7 @@ internal static class GuiOutputPlanner
         var normalizedRoot = GuiGameScanner.NormalizeUserPath(outputRoot);
         if (string.IsNullOrWhiteSpace(normalizedRoot))
         {
-            throw new ArgumentException("输出根目录不能为空");
+            throw new ArgumentException(L.Get("Gui_OutputRootEmpty"));
         }
 
         var fullRoot = PathSupport.TrimTrailingSeparators(Path.GetFullPath(normalizedRoot));
@@ -246,13 +246,13 @@ internal static class GuiOutputPlanner
     {
         if (string.IsNullOrWhiteSpace(outputDirectory))
         {
-            throw new ArgumentException("输出目录不能为空");
+            throw new ArgumentException(L.Get("Gui_ArgOutputDirEmpty"));
         }
 
         var fullOut = PathSupport.TrimTrailingSeparators(Path.GetFullPath(outputDirectory));
         if (IsFilesystemRoot(fullOut))
         {
-            throw new ArgumentException($"输出目录不能直接指向磁盘根目录：{fullOut}");
+            throw new ArgumentException(L.Format("Gui_OutputDirFilesystemRoot", fullOut));
         }
 
         foreach (var gameDir in protectedGameDirectories)
@@ -266,7 +266,7 @@ internal static class GuiOutputPlanner
             if (PathSupport.IsSameOrDescendantPath(fullGame, fullOut)
                 || PathSupport.IsSameOrDescendantPath(fullOut, fullGame))
             {
-                throw new ArgumentException($"输出目录不能与游戏目录重叠或互为父子目录：{fullOut}");
+                throw new ArgumentException(L.Format("Gui_OutputDirOverlapGame", fullOut));
             }
         }
     }
@@ -277,13 +277,13 @@ internal static class GuiOutputPlanner
     {
         if (selectedGames.Count == 0)
         {
-            throw new ArgumentException("请至少勾选一个要导出的游戏");
+            throw new ArgumentException(L.Get("Gui_PlanNoGameSelected"));
         }
 
         var normalizedRoot = GuiGameScanner.NormalizeUserPath(outputRoot);
         if (string.IsNullOrWhiteSpace(normalizedRoot))
         {
-            throw new ArgumentException("请先填写或选择一个有效的输出根目录");
+            throw new ArgumentException(L.Get("Gui_PlanOutputRootEmpty"));
         }
 
         string fullRoot;
@@ -293,7 +293,7 @@ internal static class GuiOutputPlanner
         }
         catch (Exception ex)
         {
-            throw new ArgumentException($"输出根目录格式无效：{normalizedRoot}（{ex.Message}）", ex);
+            throw new ArgumentException(L.Format("Gui_PlanOutputRootInvalid", normalizedRoot, ex.Message), ex);
         }
 
         var allGameDirs = selectedGames.Select(g => g.GameDirectory).ToArray();
@@ -307,8 +307,7 @@ internal static class GuiOutputPlanner
 
             if (!seenTargets.Add(targetDir))
             {
-                throw new ArgumentException(
-                    $"选中的多个游戏映射到了相同的输出目录：{targetDir}（请取消重复勾选或分批导出）");
+                throw new ArgumentException(L.Format("Gui_PlanDuplicateTarget", targetDir));
             }
 
             var state = InspectOutputDirectoryState(targetDir);
@@ -352,12 +351,12 @@ internal static class GuiOutputPlanner
         var normalizedRoot = GuiGameScanner.NormalizeUserPath(outputRoot);
         if (string.IsNullOrWhiteSpace(normalizedRoot))
         {
-            return "子目录预览：请先指定输出根目录";
+            return L.Get("Gui_OutputPreviewNeedRoot");
         }
 
         if (checkedGames.Count == 0)
         {
-            return "子目录预览：请至少勾选一个游戏";
+            return L.Get("Gui_OutputPreviewNeedGame");
         }
 
         try
@@ -366,19 +365,20 @@ internal static class GuiOutputPlanner
             {
                 var single = checkedGames[0];
                 var singlePath = BuildGameOutputDirectory(normalizedRoot, single.Spec.Id, single.SteamBuildId);
-                return $"子目录预览：{singlePath}{Path.DirectorySeparatorChar}";
+                return L.Format("Gui_OutputPreviewSingle", singlePath, Path.DirectorySeparatorChar);
             }
 
             var first = checkedGames[0];
             var firstFolder = BuildGameFolderName(first.Spec.Id, first.SteamBuildId);
             var second = checkedGames[1];
             var secondFolder = BuildGameFolderName(second.Spec.Id, second.SteamBuildId);
-            var suffix = checkedGames.Count > 2 ? $" 等 {checkedGames.Count} 个子目录" : " 共 2 个子目录";
-            return $"子目录预览：将分别输出到 {firstFolder}、{secondFolder}{suffix}";
+            return checkedGames.Count > 2
+                ? L.Format("Gui_OutputPreviewMany", firstFolder, secondFolder, checkedGames.Count)
+                : L.Format("Gui_OutputPreviewTwo", firstFolder, secondFolder);
         }
         catch
         {
-            return "子目录预览：输出根目录路径格式无效";
+            return L.Get("Gui_OutputPreviewInvalidRoot");
         }
     }
 
