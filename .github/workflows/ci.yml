@@ -369,45 +369,107 @@ jobs:
             Remove-Item -LiteralPath $verifyDir -Recurse -Force
           }
           Expand-Archive -LiteralPath $zipPath -DestinationPath $verifyDir -Force
-          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "使用说明.txt")) {
+          Write-Host "==> 解压后的压缩包内容："
+          Get-ChildItem -LiteralPath $verifyDir -File | Sort-Object Name | Format-Table Name, Length -AutoSize
+          foreach ($name in @("ffpr-export-gui.exe", "ffpr-export.exe", "e_sqlite3.dll", "known-builds.json", "SHA256SUMS", "README.md", "LICENSE", "使用说明.txt")) {
             $itemPath = Join-Path $verifyDir $name
             if (-not (Test-Path -LiteralPath $itemPath -PathType Leaf)) {
               throw "错误：压缩包缺少文件：$name"
             }
           }
           $packagedGui = Join-Path $verifyDir "ffpr-export-gui.exe"
+          $packagedCli = Join-Path $verifyDir "ffpr-export.exe"
           $utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-          $stdoutFile = Join-Path $env:RUNNER_TEMP "gui-selftest-pkg.stdout.txt"
-          $stderrFile = Join-Path $env:RUNNER_TEMP "gui-selftest-pkg.stderr.txt"
-          try {
-            # WinExe (GUI subsystem): wait explicitly with Start-Process and redirect stdio so logs and errors are visible.
-            $selfTest = Start-Process `
-              -FilePath $packagedGui `
-              -ArgumentList @('--self-test', '--require-cli') `
-              -WorkingDirectory $verifyDir `
-              -RedirectStandardOutput $stdoutFile `
-              -RedirectStandardError $stderrFile `
-              -Wait `
-              -PassThru `
-              -NoNewWindow
-            if (Test-Path -LiteralPath $stdoutFile -PathType Leaf) {
-              $outText = [System.IO.File]::ReadAllText($stdoutFile, $utf8NoBom).Trim()
+
+          function Invoke-PackagedExe {
+            param(
+              [string]$ExePath,
+              [string[]]$ExeArgs,
+              [hashtable]$EnvOverrides = @{}
+            )
+            $psi = [System.Diagnostics.ProcessStartInfo]::new()
+            $psi.FileName = $ExePath
+            $psi.WorkingDirectory = $verifyDir
+            $psi.UseShellExecute = $false
+            $psi.CreateNoWindow = $true
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError = $true
+            $psi.StandardOutputEncoding = $utf8NoBom
+            $psi.StandardErrorEncoding = $utf8NoBom
+            foreach ($a in $ExeArgs) {
+              [void]$psi.ArgumentList.Add($a)
+            }
+            foreach ($kv in $EnvOverrides.GetEnumerator()) {
+              $psi.Environment[[string]$kv.Key] = [string]$kv.Value
+            }
+            $p = [System.Diagnostics.Process]::Start($psi)
+            if ($null -eq $p) {
+              throw "错误：无法启动 $ExePath"
+            }
+            try {
+              $errTask = $p.StandardError.ReadToEndAsync()
+              $outText = $p.StandardOutput.ReadToEnd().Trim()
+              $errText = $errTask.GetAwaiter().GetResult().Trim()
+              $p.WaitForExit()
               if (-not [string]::IsNullOrWhiteSpace($outText)) {
                 Write-Host $outText
               }
-            }
-            if (Test-Path -LiteralPath $stderrFile -PathType Leaf) {
-              $errText = [System.IO.File]::ReadAllText($stderrFile, $utf8NoBom).Trim()
               if (-not [string]::IsNullOrWhiteSpace($errText)) {
                 [Console]::Error.WriteLine($errText)
               }
+              return [pscustomobject]@{
+                ExitCode = $p.ExitCode
+                Stdout   = $outText
+                Stderr   = $errText
+              }
+            } finally {
+              $p.Dispose()
             }
-            $selfTestExit = $selfTest.ExitCode
-            if ($selfTestExit -ne 0) {
-              throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $selfTestExit）"
+          }
+
+          Write-Host "==> 常规打包自检：ffpr-export-gui.exe --self-test --require-cli"
+          $normalSelfTest = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--self-test", "--require-cli")
+          if ($normalSelfTest.ExitCode -ne 0) {
+            throw "错误：打包后的 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($normalSelfTest.ExitCode)）"
+          }
+
+          Write-Host "==> 模拟 TEMP 不可写（TEMP/TMP 指向阻塞文件）自检"
+          $blockedTemp = Join-Path $env:RUNNER_TEMP "ci-blocked-temp-file"
+          $noTempAgpHome = Join-Path $env:RUNNER_TEMP "agp-home-notemp-ci"
+          $noTempFixtureDir = Join-Path $env:RUNNER_TEMP "fixture-notemp-ci"
+          $noTempFixtureDb = Join-Path $env:RUNNER_TEMP "fixture-notemp-ci.sqlite"
+          try {
+            if (Test-Path -LiteralPath $noTempFixtureDir) { Remove-Item -LiteralPath $noTempFixtureDir -Recurse -Force }
+            if (Test-Path -LiteralPath $noTempFixtureDb) { Remove-Item -LiteralPath $noTempFixtureDb -Force }
+            [System.IO.File]::WriteAllText($blockedTemp, "blocked-temp`n", $utf8NoBom)
+            $blockedEnv = @{
+              "TEMP"     = $blockedTemp
+              "TMP"      = $blockedTemp
+              "AGP_HOME" = $noTempAgpHome
+            }
+
+            $guiNoTemp = Invoke-PackagedExe -ExePath $packagedGui -ExeArgs @("--self-test", "--require-cli") -EnvOverrides $blockedEnv
+            if ($guiNoTemp.ExitCode -ne 0) {
+              throw "错误：TEMP 不可写模拟下 ffpr-export-gui.exe --self-test --require-cli 失败（退出码 $($guiNoTemp.ExitCode)）"
+            }
+
+            $cliHelpNoTemp = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("--help") -EnvOverrides $blockedEnv
+            if ($cliHelpNoTemp.ExitCode -ne 0 -or -not $cliHelpNoTemp.Stdout.Contains("ffpr-export")) {
+              throw "错误：TEMP 不可写模拟下 ffpr-export.exe --help 失败（退出码 $($cliHelpNoTemp.ExitCode)）"
+            }
+
+            $fixtureWrite = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("db", "write-fixture", "--out", $noTempFixtureDir) -EnvOverrides $blockedEnv
+            if ($fixtureWrite.ExitCode -ne 0) {
+              throw "错误：TEMP 不可写模拟下 ffpr-export.exe db write-fixture 失败（退出码 $($fixtureWrite.ExitCode)）"
+            }
+
+            $fixtureBuild = Invoke-PackagedExe -ExePath $packagedCli -ExeArgs @("db", "build", "--export", $noTempFixtureDir, "--out", $noTempFixtureDb) -EnvOverrides $blockedEnv
+            if ($fixtureBuild.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $noTempFixtureDb -PathType Leaf)) {
+              throw "错误：TEMP 不可写模拟下 ffpr-export.exe db build（加载 e_sqlite3.dll）失败（退出码 $($fixtureBuild.ExitCode)）"
             }
           } finally {
-            Remove-Item -LiteralPath $stdoutFile, $stderrFile -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $blockedTemp, $noTempFixtureDb, "$noTempFixtureDb.manifest.json" -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $noTempFixtureDir, $noTempAgpHome -Recurse -Force -ErrorAction SilentlyContinue
           }
 
       - name: Upload Windows package artifact
